@@ -81,7 +81,7 @@ export default function ProjectsTab({ profile, onSelectProject }) {
             <div className="card-top">
               <div>
                 <span className="card-name">{p.name}</span>
-                <div className="card-location">{p.location} — {p.description}</div>
+                <div className="card-location">{p.location}, {p.description}</div>
               </div>
               <span className={`status-dot status-${s.status || 'green'}`} />
             </div>

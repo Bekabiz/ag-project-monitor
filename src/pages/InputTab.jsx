@@ -7,7 +7,7 @@ export default function InputTab({ profile }) {
   const [selected, setSelected] = useState(null)
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
-  const [toast, setToast] = useState('')
+  const [toast, setToast] = useState(null)
   const [recording, setRecording] = useState(false)
   const [mediaRec, setMediaRec] = useState(null)
   const [showFileModal, setShowFileModal] = useState(null) // 'photo' or 'document'
@@ -23,9 +23,9 @@ export default function InputTab({ profile }) {
     setProjects(data || [])
   }
 
-  function showToast(msg) {
-    setToast(msg)
-    setTimeout(() => setToast(''), 2500)
+  function showToast(msg, isError) {
+    setToast({ msg, isError })
+    setTimeout(() => setToast(null), 2500)
   }
 
   // TEXT SUBMIT
@@ -46,7 +46,7 @@ export default function InputTab({ profile }) {
       setText('')
       showToast('OK Αποθηκεύτηκε')
     } catch (err) {
-      alert('Σφάλμα: ' + err.message)
+      showToast('Σφάλμα: ' + err.message, true)
     }
     setSending(false)
   }
@@ -72,7 +72,7 @@ export default function InputTab({ profile }) {
       setMediaRec(rec)
       setRecording(true)
     } catch (err) {
-      alert('Δεν υπάρχει πρόσβαση στο μικρόφωνο')
+      showToast('Δεν υπάρχει πρόσβαση στο μικρόφωνο', true)
     }
   }
 
@@ -99,7 +99,7 @@ export default function InputTab({ profile }) {
       })
       showToast('OK Ηχητικό αποθηκεύτηκε')
     } catch (err) {
-      alert('Σφάλμα: ' + err.message)
+      showToast('Σφάλμα: ' + err.message, true)
     }
     setSending(false)
   }
@@ -129,7 +129,7 @@ export default function InputTab({ profile }) {
       })
       showToast('OK Φωτογραφία αποθηκεύτηκε')
     } catch (err) {
-      alert('Σφάλμα: ' + err.message)
+      showToast('Σφάλμα: ' + err.message, true)
     }
     setSending(false)
     setShowFileModal(null)
@@ -161,7 +161,7 @@ export default function InputTab({ profile }) {
       setDocName(''); setDocVersion(''); setDocNotes('')
       showToast('OK Αρχείο αποθηκεύτηκε')
     } catch (err) {
-      alert('Σφάλμα: ' + err.message)
+      showToast('Σφάλμα: ' + err.message, true)
     }
     setSending(false)
     setShowFileModal(null)
@@ -194,7 +194,7 @@ export default function InputTab({ profile }) {
         >
           <div>
             <div className="project-select-name">{p.name}</div>
-            <div className="project-select-loc">{p.location} — {p.description}</div>
+            <div className="project-select-loc">{p.location}, {p.description}</div>
           </div>
           {selected?.id === p.id && <span style={{ color: 'var(--blue)' }}>✓</span>}
         </div>
@@ -273,7 +273,7 @@ export default function InputTab({ profile }) {
         </div>
       )}
 
-      {toast && <div className="toast">{toast}</div>}
+      {toast && <div className={`toast ${toast.isError ? "toast-error" : "toast-success"}`}>{toast.msg}</div>}
     </div>
   )
 }
