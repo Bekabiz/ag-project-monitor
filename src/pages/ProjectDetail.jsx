@@ -60,8 +60,41 @@ export default function ProjectDetail({ project, profile, onBack }) {
     setLoading(false)
   }
 
-  function refreshSummary() {
+  async function refreshSummary() {
     setRefreshDisabled(true)
+    try {
+      const recentEntries = entries.slice(0, 15).map(e => ({
+        created_at: e.created_at,
+        entry_type: e.entry_type,
+        ai_summary: e.ai_summary,
+        raw_text: e.raw_text,
+        file_name: e.file_name
+      }))
+
+      const res = await fetch('/api/summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          entries: recentEntries,
+          projectName: project.name,
+          scope: 'project'
+        })
+      })
+
+      if (res.ok) {
+        const { summary: summaryText } = await res.json()
+        // Save to Supabase
+        await supabase.from('ai_summaries').upsert({
+          project_id: project.id,
+          scope: 'project',
+          summary_text: summaryText,
+          generated_at: new Date().toISOString()
+        }, { onConflict: 'project_id,scope' })
+        setSummary({ summary_text: summaryText })
+      }
+    } catch (err) {
+      console.error('Summary refresh error:', err)
+    }
     setTimeout(() => setRefreshDisabled(false), 300000)
   }
 

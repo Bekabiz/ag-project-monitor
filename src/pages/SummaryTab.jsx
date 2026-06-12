@@ -138,7 +138,33 @@ export default function SummaryTab({ profile }) {
         <div className="ai-summary-text">
           {summary?.summary_text || 'Θα δημιουργηθεί μετά τις πρώτες ενημερώσεις.'}
         </div>
-        <button className="ai-refresh" onClick={() => { setRefreshDisabled(true); setTimeout(() => setRefreshDisabled(false), 300000) }} disabled={refreshDisabled}>
+        <button className="ai-refresh" onClick={async () => {
+          setRefreshDisabled(true)
+          try {
+            const recentEntries = entries.slice(0, 15).map(e => ({
+              created_at: e.created_at,
+              entry_type: e.entry_type,
+              ai_summary: e.ai_summary,
+              raw_text: e.raw_text,
+              file_name: e.file_name
+            }))
+            const res = await fetch('/api/summary', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ entries: recentEntries, scope: 'overall' })
+            })
+            if (res.ok) {
+              const { summary: summaryText } = await res.json()
+              await supabase.from('ai_summaries').upsert({
+                scope: 'overall',
+                summary_text: summaryText,
+                generated_at: new Date().toISOString()
+              }, { onConflict: 'scope' })
+              setSummary({ summary_text: summaryText })
+            }
+          } catch (err) { console.error('Summary error:', err) }
+          setTimeout(() => setRefreshDisabled(false), 300000)
+        }} disabled={refreshDisabled}>
           ↻ Ανανέωση {refreshDisabled ? '(5 λεπτά)' : ''}
         </button>
       </div>
