@@ -150,26 +150,34 @@ export default function InputTab({ profile }) {
     if (!selected) return
     setExtracting(true)
     try {
-      const projectNames = projects.map(p => p.name)
+      // Step 1: Upload audio to Supabase storage (same as photos - this works)
+      const fileName = `voice_${Date.now()}.webm`
+      const path = `${selected.id}/${fileName}`
+      const { error: upErr } = await supabase.storage.from('files').upload(path, blob)
+      if (upErr) throw upErr
+      const { data: urlData } = supabase.storage.from('files').getPublicUrl(path)
+      const fileUrl = urlData.publicUrl
 
-      // Send raw binary audio with metadata in headers
+      // Step 2: Send URL to transcribe API
+      const projectNames = projects.map(p => p.name)
       const res = await fetch('/api/transcribe', {
         method: 'POST',
-        headers: {
-          'Content-Type': blob.type || 'audio/webm',
-          'X-Audio-Type': blob.type || 'audio/webm',
-          'X-Project-Names': JSON.stringify(projectNames)
-        },
-        body: blob
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileUrl, projectNames })
       })
 
       if (!res.ok) {
+        // Clean up audio file
+        await supabase.storage.from('files').remove([path])
         showToast('Η μεταγραφή απέτυχε', true)
         setExtracting(false)
         return
       }
 
       const { transcript, extracted } = await res.json()
+
+      // Delete audio file - we only need the text
+      await supabase.storage.from('files').remove([path])
 
       if (!transcript || transcript.trim().length === 0) {
         showToast('Δεν αναγνωρίστηκε ομιλία', true)

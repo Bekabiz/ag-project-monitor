@@ -2,9 +2,6 @@ import OpenAI, { toFile } from 'openai';
 
 export const config = {
   maxDuration: 30,
-  api: {
-    bodyParser: false,
-  },
 };
 
 export default async function handler(req, res) {
@@ -16,43 +13,39 @@ export default async function handler(req, res) {
   const openai = new OpenAI({ apiKey });
 
   try {
-    // Read raw binary body
-    const chunks = [];
-    for await (const chunk of req) {
-      chunks.push(chunk);
+    const { fileUrl, projectNames } = req.body;
+    if (!fileUrl) return res.status(400).json({ error: 'No file URL' });
+
+    console.log('Fetching audio from:', fileUrl);
+
+    // Download audio from Supabase storage URL
+    const audioRes = await fetch(fileUrl);
+    if (!audioRes.ok) {
+      return res.status(400).json({ error: 'Could not download audio' });
     }
-    const audioBuffer = Buffer.concat(chunks);
 
-    if (audioBuffer.length < 100) {
-      return res.status(400).json({ error: 'Audio too small or empty' });
-    }
+    const audioBuffer = Buffer.from(await audioRes.arrayBuffer());
+    console.log('Audio downloaded:', audioBuffer.length, 'bytes');
 
-    // Get metadata from headers
-    const mimeType = req.headers['x-audio-type'] || 'audio/webm';
-    const projectNames = req.headers['x-project-names'] ? JSON.parse(req.headers['x-project-names']) : [];
-    const ext = mimeType.includes('mp4') ? 'mp4' : mimeType.includes('ogg') ? 'ogg' : 'webm';
-
-    console.log(`Audio received: ${audioBuffer.length} bytes, type: ${mimeType}`);
-
-    // Use OpenAI toFile with raw buffer
-    const file = await toFile(audioBuffer, `recording.${ext}`, { type: mimeType });
+    // Create file for OpenAI
+    const file = await toFile(audioBuffer, 'recording.webm', { type: 'audio/webm' });
 
     // Step 1: Transcribe
     const transcription = await openai.audio.transcriptions.create({
       file: file,
-      model: 'gpt-4o-mini-transcribe',
+      model: 'whisper-1',
       language: 'el',
     });
 
     const transcript = transcription.text;
-    console.log(`Transcript: ${transcript}`);
+    console.log('Transcript:', transcript);
 
     if (!transcript || transcript.trim().length === 0) {
       return res.status(200).json({ transcript: '', extracted: null });
     }
 
-    // Step 2: Extract
-    const names = projectNames.join(', ');
+    // Step 2: Extract structured data
+    const names = (projectNames || []).join(', ');
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       temperature: 0.1,
