@@ -51,7 +51,7 @@ export default function InputTab({ profile }) {
 
       const { extracted } = await res.json()
       // Show confirmation screen
-      setConfirm({ rawText: text.trim(), extracted })
+      setConfirm({ rawText: text.trim(), extracted, entryType: 'text' })
     } catch (err) {
       console.error('Extract error:', err)
       // Fallback: save without AI
@@ -61,7 +61,7 @@ export default function InputTab({ profile }) {
   }
 
   // Save entry (with or without AI extraction)
-  async function saveEntry(rawText, extracted) {
+  async function saveEntry(rawText, extracted, type = 'text') {
     setSending(true)
     try {
       const matchedProject = extracted?.project_name
@@ -72,7 +72,7 @@ export default function InputTab({ profile }) {
       const { error } = await supabase.from('entries').insert({
         project_id: targetProject.id,
         user_id: profile.id,
-        entry_type: 'text',
+        entry_type: type,
         raw_text: rawText,
         ai_summary: extracted?.summary || rawText.substring(0, 200),
         ai_extracted: extracted ? {
@@ -108,13 +108,13 @@ export default function InputTab({ profile }) {
   // Confirm AI extraction
   function handleConfirm() {
     if (!confirm) return
-    saveEntry(confirm.rawText, confirm.extracted)
+    saveEntry(confirm.rawText, confirm.extracted, confirm.entryType || 'text')
   }
 
   // Skip AI, save raw
   function handleSkipAI() {
     if (!confirm) return
-    saveEntry(confirm.rawText, null)
+    saveEntry(confirm.rawText, null, confirm.entryType || 'text')
   }
 
   // VOICE RECORDING
@@ -132,7 +132,7 @@ export default function InputTab({ profile }) {
       rec.onstop = async () => {
         stream.getTracks().forEach(t => t.stop())
         const blob = new Blob(chunks, { type: 'audio/webm' })
-        await uploadVoice(blob)
+        await transcribeAndExtract(blob)
       }
       rec.start()
       setMediaRec(rec)
@@ -142,32 +142,45 @@ export default function InputTab({ profile }) {
     }
   }
 
-  async function uploadVoice(blob) {
+  async function transcribeAndExtract(blob) {
     if (!selected) return
-    setSending(true)
+    setExtracting(true)
     try {
-      const fileName = `voice_${Date.now()}.webm`
-      const path = `${selected.id}/${fileName}`
-      const { error: upErr } = await supabase.storage.from('files').upload(path, blob)
-      if (upErr) throw upErr
-      const { data: urlData } = supabase.storage.from('files').getPublicUrl(path)
+      const projectNames = projects.map(p => p.name)
+      const formData = new FormData()
+      formData.append('audio', blob, 'recording.webm')
+      formData.append('projectNames', JSON.stringify(projectNames))
 
-      await supabase.from('entries').insert({
-        project_id: selected.id,
-        user_id: profile.id,
-        entry_type: 'voice',
-        file_url: urlData.publicUrl,
-        file_name: fileName,
-        file_size: blob.size,
-        raw_text: '[Ηχητικό σημείωμα - αναμονή μεταγραφής]',
-        ai_summary: 'Ηχητικό σημείωμα',
-        is_team_visible: false
+      const res = await fetch('/api/transcribe', {
+        method: 'POST',
+        body: formData
       })
-      showToast('Ηχητικό αποθηκεύτηκε')
+
+      if (!res.ok) {
+        showToast('Η μεταγραφή απέτυχε', true)
+        setExtracting(false)
+        return
+      }
+
+      const { transcript, extracted } = await res.json()
+
+      if (!transcript || transcript.trim().length === 0) {
+        showToast('Δεν αναγνωρίστηκε ομιλία', true)
+        setExtracting(false)
+        return
+      }
+
+      // Show confirmation with transcript + extracted data
+      setConfirm({
+        rawText: transcript,
+        extracted: extracted || null,
+        entryType: 'voice'
+      })
     } catch (err) {
-      showToast('Σφάλμα: ' + err.message, true)
+      console.error('Transcribe error:', err)
+      showToast('Σφάλμα μεταγραφής', true)
     }
-    setSending(false)
+    setExtracting(false)
   }
 
   // PHOTO UPLOAD
