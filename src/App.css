@@ -62,7 +62,14 @@ body {
   padding: 16px 20px 12px; display: flex; align-items: center; justify-content: space-between;
   border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--bg);
 }
-.app-header h1 { font-size: 20px; font-weight: 700; }
+.app-header h1 { font-size: 18px; font-weight: 600; }
+.ag-logo {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: white; color: black;
+  border: 1.5px solid var(--border);
+  font-size: 13px; font-weight: 700; letter-spacing: 1px;
+  display: flex; align-items: center; justify-content: center;
+}
 .user-badge {
   font-size: 12px; color: var(--text2); background: var(--surface);
   padding: 4px 10px; border-radius: 20px; font-weight: 500;
@@ -341,7 +348,9 @@ body {
   word-break: break-word;
 }
 .ct-photo {
-  width: 100%;
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
   border-radius: 6px;
   margin-top: 6px;
   cursor: pointer;
@@ -521,6 +530,35 @@ body {
 .date-input {
   flex: 1; padding: 10px; background: var(--surface); border: 1px solid var(--border);
   border-radius: 8px; color: var(--text); font-size: 14px;
+}
+
+/* AI Confirmation Screen */
+.submitted-by {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.submitted-by-label {
+  font-size: 12px;
+  color: var(--text2);
+  font-weight: 600;
+}
+.sub-btn {
+  font-size: 13px;
+  padding: 4px 12px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.sub-btn.active {
+  background: var(--blue);
+  color: white;
+  border-color: var(--blue);
 }
 
 /* AI Confirmation Screen */

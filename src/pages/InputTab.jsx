@@ -14,15 +14,28 @@ export default function InputTab({ profile }) {
   const [docName, setDocName] = useState('')
   const [docVersion, setDocVersion] = useState('')
   const [docNotes, setDocNotes] = useState('')
+  const [teamMembers, setTeamMembers] = useState([])
+  const [submittedBy, setSubmittedBy] = useState(null) // null = self
 
   // AI Confirmation state
   const [confirm, setConfirm] = useState(null) // { rawText, extracted }
 
-  useEffect(() => { loadProjects() }, [])
+  useEffect(() => { loadProjects(); loadTeam() }, [])
 
   async function loadProjects() {
     const { data } = await supabase.from('projects').select('*').eq('status', 'active').order('name')
     setProjects(data || [])
+  }
+
+  async function loadTeam() {
+    if (profile?.role !== 'owner') return
+    const { data } = await supabase.from('profiles').select('id, full_name').eq('role', 'team')
+    setTeamMembers(data || [])
+  }
+
+  function getSubmitterInfo() {
+    if (submittedBy) return { userId: submittedBy.id, name: submittedBy.full_name }
+    return { userId: profile.id, name: profile.full_name }
   }
 
   function showToast(msg, isError) {
@@ -68,10 +81,11 @@ export default function InputTab({ profile }) {
         ? projects.find(p => p.name === extracted.project_name)
         : null
       const targetProject = matchedProject || selected
+      const sub = getSubmitterInfo()
 
       const { error } = await supabase.from('entries').insert({
         project_id: targetProject.id,
-        user_id: profile.id,
+        user_id: sub.userId,
         entry_type: type,
         raw_text: rawText,
         ai_summary: extracted?.summary || rawText.substring(0, 200),
@@ -82,7 +96,7 @@ export default function InputTab({ profile }) {
           budget_change: extracted.budget_change,
           action_items: extracted.action_items
         } : null,
-        is_team_visible: false
+        is_team_visible: type !== 'email'
       })
       if (error) throw error
 
@@ -198,29 +212,32 @@ export default function InputTab({ profile }) {
     setExtracting(false)
   }
 
-  // PHOTO UPLOAD
+  // PHOTO UPLOAD - supports multiple
   async function handlePhotoUpload(e) {
-    const file = e.target.files?.[0]
-    if (!file || !selected) return
+    const files = Array.from(e.target.files || [])
+    if (!files.length || !selected) return
     setSending(true)
+    const sub = getSubmitterInfo()
     try {
-      const compressed = file.size > 1500000 ? await compressImage(file) : file
-      const fileName = `photo_${Date.now()}.jpg`
-      const path = `${selected.id}/${fileName}`
-      const { error: upErr } = await supabase.storage.from('files').upload(path, compressed)
-      if (upErr) throw upErr
-      const { data: urlData } = supabase.storage.from('files').getPublicUrl(path)
+      for (const file of files) {
+        const compressed = file.size > 1500000 ? await compressImage(file) : file
+        const fileName = `photo_${Date.now()}_${Math.random().toString(36).slice(2, 6)}.jpg`
+        const path = `${selected.id}/${fileName}`
+        const { error: upErr } = await supabase.storage.from('files').upload(path, compressed)
+        if (upErr) throw upErr
+        const { data: urlData } = supabase.storage.from('files').getPublicUrl(path)
 
-      await supabase.from('entries').insert({
-        project_id: selected.id,
-        user_id: profile.id,
-        entry_type: 'photo',
-        file_url: urlData.publicUrl,
-        file_name: fileName,
-        file_size: compressed.size,
-        is_team_visible: true
-      })
-      showToast('Φωτογραφία αποθηκεύτηκε')
+        await supabase.from('entries').insert({
+          project_id: selected.id,
+          user_id: sub.userId,
+          entry_type: 'photo',
+          file_url: urlData.publicUrl,
+          file_name: fileName,
+          file_size: compressed.size,
+          is_team_visible: true
+        })
+      }
+      showToast(`${files.length} φωτογραφία${files.length > 1 ? 'ες' : ''} αποθηκεύτηκ${files.length > 1 ? 'αν' : 'ε'}`)
     } catch (err) {
       showToast('Σφάλμα: ' + err.message, true)
     }
@@ -233,6 +250,7 @@ export default function InputTab({ profile }) {
     const file = e.target.files?.[0]
     if (!file || !selected) return
     setSending(true)
+    const sub = getSubmitterInfo()
     try {
       const fileName = file.name
       const path = `${selected.id}/${Date.now()}_${fileName}`
@@ -242,7 +260,7 @@ export default function InputTab({ profile }) {
 
       await supabase.from('entries').insert({
         project_id: selected.id,
-        user_id: profile.id,
+        user_id: sub.userId,
         entry_type: 'document',
         file_url: urlData.publicUrl,
         file_name: docName || fileName,
@@ -296,6 +314,28 @@ export default function InputTab({ profile }) {
 
       {selected && !confirm && (
         <div className="input-area">
+          {/* Submitted by selector - owner only */}
+          {profile?.role === 'owner' && teamMembers.length > 0 && (
+            <div className="submitted-by">
+              <span className="submitted-by-label">Από:</span>
+              <button
+                className={`sub-btn ${!submittedBy ? 'active' : ''}`}
+                onClick={() => setSubmittedBy(null)}
+              >
+                {profile.full_name.split(' ')[0]}
+              </button>
+              {teamMembers.map(m => (
+                <button
+                  key={m.id}
+                  className={`sub-btn ${submittedBy?.id === m.id ? 'active' : ''}`}
+                  onClick={() => setSubmittedBy(m)}
+                >
+                  {m.full_name.split(' ')[0]}
+                </button>
+              ))}
+            </div>
+          )}
+
           <textarea
             className="text-input-box"
             placeholder="Γράψτε ενημέρωση... π.χ. Μίλησα με Νίκο, χάλυβας Πέμπτη, +2000€"
@@ -303,14 +343,12 @@ export default function InputTab({ profile }) {
             onChange={e => setText(e.target.value)}
           />
           <div className="input-actions">
-            {profile?.role === 'owner' && (
-              <button
-                className={`action-btn ${recording ? 'recording' : ''}`}
-                onClick={toggleRecording}
-              >
-                {recording ? '■ Stop' : <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a2 2 0 0 1 2 2v4a2 2 0 1 1-4 0V3a2 2 0 0 1 2-2zM5 7a3 3 0 0 0 6 0h1a4 4 0 0 1-3.5 3.97V13H10v1H6v-1h1.5v-2.03A4 4 0 0 1 4 7h1z"/></svg>}
-              </button>
-            )}
+            <button
+              className={`action-btn ${recording ? 'recording' : ''}`}
+              onClick={toggleRecording}
+            >
+              {recording ? '■ Stop' : <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a2 2 0 0 1 2 2v4a2 2 0 1 1-4 0V3a2 2 0 0 1 2-2zM5 7a3 3 0 0 0 6 0h1a4 4 0 0 1-3.5 3.97V13H10v1H6v-1h1.5v-2.03A4 4 0 0 1 4 7h1z"/></svg>}
+            </button>
             <button
               className="action-btn primary"
               onClick={handleTextSubmit}
@@ -431,7 +469,7 @@ export default function InputTab({ profile }) {
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <p className="modal-title">Φωτογραφία</p>
             <input
-              type="file" accept="image/*" capture="environment"
+              type="file" accept="image/*" capture="environment" multiple
               onChange={handlePhotoUpload}
               style={{ color: 'var(--text)' }}
             />

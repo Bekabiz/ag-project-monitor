@@ -48,7 +48,10 @@ export default function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>AG Project</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div className="ag-logo">AG</div>
+          <h1>Project</h1>
+        </div>
         {profile && <span className="user-badge" onClick={async () => {
           if (confirm('Αποσύνδεση;')) {
             await supabase.auth.signOut()
