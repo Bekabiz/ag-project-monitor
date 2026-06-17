@@ -66,7 +66,9 @@ export default function ProjectsTab({ profile, onSelectProject }) {
   if (projects.length === 0) {
     return (
       <div className="empty-state">
-        <div className="icon"></div>
+        <div className="icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+        </div>
         <p>Δεν υπάρχουν έργα</p>
       </div>
     )
@@ -86,12 +88,12 @@ export default function ProjectsTab({ profile, onSelectProject }) {
               <span className={`status-dot status-${s.status || 'green'}`} />
             </div>
             {s.overdueCount > 0 && (
-              <div style={{ fontSize: 13, color: 'var(--red)', marginTop: 4 }}>
-                ! {s.overdueCount} εκκρεμότητ{s.overdueCount > 1 ? 'ες' : 'α'}
+              <div style={{ fontSize: 12, color: 'var(--red)', marginTop: 6, fontWeight: 500 }}>
+                {s.overdueCount} εκκρεμότητ{s.overdueCount > 1 ? 'ες' : 'α'}
               </div>
             )}
             {s.status === 'yellow' && (
-              <div style={{ fontSize: 13, color: 'var(--yellow)', marginTop: 4 }}>
+              <div style={{ fontSize: 12, color: 'var(--yellow)', marginTop: 6, fontWeight: 500 }}>
                 {s.daysSinceUpdate} μέρες χωρίς ενημέρωση
               </div>
             )}

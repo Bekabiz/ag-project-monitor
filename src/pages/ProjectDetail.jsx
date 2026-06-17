@@ -174,7 +174,7 @@ export default function ProjectDetail({ project, profile, onBack }) {
               {summary?.summary_text || 'Δεν υπάρχει ακόμα σύνοψη. Θα δημιουργηθεί μετά τις πρώτες ενημερώσεις.'}
             </div>
             <button className="ai-refresh" onClick={refreshSummary} disabled={refreshDisabled}>
-              ↻ Ανανέωση {refreshDisabled ? '(5 λεπτά)' : ''}
+              Ανανέωση {refreshDisabled ? '(5 λεπτά)' : ''}
             </button>
           </div>
         )}
@@ -182,7 +182,7 @@ export default function ProjectDetail({ project, profile, onBack }) {
         {/* Overdue Alerts */}
         {tab === 'timeline' && deadlines.filter(d => d.status === 'overdue').map(d => (
           <div key={d.id} className="alert-entry" style={{ margin: '8px 16px' }}>
-            <div className="alert-title">⚠ {d.description}</div>
+            <div className="alert-title">{d.description}</div>
             <div className="alert-text">
               Προθεσμία: {new Date(d.due_date).toLocaleDateString('el-GR')}
               {d.alert_summary && <> — {d.alert_summary}</>}
@@ -194,7 +194,13 @@ export default function ProjectDetail({ project, profile, onBack }) {
         {Object.entries(grouped).length === 0 && (
           <div className="empty-state">
             <div className="icon">
-              {tab === 'photos' ? '📷' : tab === 'documents' ? '📄' : '📋'}
+              {tab === 'photos' ? (
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+              ) : tab === 'documents' ? (
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              ) : (
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              )}
             </div>
             <p>{tab === 'photos' ? 'Δεν υπάρχουν φωτογραφίες' : tab === 'documents' ? 'Δεν υπάρχουν αρχεία' : 'Δεν υπάρχουν ενημερώσεις'}</p>
           </div>

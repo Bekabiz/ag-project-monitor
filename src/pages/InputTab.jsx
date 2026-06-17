@@ -317,7 +317,9 @@ export default function InputTab({ profile }) {
             <div className="project-select-name">{p.name}</div>
             <div className="project-select-loc">{p.location}{p.description ? `, ${p.description}` : ''}</div>
           </div>
-          {selected?.id === p.id && <span style={{ color: 'var(--blue)' }}>✓</span>}
+          {selected?.id === p.id && (
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--text)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3.5 8 6.5 11 12.5 5"/></svg>
+          )}
         </div>
       ))}
 
@@ -468,7 +470,7 @@ export default function InputTab({ profile }) {
               Χωρίς AI
             </button>
             <button className="action-btn primary" onClick={handleConfirm} disabled={sending}>
-              {sending ? '...' : '✓ Σωστό'}
+              {sending ? '...' : 'Επιβεβαίωση'}
             </button>
           </div>
         </div>

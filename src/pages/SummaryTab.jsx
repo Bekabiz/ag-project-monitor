@@ -108,11 +108,9 @@ export default function SummaryTab({ profile }) {
           const daysUntil = Math.ceil((new Date(d.due_date) - new Date()) / 86400000)
           return (
             <div key={d.id} className="pending-item">
-              <div className="pending-desc">
-                <span style={{ color: isOverdue ? 'var(--red)' : 'var(--yellow)' }}>
-                  {isOverdue ? '●' : '●'}
-                </span>
-                {' '}{d.description}
+              <div className="pending-desc" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: isOverdue ? 'var(--red)' : 'var(--yellow)', flexShrink: 0 }} />
+                {d.description}
               </div>
               <div className="pending-meta">
                 {d.projects?.name} — {isOverdue ? `${Math.abs(daysUntil)} μέρες καθυστέρηση` : `Έως ${new Date(d.due_date).toLocaleDateString('el-GR')}`}
@@ -165,7 +163,7 @@ export default function SummaryTab({ profile }) {
           } catch (err) { console.error('Summary error:', err) }
           setTimeout(() => setRefreshDisabled(false), 300000)
         }} disabled={refreshDisabled}>
-          ↻ Ανανέωση {refreshDisabled ? '(5 λεπτά)' : ''}
+          Ανανέωση {refreshDisabled ? '(5 λεπτά)' : ''}
         </button>
       </div>
     </div>

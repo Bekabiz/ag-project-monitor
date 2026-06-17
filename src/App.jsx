@@ -58,7 +58,7 @@ export default function App() {
             setSession(null)
             setProfile(null)
           }
-        }} style={{ cursor: 'pointer' }}>{profile.full_name} ↪</span>}
+        }} style={{ cursor: 'pointer' }}>{profile.full_name}</span>}
       </header>
 
       <main className="app-main">
