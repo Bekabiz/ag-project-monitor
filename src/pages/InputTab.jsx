@@ -146,14 +146,19 @@ export default function InputTab({ profile }) {
     if (!selected) return
     setExtracting(true)
     try {
-      const projectNames = projects.map(p => p.name)
-      const formData = new FormData()
-      formData.append('audio', blob, 'recording.webm')
-      formData.append('projectNames', JSON.stringify(projectNames))
+      // Convert blob to base64
+      const reader = new FileReader()
+      const base64 = await new Promise((resolve, reject) => {
+        reader.onload = () => resolve(reader.result.split(',')[1])
+        reader.onerror = reject
+        reader.readAsDataURL(blob)
+      })
 
+      const projectNames = projects.map(p => p.name)
       const res = await fetch('/api/transcribe', {
         method: 'POST',
-        body: formData
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ audioBase64: base64, projectNames })
       })
 
       if (!res.ok) {
