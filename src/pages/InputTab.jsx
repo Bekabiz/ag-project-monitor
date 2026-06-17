@@ -150,19 +150,17 @@ export default function InputTab({ profile }) {
     if (!selected) return
     setExtracting(true)
     try {
-      // Convert blob to base64
-      const reader = new FileReader()
-      const base64 = await new Promise((resolve, reject) => {
-        reader.onload = () => resolve(reader.result.split(',')[1])
-        reader.onerror = reject
-        reader.readAsDataURL(blob)
-      })
-
       const projectNames = projects.map(p => p.name)
+
+      // Send raw binary audio with metadata in headers
       const res = await fetch('/api/transcribe', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ audioBase64: base64, mimeType: blob.type, projectNames })
+        headers: {
+          'Content-Type': blob.type || 'audio/webm',
+          'X-Audio-Type': blob.type || 'audio/webm',
+          'X-Project-Names': JSON.stringify(projectNames)
+        },
+        body: blob
       })
 
       if (!res.ok) {
