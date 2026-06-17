@@ -46,9 +46,16 @@ export default function ProjectDetail({ project, profile, onBack }) {
   useEffect(() => { loadData() }, [project.id])
 
   async function loadData() {
+    let entriesQuery = supabase.from('entries').select('*').eq('project_id', project.id)
+      .order('created_at', { ascending: false }).limit(100)
+    
+    // Team members only see team-visible entries (no voice, no email, no budget)
+    if (profile?.role === 'team') {
+      entriesQuery = entriesQuery.eq('is_team_visible', true)
+    }
+
     const [entriesRes, deadlinesRes, summaryRes] = await Promise.all([
-      supabase.from('entries').select('*').eq('project_id', project.id)
-        .order('created_at', { ascending: false }).limit(100),
+      entriesQuery,
       supabase.from('deadlines').select('*').eq('project_id', project.id)
         .in('status', ['overdue', 'pending']).order('due_date'),
       supabase.from('ai_summaries').select('*').eq('project_id', project.id)
@@ -58,6 +65,11 @@ export default function ProjectDetail({ project, profile, onBack }) {
     setDeadlines(deadlinesRes.data || [])
     setSummary(summaryRes.data?.[0] || null)
     setLoading(false)
+  }
+
+  function getFirstName(fullName) {
+    if (!fullName) return ''
+    return fullName.split(' ')[0]
   }
 
   async function refreshSummary() {
@@ -209,6 +221,7 @@ export default function ProjectDetail({ project, profile, onBack }) {
                                 {SVG_ICONS[e.entry_type]}
                               </span>
                               <span className="ct-type-label">{TYPE_LABELS[e.entry_type]}</span>
+                              {e.submitter_name && <span className="ct-submitter">{getFirstName(e.submitter_name)}</span>}
                               <span className="ct-time">{formatTime(e.created_at)}</span>
                             </div>
                             {displayText && (
@@ -251,6 +264,7 @@ export default function ProjectDetail({ project, profile, onBack }) {
                                 {SVG_ICONS[e.entry_type]}
                               </span>
                               <span className="ct-type-label">{TYPE_LABELS[e.entry_type]}</span>
+                              {e.submitter_name && <span className="ct-submitter">{getFirstName(e.submitter_name)}</span>}
                               <span className="ct-time">{formatTime(e.created_at)}</span>
                             </div>
                             {displayText && (

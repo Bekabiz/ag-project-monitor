@@ -326,6 +326,14 @@ body {
   color: var(--text2);
   margin-left: auto;
 }
+.ct-submitter {
+  font-size: 11px;
+  color: var(--blue);
+  font-weight: 500;
+  background: var(--surface2);
+  padding: 1px 6px;
+  border-radius: 8px;
+}
 .ct-card-body {
   font-size: 13px;
   line-height: 1.45;
