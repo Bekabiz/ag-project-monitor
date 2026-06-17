@@ -43,9 +43,18 @@ export default function InputTab({ profile }) {
     setTimeout(() => setToast(null), 2500)
   }
 
-  // TEXT SUBMIT - now goes through AI extraction first
+  // TEXT SUBMIT - AI extraction for owner only, raw save for team
   async function handleTextSubmit() {
     if (!selected || !text.trim()) return
+    
+    // Team members: save directly, no AI
+    if (profile?.role !== 'owner') {
+      await saveEntry(text.trim(), null)
+      setText('')
+      return
+    }
+
+    // Owner: go through AI extraction
     setExtracting(true)
     try {
       const projectNames = projects.map(p => p.name)
@@ -343,12 +352,14 @@ export default function InputTab({ profile }) {
             onChange={e => setText(e.target.value)}
           />
           <div className="input-actions">
-            <button
-              className={`action-btn ${recording ? 'recording' : ''}`}
-              onClick={toggleRecording}
-            >
-              {recording ? '■ Stop' : <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a2 2 0 0 1 2 2v4a2 2 0 1 1-4 0V3a2 2 0 0 1 2-2zM5 7a3 3 0 0 0 6 0h1a4 4 0 0 1-3.5 3.97V13H10v1H6v-1h1.5v-2.03A4 4 0 0 1 4 7h1z"/></svg>}
-            </button>
+            {profile?.role === 'owner' && (
+              <button
+                className={`action-btn ${recording ? 'recording' : ''}`}
+                onClick={toggleRecording}
+              >
+                {recording ? '■ Stop' : <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a2 2 0 0 1 2 2v4a2 2 0 1 1-4 0V3a2 2 0 0 1 2-2zM5 7a3 3 0 0 0 6 0h1a4 4 0 0 1-3.5 3.97V13H10v1H6v-1h1.5v-2.03A4 4 0 0 1 4 7h1z"/></svg>}
+              </button>
+            )}
             <button
               className="action-btn primary"
               onClick={handleTextSubmit}
