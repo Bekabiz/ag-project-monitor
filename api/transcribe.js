@@ -1,5 +1,10 @@
+import OpenAI, { toFile } from 'openai';
+import { writeFileSync, readFileSync, unlinkSync } from 'fs';
+import { join } from 'path';
+import { tmpdir } from 'os';
+
 export const config = {
-  maxDuration: 30, // seconds - transcription can take time
+  maxDuration: 30,
 };
 
 export default async function handler(req, res) {
@@ -8,35 +13,32 @@ export default async function handler(req, res) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'API key not configured' });
 
+  const openai = new OpenAI({ apiKey });
+  let tmpPath = null;
+
   try {
-    const { audioBase64, projectNames } = req.body;
-    if (!audioBase64) return res.status(400).json({ error: 'No audio provided' });
+    const { audioBase64, mimeType, projectNames } = req.body;
+    if (!audioBase64) return res.status(400).json({ error: 'No audio' });
 
-    // Convert base64 to buffer then to File
+    // Write to temp file to preserve binary integrity
+    const ext = (mimeType || '').includes('mp4') ? 'mp4' : 'webm';
+    tmpPath = join(tmpdir(), `voice_${Date.now()}.${ext}`);
     const audioBuffer = Buffer.from(audioBase64, 'base64');
-    const file = new File([audioBuffer], 'recording.webm', { type: 'audio/webm' });
+    writeFileSync(tmpPath, audioBuffer);
 
-    // Use native FormData
-    const form = new FormData();
-    form.append('file', file);
-    form.append('model', 'gpt-4o-mini-transcribe');
-    form.append('language', 'el');
-
-    // Step 1: Transcribe
-    const transcribeRes = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${apiKey}` },
-      body: form
+    // Use OpenAI's toFile to create proper file from buffer
+    const file = await toFile(readFileSync(tmpPath), `recording.${ext}`, {
+      type: mimeType || 'audio/webm',
     });
 
-    if (!transcribeRes.ok) {
-      const errText = await transcribeRes.text();
-      console.error('Transcription error:', transcribeRes.status, errText);
-      return res.status(502).json({ error: 'Transcription failed', status: transcribeRes.status, details: errText });
-    }
+    // Step 1: Transcribe Greek audio
+    const transcription = await openai.audio.transcriptions.create({
+      file: file,
+      model: 'gpt-4o-mini-transcribe',
+      language: 'el',
+    });
 
-    const transcribeData = await transcribeRes.json();
-    const transcript = transcribeData.text;
+    const transcript = transcription.text;
 
     if (!transcript || transcript.trim().length === 0) {
       return res.status(200).json({ transcript: '', extracted: null });
@@ -44,22 +46,15 @@ export default async function handler(req, res) {
 
     // Step 2: Extract structured data
     const names = (projectNames || []).join(', ');
-    const extractRes = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        temperature: 0.1,
-        messages: [
-          { role: 'system', content: `You extract structured project data from Greek construction office notes.
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      temperature: 0.1,
+      messages: [
+        { role: 'system', content: `You extract structured project data from Greek construction office notes.
 Active projects: ${names}
 
 Rules:
-- project_name MUST match one from the active projects list (closest match)
-- If no project matches, set project_name to null
+- project_name MUST match one from active projects list (closest match)
 - deadline_date: ISO YYYY-MM-DD or null
 - budget_change: number (positive=increase, negative=decrease, 0=none)
 - summary: 1-2 sentences in Greek
@@ -68,26 +63,25 @@ Rules:
 
 Return ONLY valid JSON:
 {"project_name":"string or null","people":["string"],"deadline_description":"string or empty","deadline_date":"YYYY-MM-DD or null","budget_change":0,"action_items":["string"],"summary":"Greek summary"}` },
-          { role: 'user', content: transcript }
-        ]
-      })
+        { role: 'user', content: transcript }
+      ]
     });
 
     let extracted = null;
-    if (extractRes.ok) {
-      const extractData = await extractRes.json();
-      const raw = extractData.choices?.[0]?.message?.content || '';
-      try {
-        extracted = JSON.parse(raw.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim());
-      } catch (e) {
-        console.error('Parse error:', e);
-      }
+    const raw = completion.choices?.[0]?.message?.content || '';
+    try {
+      extracted = JSON.parse(raw.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim());
+    } catch (e) {
+      console.error('Parse error:', e);
     }
 
     return res.status(200).json({ transcript, extracted });
 
   } catch (err) {
-    console.error('Transcribe error:', err);
+    console.error('Transcribe error:', err.message);
     return res.status(500).json({ error: err.message });
+  } finally {
+    // Clean up temp file
+    if (tmpPath) try { unlinkSync(tmpPath); } catch (e) {}
   }
 }

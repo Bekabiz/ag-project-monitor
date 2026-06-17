@@ -126,7 +126,11 @@ export default function InputTab({ profile }) {
     }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const rec = new MediaRecorder(stream)
+      // Try mp4 first (better compatibility), fallback to webm
+      const mimeType = MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4'
+        : MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus'
+        : 'audio/webm'
+      const rec = new MediaRecorder(stream, { mimeType })
       const chunks = []
       rec.ondataavailable = e => chunks.push(e.data)
       rec.onstop = async () => {
@@ -158,7 +162,7 @@ export default function InputTab({ profile }) {
       const res = await fetch('/api/transcribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ audioBase64: base64, projectNames })
+        body: JSON.stringify({ audioBase64: base64, mimeType: blob.type, projectNames })
       })
 
       if (!res.ok) {
