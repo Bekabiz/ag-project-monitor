@@ -49,7 +49,13 @@ export default function App() {
     <div className="app">
       <header className="app-header">
         <h1>AG Project</h1>
-        {profile && <span className="user-badge">{profile.full_name}</span>}
+        {profile && <span className="user-badge" onClick={async () => {
+          if (confirm('Αποσύνδεση;')) {
+            await supabase.auth.signOut()
+            setSession(null)
+            setProfile(null)
+          }
+        }} style={{ cursor: 'pointer' }}>{profile.full_name} ↪</span>}
       </header>
 
       <main className="app-main">
