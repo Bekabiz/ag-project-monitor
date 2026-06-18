@@ -57,7 +57,7 @@ export default function ProjectDetail({ project, profile, onBack }) {
     const [entriesRes, deadlinesRes, summaryRes] = await Promise.all([
       entriesQuery,
       supabase.from('deadlines').select('*').eq('project_id', project.id)
-        .in('status', ['overdue', 'pending']).order('due_date'),
+        .order('due_date'),
       supabase.from('ai_summaries').select('*').eq('project_id', project.id)
         .eq('scope', 'project').order('generated_at', { ascending: false }).limit(1)
     ])
@@ -124,6 +124,17 @@ export default function ProjectDetail({ project, profile, onBack }) {
     return new Date(iso).toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit' })
   }
 
+  async function markDeadlineComplete(deadlineId) {
+    await supabase.from('deadlines').update({ status: 'completed' }).eq('id', deadlineId)
+    setDeadlines(deadlines.map(d => d.id === deadlineId ? { ...d, status: 'completed' } : d))
+  }
+
+  async function reopenDeadline(deadlineId, dueDate) {
+    const newStatus = new Date(dueDate) < new Date() ? 'overdue' : 'pending'
+    await supabase.from('deadlines').update({ status: newStatus }).eq('id', deadlineId)
+    setDeadlines(deadlines.map(d => d.id === deadlineId ? { ...d, status: newStatus } : d))
+  }
+
   function formatFileSize(bytes) {
     if (!bytes) return ''
     if (bytes < 1024) return bytes + ' B'
@@ -156,6 +167,9 @@ export default function ProjectDetail({ project, profile, onBack }) {
       <div className="detail-tabs">
         <button className={`detail-tab ${tab === 'timeline' ? 'active' : ''}`} onClick={() => setTab('timeline')}>
           Χρονολόγιο
+        </button>
+        <button className={`detail-tab ${tab === 'deadlines' ? 'active' : ''}`} onClick={() => setTab('deadlines')}>
+          Προθεσμίες {deadlines.filter(d => d.status === 'overdue').length > 0 && <span className="tab-badge">{deadlines.filter(d => d.status === 'overdue').length}</span>}
         </button>
         <button className={`detail-tab ${tab === 'photos' ? 'active' : ''}`} onClick={() => setTab('photos')}>
           Φωτο ({photos.length})
@@ -361,6 +375,55 @@ export default function ProjectDetail({ project, profile, onBack }) {
                 ))}
               </div>
             ))}
+          </div>
+        )}
+
+        {/* === DEADLINES VIEW === */}
+        {tab === 'deadlines' && (
+          <div style={{ padding: '12px 16px' }}>
+            {deadlines.length === 0 && (
+              <div className="empty-state">
+                <div className="icon">📅</div>
+                <p>Δεν υπάρχουν προθεσμίες</p>
+              </div>
+            )}
+            {['overdue', 'pending', 'completed'].map(status => {
+              const items = deadlines.filter(d => d.status === status)
+              if (items.length === 0) return null
+              const statusLabels = { overdue: 'Εκπρόθεσμες', pending: 'Εκκρεμείς', completed: 'Ολοκληρωμένες' }
+              return (
+                <div key={status} style={{ marginBottom: 20 }}>
+                  <div className="deadline-section-label">{statusLabels[status]} ({items.length})</div>
+                  {items.map(d => (
+                    <div key={d.id} className={`deadline-card deadline-${d.status}`}>
+                      <div className="deadline-card-main">
+                        <div className="deadline-card-desc">{d.description}</div>
+                        <div className="deadline-card-date">
+                          {new Date(d.due_date).toLocaleDateString('el-GR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                          {d.status === 'overdue' && (
+                            <span className="deadline-overdue-tag">
+                              {Math.floor((new Date() - new Date(d.due_date)) / 86400000)} μέρες
+                            </span>
+                          )}
+                        </div>
+                        {d.alert_summary && d.status === 'overdue' && (
+                          <div className="deadline-alert-text">{d.alert_summary}</div>
+                        )}
+                      </div>
+                      {d.status === 'completed' ? (
+                        <button className="deadline-reopen" onClick={() => reopenDeadline(d.id, d.due_date)}>
+                          Επαναφορά
+                        </button>
+                      ) : (
+                        <button className="deadline-complete" onClick={() => markDeadlineComplete(d.id)}>
+                          ✓ Έγινε
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )
+            })}
           </div>
         )}
       </div>
