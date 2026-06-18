@@ -184,8 +184,8 @@ export default function ProjectDetail({ project, profile, onBack }) {
           <div key={d.id} className="alert-entry" style={{ margin: '8px 16px' }}>
             <div className="alert-title">{d.description}</div>
             <div className="alert-text">
-              Προθεσμία: {new Date(d.due_date).toLocaleDateString('el-GR')}
-              {d.alert_summary && <> — {d.alert_summary}</>}
+              <strong style={{ fontWeight: 600 }}>Προθεσμία</strong> {new Date(d.due_date).toLocaleDateString('el-GR')}
+              {d.alert_summary && <><span style={{ margin: '0 6px', color: 'var(--text3)' }}>|</span>{d.alert_summary}</>}
             </div>
           </div>
         ))}
@@ -221,7 +221,7 @@ export default function ProjectDetail({ project, profile, onBack }) {
                       {/* Left content */}
                       <div className="ct-content-left">
                         {isLeft && (
-                          <div className="ct-card" style={{ borderTopColor: color }}>
+                          <div className="ct-card" style={{ borderTop: `3px solid ${color}` }}>
                             <div className="ct-card-header">
                               <span className="ct-badge" style={{ background: color }}>
                                 {SVG_ICONS[e.entry_type]}
@@ -247,7 +247,8 @@ export default function ProjectDetail({ project, profile, onBack }) {
                                 {e.file_size && <div className="ct-doc-size">{formatFileSize(e.file_size)}</div>}
                                 {e.file_url && (
                                   <a href={e.file_url} target="_blank" rel="noopener" className="ct-doc-link">
-                                    Άνοιγμα αρχείου ↗
+                                    Άνοιγμα αρχείου
+                                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 3H3v10h10v-3M9 2h5v5M14 2L7 9"/></svg>
                                   </a>
                                 )}
                               </div>
@@ -264,7 +265,7 @@ export default function ProjectDetail({ project, profile, onBack }) {
                       {/* Right content */}
                       <div className="ct-content-right">
                         {!isLeft && (
-                          <div className="ct-card" style={{ borderTopColor: color }}>
+                          <div className="ct-card" style={{ borderTop: `3px solid ${color}` }}>
                             <div className="ct-card-header">
                               <span className="ct-badge" style={{ background: color }}>
                                 {SVG_ICONS[e.entry_type]}
@@ -290,7 +291,8 @@ export default function ProjectDetail({ project, profile, onBack }) {
                                 {e.file_size && <div className="ct-doc-size">{formatFileSize(e.file_size)}</div>}
                                 {e.file_url && (
                                   <a href={e.file_url} target="_blank" rel="noopener" className="ct-doc-link">
-                                    Άνοιγμα αρχείου ↗
+                                    Άνοιγμα αρχείου
+                                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 3H3v10h10v-3M9 2h5v5M14 2L7 9"/></svg>
                                   </a>
                                 )}
                               </div>

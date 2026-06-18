@@ -113,7 +113,9 @@ export default function SummaryTab({ profile }) {
                 {d.description}
               </div>
               <div className="pending-meta">
-                {d.projects?.name} — {isOverdue ? `${Math.abs(daysUntil)} μέρες καθυστέρηση` : `Έως ${new Date(d.due_date).toLocaleDateString('el-GR')}`}
+                <strong style={{ fontWeight: 600 }}>{d.projects?.name}</strong>
+                <span style={{ margin: '0 5px', color: 'var(--text3)' }}>|</span>
+                {isOverdue ? `${Math.abs(daysUntil)} μέρες καθυστέρηση` : `Έως ${new Date(d.due_date).toLocaleDateString('el-GR')}`}
               </div>
             </div>
           )

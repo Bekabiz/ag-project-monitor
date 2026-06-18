@@ -52,7 +52,7 @@ export default function ProjectsTab({ profile, onSelectProject }) {
   }
 
   function formatDate(iso) {
-    if (!iso) return '—'
+    if (!iso) return '-'
     const d = new Date(iso)
     const now = new Date()
     const diff = Math.floor((now - d) / 86400000)
@@ -83,7 +83,7 @@ export default function ProjectsTab({ profile, onSelectProject }) {
             <div className="card-top">
               <div>
                 <span className="card-name">{p.name}</span>
-                <div className="card-location">{p.location}, {p.description}</div>
+                <div className="card-location">{p.location}{p.description ? <span style={{ margin: '0 5px', color: 'var(--text3)' }}>|</span> : ''}{p.description}</div>
               </div>
               <span className={`status-dot status-${s.status || 'green'}`} />
             </div>
@@ -98,8 +98,8 @@ export default function ProjectsTab({ profile, onSelectProject }) {
               </div>
             )}
             <div className="card-meta">
-              <span>Φωτο: {formatDate(s.lastPhoto)}</span>
-              <span>Ενημ: {formatDate(s.lastUpdate)}</span>
+              <span><strong style={{ fontWeight: 600 }}>Φωτο</strong> {formatDate(s.lastPhoto)}</span>
+              <span><strong style={{ fontWeight: 600 }}>Ενημ</strong> {formatDate(s.lastUpdate)}</span>
             </div>
           </div>
         )
