@@ -14,28 +14,16 @@ export default function InputTab({ profile }) {
   const [docName, setDocName] = useState('')
   const [docVersion, setDocVersion] = useState('')
   const [docNotes, setDocNotes] = useState('')
-  const [teamMembers, setTeamMembers] = useState([])
-  const [submittedBy, setSubmittedBy] = useState(null) // null = self
+  const [teamVisible, setTeamVisible] = useState(false) // false = private (owner only), true = team can see
 
   // AI Confirmation state
   const [confirm, setConfirm] = useState(null) // { rawText, extracted }
 
-  useEffect(() => { loadProjects(); loadTeam() }, [])
+  useEffect(() => { loadProjects() }, [])
 
   async function loadProjects() {
     const { data } = await supabase.from('projects').select('*').eq('status', 'active').order('name')
     setProjects(data || [])
-  }
-
-  async function loadTeam() {
-    if (profile?.role !== 'owner') return
-    const { data } = await supabase.from('profiles').select('id, full_name').eq('role', 'team')
-    setTeamMembers(data || [])
-  }
-
-  function getSubmitterInfo() {
-    if (submittedBy) return { userId: submittedBy.id, name: submittedBy.full_name }
-    return { userId: profile.id, name: profile.full_name }
   }
 
   function showToast(msg, isError) {
@@ -90,11 +78,10 @@ export default function InputTab({ profile }) {
         ? projects.find(p => p.name === extracted.project_name)
         : null
       const targetProject = matchedProject || selected
-      const sub = getSubmitterInfo()
 
       const { error } = await supabase.from('entries').insert({
         project_id: targetProject.id,
-        user_id: sub.userId,
+        user_id: profile.id,
         entry_type: type,
         raw_text: rawText,
         ai_summary: extracted?.summary || rawText.substring(0, 200),
@@ -105,7 +92,7 @@ export default function InputTab({ profile }) {
           budget_change: extracted.budget_change,
           action_items: extracted.action_items
         } : null,
-        is_team_visible: type !== 'email'
+        is_team_visible: teamVisible
       })
       if (error) throw error
 
@@ -226,7 +213,6 @@ export default function InputTab({ profile }) {
     const files = Array.from(e.target.files || [])
     if (!files.length || !selected) return
     setSending(true)
-    const sub = getSubmitterInfo()
     try {
       for (const file of files) {
         const compressed = file.size > 1500000 ? await compressImage(file) : file
@@ -238,12 +224,12 @@ export default function InputTab({ profile }) {
 
         await supabase.from('entries').insert({
           project_id: selected.id,
-          user_id: sub.userId,
+          user_id: profile.id,
           entry_type: 'photo',
           file_url: urlData.publicUrl,
           file_name: fileName,
           file_size: compressed.size,
-          is_team_visible: true
+          is_team_visible: profile?.role === 'owner' ? teamVisible : true
         })
       }
       showToast(`${files.length} φωτογραφία${files.length > 1 ? 'ες' : ''} αποθηκεύτηκ${files.length > 1 ? 'αν' : 'ε'}`)
@@ -259,7 +245,6 @@ export default function InputTab({ profile }) {
     const file = e.target.files?.[0]
     if (!file || !selected) return
     setSending(true)
-    const sub = getSubmitterInfo()
     try {
       const fileName = file.name
       const path = `${selected.id}/${Date.now()}_${fileName}`
@@ -269,14 +254,14 @@ export default function InputTab({ profile }) {
 
       await supabase.from('entries').insert({
         project_id: selected.id,
-        user_id: sub.userId,
+        user_id: profile.id,
         entry_type: 'document',
         file_url: urlData.publicUrl,
         file_name: docName || fileName,
         file_size: file.size,
         doc_version: docVersion || null,
         doc_notes: docNotes || null,
-        is_team_visible: true
+        is_team_visible: profile?.role === 'owner' ? teamVisible : true
       })
       setDocName(''); setDocVersion(''); setDocNotes('')
       showToast('Αρχείο αποθηκεύτηκε')
@@ -325,25 +310,22 @@ export default function InputTab({ profile }) {
 
       {selected && !confirm && (
         <div className="input-area">
-          {/* Submitted by selector - owner only */}
-          {profile?.role === 'owner' && teamMembers.length > 0 && (
-            <div className="submitted-by">
-              <span className="submitted-by-label">Από:</span>
+          {/* Visibility toggle - owner only */}
+          {profile?.role === 'owner' && (
+            <div className="visibility-toggle">
+              <span className="visibility-label">Ποιος βλέπει:</span>
               <button
-                className={`sub-btn ${!submittedBy ? 'active' : ''}`}
-                onClick={() => setSubmittedBy(null)}
+                className={`vis-btn ${!teamVisible ? 'active' : ''}`}
+                onClick={() => setTeamVisible(false)}
               >
-                {profile.full_name.split(' ')[0]}
+                🔒 Μόνο εγώ
               </button>
-              {teamMembers.map(m => (
-                <button
-                  key={m.id}
-                  className={`sub-btn ${submittedBy?.id === m.id ? 'active' : ''}`}
-                  onClick={() => setSubmittedBy(m)}
-                >
-                  {m.full_name.split(' ')[0]}
-                </button>
-              ))}
+              <button
+                className={`vis-btn ${teamVisible ? 'active' : ''}`}
+                onClick={() => setTeamVisible(true)}
+              >
+                👥 Η ομάδα
+              </button>
             </div>
           )}
 
