@@ -46,15 +46,19 @@ export default async function handler(req, res) {
 
     // Step 2: Extract structured data
     const names = (projectNames || []).join(', ');
+    const todayDate = new Date().toISOString().split('T')[0];
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       temperature: 0.1,
       messages: [
         { role: 'system', content: `You extract structured project data from Greek construction office notes.
 Active projects: ${names}
+TODAY'S DATE: ${todayDate}
 Rules:
 - project_name MUST match one from active projects (closest match)
+- When a date is mentioned without a year (e.g. "20 Ιουλίου", "Παρασκευή"), assume the NEXT upcoming occurrence from TODAY'S DATE. Never use a past year.
 - deadline_date: ISO YYYY-MM-DD or null
+- deadline_description: SPECIFIC descriptive Greek text so user knows what the deadline is for (e.g. "Παράδοση χάλυβα", "Σκυροδέτηση θεμελίων"). NEVER generic like "Προθεσμία έργου". Describe the actual task.
 - budget_change: number (positive=increase, negative=decrease, 0=none)
 - summary: 1-2 sentences in Greek
 - action_items: specific tasks in Greek

@@ -7,13 +7,18 @@ export default async function handler(req, res) {
   const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) return res.status(500).json({ error: 'API key not configured' })
 
+  const today = new Date().toISOString().split('T')[0]
   const systemPrompt = `You extract structured project data from Greek or English construction office notes.
 Active projects: ${(projectNames || []).join(', ')}
+
+TODAY'S DATE: ${today}
 
 Rules:
 - project_name MUST match one from the active projects list above (pick the closest match even if there are typos)
 - If no project matches, set project_name to null
 - deadline_date must be ISO format YYYY-MM-DD or null
+- IMPORTANT: When a date is mentioned without a year (e.g. "20 Ιουλίου", "Παρασκευή"), assume the NEXT upcoming occurrence from TODAY'S DATE. Never use a past year. If "20 Ιουλίου" is said and today is in 2026, the deadline is 2026-07-20, not a past year.
+- deadline_description must be SPECIFIC and descriptive in Greek so the user knows exactly what the deadline is for (e.g. "Παράδοση χάλυβα", "Σκυροδέτηση θεμελίων", "Κατάθεση δικαιολογητικών στον Δήμο"). NEVER write generic text like "Προθεσμία έργου" or "Deadline". Describe the actual task.
 - budget_change is a number (positive = increase, negative = decrease, 0 = no change)
 - summary should be 1-2 sentences in Greek describing the update
 - action_items should be specific actionable tasks in Greek
