@@ -697,6 +697,39 @@ body {
   margin-right: 4px; margin-bottom: 4px;
 }
 .confirm-date { color: var(--text2); font-weight: 400; }
+.confirm-edit-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--surface);
+  font-family: inherit;
+  box-sizing: border-box;
+}
+.confirm-edit-input:focus {
+  outline: none;
+  border-color: var(--blue);
+}
+.confirm-edit-textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--surface);
+  font-family: inherit;
+  resize: vertical;
+  line-height: 1.55;
+  box-sizing: border-box;
+}
+.confirm-edit-textarea:focus {
+  outline: none;
+  border-color: var(--blue);
+}
 .confirm-actions { display: flex; gap: 8px; }
 .confirm-actions .action-btn { flex: 1; }
 

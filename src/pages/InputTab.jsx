@@ -127,6 +127,35 @@ export default function InputTab({ profile }) {
     saveEntry(confirm.rawText, null, confirm.entryType || 'text')
   }
 
+  // Update a single field in the confirmed extraction
+  function updateExtracted(field, value) {
+    setConfirm(prev => ({
+      ...prev,
+      extracted: { ...prev.extracted, [field]: value }
+    }))
+  }
+
+  // Re-run AI extraction on the (possibly edited) original text
+  async function handleReExtract() {
+    if (!confirm) return
+    setExtracting(true)
+    try {
+      const projectNames = projects.map(p => p.name)
+      const res = await fetch('/api/extract', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: confirm.rawText, projectNames })
+      })
+      if (res.ok) {
+        const { extracted } = await res.json()
+        setConfirm(prev => ({ ...prev, extracted }))
+      }
+    } catch (err) {
+      console.error('Re-extract error:', err)
+    }
+    setExtracting(false)
+  }
+
   // VOICE RECORDING
   async function toggleRecording() {
     if (recording && mediaRec) {
@@ -376,39 +405,75 @@ export default function InputTab({ profile }) {
           <div className="confirm-header">
             <span className="confirm-badge">AI</span>
             <span className="confirm-title">Επιβεβαίωση δεδομένων</span>
+            <button
+              className="action-btn"
+              onClick={handleReExtract}
+              disabled={extracting}
+              style={{ marginLeft: 'auto', fontSize: 12, padding: '4px 10px', display: 'flex', alignItems: 'center', gap: 4 }}
+              title="Επανάληψη ανάλυσης AI"
+            >
+              {extracting ? <span className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} /> : (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              )}
+              AI
+            </button>
           </div>
 
           <div className="confirm-original">
             <div className="confirm-label">Αρχικό κείμενο</div>
-            <div className="confirm-text">{confirm.rawText}</div>
+            <textarea
+              className="confirm-edit-textarea"
+              value={confirm.rawText}
+              onChange={e => setConfirm(prev => ({ ...prev, rawText: e.target.value }))}
+              rows={3}
+            />
           </div>
 
           <div className="confirm-grid">
             {confirm.extracted.project_name && (
               <div className="confirm-field">
                 <div className="confirm-label">Έργο</div>
-                <div className="confirm-value">{confirm.extracted.project_name}</div>
+                <select
+                  className="confirm-edit-input"
+                  value={confirm.extracted.project_name}
+                  onChange={e => updateExtracted('project_name', e.target.value)}
+                >
+                  {projects.map(p => (
+                    <option key={p.id} value={p.name}>{p.name}</option>
+                  ))}
+                </select>
               </div>
             )}
 
             {confirm.extracted.people?.length > 0 && (
               <div className="confirm-field">
                 <div className="confirm-label">Άτομα</div>
-                <div className="confirm-value">
-                  {confirm.extracted.people.map((p, i) => (
-                    <span key={i} className="confirm-tag">{p}</span>
-                  ))}
-                </div>
+                <input
+                  className="confirm-edit-input"
+                  value={confirm.extracted.people.join(', ')}
+                  onChange={e => updateExtracted('people', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+                />
               </div>
             )}
 
             {confirm.extracted.deadline_description && (
               <div className="confirm-field">
                 <div className="confirm-label">Προθεσμία</div>
-                <div className="confirm-value">
-                  {confirm.extracted.deadline_description}
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <input
+                    className="confirm-edit-input"
+                    value={confirm.extracted.deadline_description}
+                    onChange={e => updateExtracted('deadline_description', e.target.value)}
+                    style={{ flex: 1 }}
+                  />
                   {confirm.extracted.deadline_date && (
-                    <span className="confirm-date"><span style={{ margin: '0 5px', color: 'var(--text3)' }}>|</span>{new Date(confirm.extracted.deadline_date).toLocaleDateString('el-GR')}</span>
+                    <input
+                      className="confirm-edit-input"
+                      type="date"
+                      value={confirm.extracted.deadline_date}
+                      onChange={e => updateExtracted('deadline_date', e.target.value)}
+                      style={{ width: 140 }}
+                    />
                   )}
                 </div>
               </div>
@@ -416,30 +481,37 @@ export default function InputTab({ profile }) {
 
             {confirm.extracted.budget_change !== 0 && confirm.extracted.budget_change != null && (
               <div className="confirm-field">
-                <div className="confirm-label">Αλλαγή προϋπολογισμού</div>
-                <div className="confirm-value" style={{ color: confirm.extracted.budget_change > 0 ? 'var(--red)' : 'var(--green)' }}>
-                  {confirm.extracted.budget_change > 0 ? '+' : ''}{confirm.extracted.budget_change.toLocaleString('el-GR')}€
-                </div>
+                <div className="confirm-label">Αλλαγή προϋπολογισμού (€)</div>
+                <input
+                  className="confirm-edit-input"
+                  type="number"
+                  value={confirm.extracted.budget_change}
+                  onChange={e => updateExtracted('budget_change', Number(e.target.value))}
+                />
               </div>
             )}
 
             {confirm.extracted.action_items?.length > 0 && (
               <div className="confirm-field">
                 <div className="confirm-label">Ενέργειες</div>
-                <div className="confirm-value">
-                  {confirm.extracted.action_items.map((a, i) => (
-                    <div key={i} style={{ fontSize: 14, marginBottom: 2 }}>• {a}</div>
-                  ))}
-                </div>
+                <textarea
+                  className="confirm-edit-textarea"
+                  value={confirm.extracted.action_items.join('\n')}
+                  onChange={e => updateExtracted('action_items', e.target.value.split('\n').filter(Boolean))}
+                  rows={Math.min(confirm.extracted.action_items.length + 1, 4)}
+                />
               </div>
             )}
 
             {confirm.extracted.summary && (
               <div className="confirm-field">
                 <div className="confirm-label">AI Σύνοψη</div>
-                <div className="confirm-value" style={{ fontStyle: 'italic', color: 'var(--text2)' }}>
-                  {confirm.extracted.summary}
-                </div>
+                <input
+                  className="confirm-edit-input"
+                  value={confirm.extracted.summary}
+                  onChange={e => updateExtracted('summary', e.target.value)}
+                  style={{ fontStyle: 'italic', color: 'var(--text2)' }}
+                />
               </div>
             )}
           </div>
@@ -452,7 +524,7 @@ export default function InputTab({ profile }) {
               Χωρίς AI
             </button>
             <button className="action-btn primary" onClick={handleConfirm} disabled={sending}>
-              {sending ? '...' : 'Επιβεβαίωση'}
+              {sending ? '...' : '✓ Σωστό'}
             </button>
           </div>
         </div>
