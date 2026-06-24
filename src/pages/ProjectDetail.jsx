@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import StepsView from './StepsView'
 
 const ICON_COLORS = { text: '#3b82f6', voice: '#a855f7', photo: '#22c55e', document: '#f97316', email: '#eab308' }
 const TYPE_LABELS = { text: 'Σημείωση', voice: 'Ηχητικό', photo: 'Φωτογραφία', document: 'Αρχείο', email: 'Email' }
@@ -35,7 +36,7 @@ function ReadMore({ text, limit = 120 }) {
 }
 
 export default function ProjectDetail({ project, profile, onBack }) {
-  const [tab, setTab] = useState('timeline')
+  const [tab, setTab] = useState('steps')
   const [entries, setEntries] = useState([])
   const [deadlines, setDeadlines] = useState([])
   const [summary, setSummary] = useState(null)
@@ -163,8 +164,11 @@ export default function ProjectDetail({ project, profile, onBack }) {
         </div>
       </div>
 
-      {/* Tabs: Timeline, Photos, Documents */}
+      {/* Tabs: Steps, Timeline, Photos, Documents */}
       <div className="detail-tabs">
+        <button className={`detail-tab ${tab === 'steps' ? 'active' : ''}`} onClick={() => setTab('steps')}>
+          Βήματα
+        </button>
         <button className={`detail-tab ${tab === 'timeline' ? 'active' : ''}`} onClick={() => setTab('timeline')}>
           Χρονολόγιο
         </button>
@@ -180,6 +184,13 @@ export default function ProjectDetail({ project, profile, onBack }) {
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto' }}>
+        {/* Steps View */}
+        {tab === 'steps' && (
+          <div style={{ padding: '12px 16px' }}>
+            <StepsView project={project} profile={profile} />
+          </div>
+        )}
+
         {/* AI Summary - timeline tab only, owner only */}
         {tab === 'timeline' && profile?.role === 'owner' && (
           <div className="ai-summary-box">
