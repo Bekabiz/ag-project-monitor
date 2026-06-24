@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   const openai = new OpenAI({ apiKey });
 
   try {
-    const { fileUrl, projectNames } = req.body;
+    const { fileUrl, projectNames, transcribeOnly } = req.body;
     if (!fileUrl) return res.status(400).json({ error: 'No file URL' });
 
     console.log('Fetching audio from:', fileUrl);
@@ -42,6 +42,11 @@ export default async function handler(req, res) {
 
     if (!transcript || transcript.trim().length === 0) {
       return res.status(200).json({ transcript: '', extracted: null });
+    }
+
+    // If transcribeOnly, return just the transcript (used for voice task titles)
+    if (transcribeOnly) {
+      return res.status(200).json({ transcript, extracted: null });
     }
 
     // Step 2: Extract structured data

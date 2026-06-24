@@ -13,6 +13,7 @@ export default function App() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('today')
   const [selectedProject, setSelectedProject] = useState(null)
+  const [todayBadge, setTodayBadge] = useState(0)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -63,7 +64,7 @@ export default function App() {
       </header>
 
       <main className="app-main">
-        {activeTab === 'today' && <TodayTab profile={profile} />}
+        {activeTab === 'today' && <TodayTab profile={profile} onBadgeCount={setTodayBadge} />}
         {activeTab === 'input' && <InputTab profile={profile} />}
         {activeTab === 'projects' && (
           <ProjectsTab profile={profile} onSelectProject={setSelectedProject} />
@@ -74,9 +75,12 @@ export default function App() {
       <nav className="tab-bar">
         <button 
           className={`tab ${activeTab === 'today' ? 'active' : ''}`}
-          onClick={() => setActiveTab('today')}
+          onClick={() => { setActiveTab('today'); setTodayBadge(0) }}
         >
-          <svg className="tab-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <div style={{ position: 'relative', display: 'inline-flex' }}>
+            <svg className="tab-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            {todayBadge > 0 && activeTab !== 'today' && <span className="nav-badge">{todayBadge > 9 ? '9+' : todayBadge}</span>}
+          </div>
           <span>Σήμερα</span>
         </button>
         <button 
