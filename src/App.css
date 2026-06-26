@@ -1088,3 +1088,201 @@ body {
   background: var(--red-light); padding: 2px 8px;
   border-radius: 100px; margin-left: auto;
 }
+
+/* ===== ANNOUNCEMENTS ===== */
+.announcements-section { margin-bottom: 12px; }
+.announcement-card {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 12px 14px; margin-bottom: 8px;
+  background: linear-gradient(135deg, #fef3c7, #fef9c3);
+  border: 1px solid #fde68a; border-radius: var(--radius);
+  border-left: 4px solid #f59e0b;
+}
+.announcement-icon { font-size: 18px; flex-shrink: 0; }
+.announcement-text { font-size: 14px; color: #92400e; font-weight: 500; line-height: 1.4; }
+.announcement-meta { font-size: 11px; color: #b45309; margin-top: 4px; }
+.announcement-dismiss {
+  background: none; border: none; color: #b45309; font-size: 16px;
+  cursor: pointer; padding: 2px 6px; opacity: 0.6; flex-shrink: 0;
+}
+.announcement-dismiss:hover { opacity: 1; }
+.announcement-add-btn {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  width: 100%; padding: 8px; margin-bottom: 12px;
+  background: transparent; border: 1.5px dashed #fde68a;
+  border-radius: var(--radius); color: #b45309;
+  font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.announcement-add-btn:hover { background: #fffbeb; border-color: #f59e0b; }
+
+/* ===== PLAN REMINDER CARDS ===== */
+.plan-reminder-card {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; margin-bottom: 6px;
+  background: rgba(124, 58, 237, 0.06);
+  border: 1px solid rgba(124, 58, 237, 0.15);
+  border-radius: var(--radius); border-left: 3px solid var(--purple);
+}
+.plan-reminder-text { flex: 1; font-size: 13px; color: var(--text); font-weight: 500; }
+
+/* ===== ASSIGNEE PICKER ===== */
+.assignee-picker { margin-bottom: 4px; }
+.assignee-picker-label {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 12px; color: var(--text2); font-weight: 500; margin-bottom: 6px;
+}
+.assignee-all-btn {
+  background: none; border: none; color: var(--blue);
+  font-size: 12px; font-weight: 600; cursor: pointer; padding: 0;
+}
+.assignee-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.assignee-chip {
+  display: flex; align-items: center; gap: 5px;
+  padding: 6px 10px; border-radius: 100px;
+  border: 1.5px solid var(--border); background: var(--surface);
+  font-size: 13px; color: var(--text2); cursor: pointer;
+  transition: all 0.15s; font-weight: 500;
+}
+.assignee-chip:hover { border-color: var(--blue); }
+.assignee-chip-active {
+  background: rgba(37, 99, 235, 0.08); border-color: var(--blue); color: var(--blue);
+}
+.assignee-chip-avatar {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--text3); color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 600;
+}
+.assignee-chip-active .assignee-chip-avatar { background: var(--blue); }
+
+/* ===== URGENT TOGGLE ===== */
+.urgent-toggle {
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 14px; border: 1.5px solid var(--border);
+  border-radius: var(--radius); background: var(--surface);
+  font-size: 13px; color: var(--text2); cursor: pointer;
+  font-family: inherit; font-weight: 500; transition: all 0.15s;
+}
+.urgent-toggle:hover { border-color: var(--red); }
+.urgent-toggle-on {
+  background: var(--red-light); border-color: var(--red); color: var(--red); font-weight: 600;
+}
+.urgent-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--red); color: white;
+  font-size: 11px; font-weight: 700; flex-shrink: 0;
+}
+
+/* ===== MONITOR TAB ===== */
+.monitor-page { padding-bottom: 20px; }
+.monitor-switcher {
+  display: flex; gap: 4px; padding: 4px;
+  background: var(--surface); border-radius: 10px; margin-bottom: 16px;
+}
+.monitor-sw-btn {
+  flex: 1; padding: 8px 4px; border: none; background: transparent;
+  border-radius: 8px; font-size: 13px; font-weight: 600;
+  color: var(--text2); cursor: pointer; font-family: inherit;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+  transition: all 0.15s;
+}
+.monitor-sw-btn.active { background: var(--bg); color: var(--text); box-shadow: var(--shadow-xs); }
+.monitor-sw-count {
+  min-width: 18px; height: 18px; padding: 0 5px;
+  background: var(--blue); color: white;
+  border-radius: 9px; font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.monitor-stats-bar {
+  display: flex; gap: 8px; margin-bottom: 16px;
+}
+.monitor-stat {
+  flex: 1; text-align: center; padding: 12px 8px;
+  background: var(--surface); border-radius: var(--radius);
+}
+.monitor-stat-num { display: block; font-size: 22px; font-weight: 700; color: var(--text); }
+.monitor-stat-label { font-size: 11px; color: var(--text2); font-weight: 500; margin-top: 2px; }
+
+/* Monitor person groups */
+.monitor-person-group {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); margin-bottom: 12px; overflow: hidden;
+}
+.monitor-person-header {
+  display: flex; align-items: center; gap: 10px; padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.monitor-person-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--blue); color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 600;
+}
+.monitor-person-name { font-size: 14px; font-weight: 600; color: var(--text); }
+.monitor-person-meta { font-size: 12px; color: var(--text2); }
+
+/* Monitor task cards */
+.monitor-task-card {
+  padding: 10px 14px; border-bottom: 1px solid var(--border-light);
+}
+.monitor-task-card:last-child { border-bottom: none; }
+.monitor-task-urgent { background: rgba(220, 38, 38, 0.03); }
+.monitor-task-top { display: flex; align-items: center; gap: 6px; }
+.monitor-task-title { flex: 1; font-size: 13px; font-weight: 600; color: var(--text); }
+.monitor-task-status { font-size: 11px; font-weight: 600; flex-shrink: 0; }
+.monitor-task-desc { font-size: 12px; color: var(--text2); margin-top: 3px; line-height: 1.3; }
+.monitor-task-meta { font-size: 11px; color: var(--text3); margin-top: 3px; }
+.monitor-done-summary {
+  padding: 8px 14px; font-size: 12px; color: var(--green);
+  font-weight: 500; background: rgba(34, 197, 94, 0.04);
+}
+
+/* Monitor overview */
+.monitor-overview-section {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px; margin-bottom: 12px;
+}
+.monitor-overview-title {
+  font-size: 14px; font-weight: 700; color: var(--text);
+  margin-bottom: 10px; display: flex; align-items: center;
+}
+.monitor-overview-empty { font-size: 13px; color: var(--text3); }
+.monitor-deadline-card {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 8px 0; border-bottom: 1px solid var(--border-light);
+}
+.monitor-deadline-card:last-child { border-bottom: none; }
+.monitor-deadline-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+.monitor-deadline-desc { font-size: 13px; font-weight: 500; color: var(--text); }
+.monitor-deadline-meta { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.monitor-budget-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 0; font-size: 13px;
+}
+.monitor-budget-name { flex: 1; color: var(--text); font-weight: 500; }
+.monitor-budget-amount { color: var(--text); font-weight: 600; }
+
+/* Plan cards */
+.plan-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px;
+  margin-bottom: 8px; border-left: 3px solid var(--purple);
+}
+.plan-card-today { border-left-color: var(--blue); background: rgba(37, 99, 235, 0.04); }
+.plan-card-date {
+  font-size: 11px; font-weight: 700; color: var(--purple);
+  text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;
+}
+.plan-card-today .plan-card-date { color: var(--blue); }
+.plan-card-text { font-size: 14px; color: var(--text); line-height: 1.4; }
+.plan-card-actions { display: flex; gap: 6px; margin-top: 8px; }
+.plan-action-btn {
+  padding: 4px 12px; border: 1px solid var(--border);
+  border-radius: 6px; background: var(--bg);
+  font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.plan-done-btn { color: var(--green); border-color: rgba(34, 197, 94, 0.3); }
+.plan-done-btn:hover { background: var(--green-light); }
+.plan-delete-btn { color: var(--text3); }
+.plan-delete-btn:hover { color: var(--red); background: var(--red-light); }

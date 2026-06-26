@@ -4,7 +4,7 @@ import Login from './pages/Login'
 import TodayTab from './pages/TodayTab'
 import InputTab from './pages/InputTab'
 import ProjectsTab from './pages/ProjectsTab'
-import SummaryTab from './pages/SummaryTab'
+import MonitorTab from './pages/MonitorTab'
 import ProjectDetail from './pages/ProjectDetail'
 
 export default function App() {
@@ -69,7 +69,7 @@ export default function App() {
         {activeTab === 'projects' && (
           <ProjectsTab profile={profile} onSelectProject={setSelectedProject} />
         )}
-        {activeTab === 'summary' && <SummaryTab profile={profile} />}
+        {activeTab === 'summary' && <MonitorTab profile={profile} />}
       </main>
 
       <nav className="tab-bar">
@@ -102,8 +102,8 @@ export default function App() {
             className={`tab ${activeTab === 'summary' ? 'active' : ''}`}
             onClick={() => setActiveTab('summary')}
           >
-            <svg className="tab-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="4" y="14" width="4" height="6" rx="1"/><rect x="10" y="8" width="4" height="12" rx="1"/><rect x="16" y="4" width="4" height="16" rx="1"/></svg>
-            <span>Σύνοψη</span>
+            <svg className="tab-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span>Κέντρο</span>
           </button>
         )}
       </nav>

@@ -13,6 +13,7 @@ export default function StepsView({ project, profile }) {
   const [dueDate, setDueDate] = useState('')
   const [dueTime, setDueTime] = useState('17:00')
   const [stepFile, setStepFile] = useState(null)
+  const [isUrgent, setIsUrgent] = useState(false)
   const [saving, setSaving] = useState(false)
   const [expandedStep, setExpandedStep] = useState(null)
   const [noteText, setNoteText] = useState('')
@@ -104,6 +105,7 @@ export default function StepsView({ project, profile }) {
     setDueDate('')
     setDueTime('17:00')
     setStepFile(null)
+    setIsUrgent(false)
     setEditStep(null)
     setShowAdd(true)
   }
@@ -125,6 +127,7 @@ export default function StepsView({ project, profile }) {
       setDueTime('17:00')
     }
     setStepFile(null)
+    setIsUrgent(step.is_urgent || false)
     setEditStep(step)
     setShowAdd(true)
   }
@@ -164,7 +167,8 @@ export default function StepsView({ project, profile }) {
         due_date: dueDatetime,
         file_url: fileUrl,
         file_name: fileName,
-        updated_by: profile.id
+        updated_by: profile.id,
+        is_urgent: isUrgent
       }).eq('id', editStep.id)
     } else {
       const maxPos = steps.length > 0 ? Math.max(...steps.map(s => s.position || 0)) : 0
@@ -181,7 +185,8 @@ export default function StepsView({ project, profile }) {
         position: maxPos + 1,
         file_url: fileUrl,
         file_name: fileName,
-        updated_by: profile.id
+        updated_by: profile.id,
+        is_urgent: isUrgent
       })
     }
 
@@ -294,7 +299,10 @@ export default function StepsView({ project, profile }) {
           <div key={step.id} className={getStepBg(step)} onClick={() => setExpandedStep(isExpanded ? null : step.id)}>
             <div className="step-card-top">
               <div style={{ flex: 1 }}>
-                <span className={`step-title ${step.status === 'done' ? 'step-title-done' : ''}`}>{step.title}</span>
+                <span className={`step-title ${step.status === 'done' ? 'step-title-done' : ''}`}>
+                  {step.is_urgent && <span className="urgent-badge" style={{ marginRight: 4 }}>!</span>}
+                  {step.title}
+                </span>
                 {step.description && <div className="step-desc-preview">{step.description}</div>}
                 <div className="step-meta">
                   <span>{step.assigned_to_name || 'Χωρίς ανάθεση'}</span>
@@ -412,11 +420,18 @@ export default function StepsView({ project, profile }) {
             </div>
 
             {/* File */}
-            <label className="task-attach-btn">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-              {stepFile ? stepFile.name : (editStep?.file_name || 'Επισύναψη αρχείου')}
-              <input type="file" onChange={e => setStepFile(e.target.files[0])} hidden />
-            </label>
+            {/* Urgent + File */}
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className={`urgent-toggle ${isUrgent ? 'urgent-toggle-on' : ''}`}
+                onClick={() => setIsUrgent(!isUrgent)}>
+                <span style={{ fontSize: 16 }}>🔴</span> Επείγον
+              </button>
+              <label className="task-attach-btn" style={{ flex: 1 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                {stepFile ? stepFile.name : (editStep?.file_name || 'Αρχείο')}
+                <input type="file" onChange={e => setStepFile(e.target.files[0])} hidden />
+              </label>
+            </div>
 
             <div className="modal-actions">
               <button className="action-btn" onClick={() => setShowAdd(false)}>Ακύρωση</button>
