@@ -164,15 +164,53 @@ export default function TodayTab({ profile, onBadgeCount }) {
       const path = `voice-tasks/${Date.now()}.webm`
       await supabase.storage.from('files').upload(path, blob)
       const { data: urlData } = supabase.storage.from('files').getPublicUrl(path)
+      const projectNames = projects.map(p => p.name)
+      const useFullExtraction = target === 'task'
       const res = await fetch('/api/transcribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fileUrl: urlData.publicUrl, transcribeOnly: true })
+        body: JSON.stringify({
+          fileUrl: urlData.publicUrl,
+          transcribeOnly: !useFullExtraction,
+          projectNames: useFullExtraction ? projectNames : undefined
+        })
       })
       const data = await res.json()
       if (data.transcript) {
-        if (target === 'task') setTaskTitle(prev => prev ? prev + ' ' + data.transcript : data.transcript)
-        else if (target === 'announcement') setAnnText(prev => prev ? prev + ' ' + data.transcript : data.transcript)
+        if (target === 'task') {
+          // Smart extraction: try to auto-fill from AI
+          if (data.extracted) {
+            const ex = data.extracted
+            // Set title from summary or transcript
+            setTaskTitle(ex.summary || data.transcript)
+            // Match project name
+            if (ex.project_name) {
+              const matchedProj = projects.find(p =>
+                p.name.toLowerCase().includes(ex.project_name.toLowerCase()) ||
+                ex.project_name.toLowerCase().includes(p.name.toLowerCase())
+              )
+              if (matchedProj) setTaskProject(matchedProj.id)
+            }
+            // Match people to assignees
+            if (ex.people && ex.people.length > 0) {
+              const matchedIds = []
+              ex.people.forEach(personName => {
+                const match = profiles.find(p =>
+                  p.full_name?.toLowerCase().includes(personName.toLowerCase()) ||
+                  personName.toLowerCase().includes(p.full_name?.split(' ')[0]?.toLowerCase() || '')
+                )
+                if (match) matchedIds.push(match.id)
+              })
+              if (matchedIds.length > 0) setTaskAssignees(matchedIds)
+            }
+            // Set date
+            if (ex.deadline_date) setTaskDate(ex.deadline_date)
+            // Set description from action items
+            if (ex.action_items?.length > 0) setTaskDesc(ex.action_items.join(', '))
+          } else {
+            setTaskTitle(prev => prev ? prev + ' ' + data.transcript : data.transcript)
+          }
+        } else if (target === 'announcement') setAnnText(prev => prev ? prev + ' ' + data.transcript : data.transcript)
         else if (target === 'update') setUpdateText(prev => prev ? prev + ' ' + data.transcript : data.transcript)
       }
       await supabase.storage.from('files').remove([path])
@@ -240,13 +278,16 @@ export default function TodayTab({ profile, onBadgeCount }) {
       if (taskDate) dueDate = `${taskDate}T${taskTime || '17:00'}:00`
 
       const isPersonal = taskProject === 'personal'
-      const projectId = isPersonal ? null : (taskProject || null)
+      const isStaff = taskProject === 'staff'
+      const projectId = (isPersonal || isStaff) ? null : (taskProject || null)
 
       // Determine assignees
       let assigneeList = []
       if (isPersonal) {
-        // Personal = only me
         assigneeList = [{ id: profile.id, name: profile.full_name }]
+      } else if (isStaff) {
+        // All team members
+        assigneeList = profiles.map(p => ({ id: p.id, name: p.full_name }))
       } else if (taskAssignees.length > 0) {
         assigneeList = taskAssignees.map(id => {
           const p = profiles.find(pr => pr.id === id)
@@ -297,15 +338,6 @@ export default function TodayTab({ profile, onBadgeCount }) {
   // === INLINE TASK STATUS ===
   async function updateTaskStatus(step, newStatus) {
     await supabase.from('steps').update({ status: newStatus, updated_by: profile.id }).eq('id', step.id)
-    if (newStatus === 'done' && step.project_id) {
-      const latestNote = taskNotes[step.id]?.[0]?.text || ''
-      await supabase.from('entries').insert({
-        project_id: step.project_id, user_id: profile.id, entry_type: 'text',
-        raw_text: `✅ Ολοκληρώθηκε: ${step.title}${latestNote ? ' \u2014 ' + latestNote : ''}`,
-        ai_summary: `Ολοκλήρωση: ${step.title}. ${step.assigned_to_name || profile.full_name}`,
-        is_team_visible: true, submitter_name: profile.full_name
-      })
-    }
     await loadData()
   }
 
@@ -411,6 +443,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
   const personUpdates = getPersonUpdates()
   const otherProfiles = profiles.filter(p => p.id !== profile.id)
   const isPersonalTask = taskProject === 'personal'
+  const isStaffTask = taskProject === 'staff'
 
   return (
     <div>
@@ -669,14 +702,15 @@ export default function TodayTab({ profile, onBadgeCount }) {
               onChange={e => setTaskDesc(e.target.value)} rows={2} style={{ resize: 'vertical', fontFamily: 'inherit' }} />
 
             {/* Project */}
-            <select className="modal-input" value={taskProject} onChange={e => { setTaskProject(e.target.value); if (e.target.value === 'personal') setTaskAssignees([]) }}>
+            <select className="modal-input" value={taskProject} onChange={e => { setTaskProject(e.target.value); if (e.target.value === 'personal' || e.target.value === 'staff') setTaskAssignees([]) }}>
               <option value="">Έργο...</option>
-              <option value="personal">📌 Προσωπικό</option>
+              <option value="personal">👤 Για εμένα</option>
+              <option value="staff">👥 Όλο το γραφείο</option>
               {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
 
             {/* Assign to: hidden for personal, multi-select for others */}
-            {!isPersonalTask && (
+            {!isPersonalTask && !isStaffTask && (
               <div className="assignee-picker">
                 <div className="assignee-picker-label">
                   Ανάθεση σε

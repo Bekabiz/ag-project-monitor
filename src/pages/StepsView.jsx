@@ -196,26 +196,10 @@ export default function StepsView({ project, profile }) {
   }
 
   async function updateStatus(stepId, newStatus) {
-    const step = steps.find(s => s.id === stepId)
     await supabase.from('steps').update({
       status: newStatus,
       updated_by: profile.id
     }).eq('id', stepId)
-
-    // Auto-feed to timeline when done
-    if (newStatus === 'done' && step) {
-      const latestNote = stepNotes[stepId]?.[0]?.text || ''
-      await supabase.from('entries').insert({
-        project_id: project.id,
-        user_id: profile.id,
-        entry_type: 'text',
-        raw_text: `✅ Ολοκληρώθηκε: ${step.title}${latestNote ? ' — ' + latestNote : ''}`,
-        ai_summary: `Ολοκλήρωση εργασίας: ${step.title}. ${step.assigned_to_name || profile.full_name}${latestNote ? '. ' + latestNote : ''}`,
-        is_team_visible: true,
-        submitter_name: profile.full_name
-      })
-    }
-
     await loadSteps()
   }
 
