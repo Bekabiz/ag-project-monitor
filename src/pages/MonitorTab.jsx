@@ -318,7 +318,7 @@ export default function MonitorTab({ profile }) {
                           <input className="step-note-input" placeholder="Απάντηση..." value={replyText}
                             onChange={e => setReplyText(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendReply(task.id)} />
                           <button className="step-note-send" onClick={() => sendReply(task.id)} disabled={!replyText.trim()}>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                           </button>
                         </div>
                       </div>
@@ -400,7 +400,7 @@ export default function MonitorTab({ profile }) {
       {activeSection === 'planner' && (
         <div>
           <button className="new-task-fab" onClick={() => setShowPlanModal(true)} style={{ marginBottom: 16 }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Νέο σχέδιο
           </button>
 

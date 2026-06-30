@@ -332,7 +332,7 @@ export default function InputTab({ profile }) {
             <div className="project-select-loc">{p.location}{p.description ? <><span style={{ margin: '0 5px', color: 'var(--text3)' }}>|</span>{p.description}</> : ''}</div>
           </div>
           {selected?.id === p.id && (
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--text)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3.5 8 6.5 11 12.5 5"/></svg>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--text)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3.5 8 6.5 11 12.5 5"/></svg>
           )}
         </div>
       ))}
@@ -413,7 +413,7 @@ export default function InputTab({ profile }) {
               title="Επανάληψη ανάλυσης AI"
             >
               {extracting ? <span className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} /> : (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
               )}
               AI
             </button>

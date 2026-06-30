@@ -478,7 +478,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
       {todayPlans.length > 0 && (
         <div className="today-section">
           <div className="today-section-header">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" strokeWidth="2" strokeLinecap="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" strokeWidth="1.5" strokeLinecap="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
             <span>Υπενθυμίσεις σήμερα</span>
           </div>
           {todayPlans.map(plan => (
@@ -492,14 +492,14 @@ export default function TodayTab({ profile, onBadgeCount }) {
 
       {/* ===== NEW TASK BUTTON ===== */}
       <button className="new-task-fab" onClick={openTaskModal}>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Νέα εργασία
       </button>
 
       {/* ===== MY TASKS ===== */}
       <div className="today-section">
         <div className="today-section-header">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12l2 2 4-4"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12l2 2 4-4"/></svg>
           <span>Οι εργασίες μου ({mySteps.length})</span>
           {overdueCount > 0 && <span className="overdue-badge">{overdueCount} εκπρόθεσμ{overdueCount > 1 ? 'ες' : 'η'}</span>}
         </div>
@@ -529,9 +529,9 @@ export default function TodayTab({ profile, onBadgeCount }) {
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  {step.file_url && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" strokeWidth="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>}
+                  {step.file_url && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" strokeWidth="1.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>}
                   {notes.length > 0 && <span className="step-note-count">{notes.length}</span>}
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" strokeWidth="2" style={{ transform: isExpanded ? 'rotate(180deg)' : '', transition: '0.2s' }}><polyline points="6 9 12 15 18 9"/></svg>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" strokeWidth="1.5" style={{ transform: isExpanded ? 'rotate(180deg)' : '', transition: '0.2s' }}><polyline points="6 9 12 15 18 9"/></svg>
                 </div>
               </div>
 
@@ -547,7 +547,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
                   </div>
                   {step.file_url && (
                     <a href={step.file_url} target="_blank" rel="noopener" className="step-file-link">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
                       {step.file_name || 'Αρχείο'}
                     </a>
                   )}
@@ -561,7 +561,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
                     <input className="step-note-input" placeholder="Σημείωση..." value={taskNoteText}
                       onChange={e => setTaskNoteText(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTaskNote(step.id)} />
                     <button className="step-note-send" onClick={() => addTaskNote(step.id)} disabled={!taskNoteText.trim()}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                     </button>
                   </div>
                 </div>
@@ -574,7 +574,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
       {/* ===== UPDATES BY PERSON ===== */}
       <div className="today-section">
         <div className="today-section-header">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           <span>Ενημερώσεις σήμερα</span>
         </div>
         {Object.keys(personUpdates).length === 0 && <div className="empty-state" style={{ padding: '24px 16px' }}>Δεν υπάρχουν ενημερώσεις σήμερα</div>}
@@ -584,7 +584,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
               <div className="person-avatar">{name.charAt(0)}</div>
               <span className="person-name">{name}</span>
               <span className="person-count">{items.length} ενημ.</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ transform: expandedPerson === name ? 'rotate(180deg)' : '', transition: '0.2s' }}><polyline points="6 9 12 15 18 9"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ transform: expandedPerson === name ? 'rotate(180deg)' : '', transition: '0.2s' }}><polyline points="6 9 12 15 18 9"/></svg>
             </div>
             {expandedPerson === name && (
               <div className="person-update-list">
@@ -645,7 +645,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
         </div>
       ) : (
         <button className="today-add-btn" onClick={() => setShowAddUpdate(true)}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Γενική ενημέρωση
         </button>
       )}
@@ -747,7 +747,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
                 <span style={{ fontSize: 16 }}>🔴</span> Επείγον
               </button>
               <label className="task-attach-btn" style={{ flex: 1 }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
                 {taskFile ? taskFile.name : 'Αρχείο'}
                 <input type="file" onChange={e => setTaskFile(e.target.files[0])} hidden />
               </label>

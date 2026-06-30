@@ -12,7 +12,7 @@ const SVG_ICONS = {
   document: <svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 1h5l4 4v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zm5 1v3h3L9 2z"/></svg>,
   email: <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 3h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zm0 1l6 4 6-4H2zm0 1.5V12h12V5.5L8 9.5 2 5.5z"/></svg>,
   download: <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1v9m0 0L5 7m3 3l3-3M2 12v1a1 1 0 001 1h10a1 1 0 001-1v-1" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>,
-  close: <svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round"/></svg>,
+  close: <svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/></svg>,
 }
 
 function ReadMore({ text, limit = 120 }) {
@@ -156,7 +156,7 @@ export default function ProjectDetail({ project, profile, onBack }) {
       {/* Header */}
       <div className="detail-header">
         <button className="back-btn" onClick={onBack}>
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M14 4l-6 6 6 6"/></svg>
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M14 4l-6 6 6 6"/></svg>
         </button>
         <div style={{ flex: 1 }}>
           <div className="detail-name">{project.name}</div>
@@ -273,7 +273,7 @@ export default function ProjectDetail({ project, profile, onBack }) {
                                 {e.file_url && (
                                   <a href={e.file_url} target="_blank" rel="noopener" className="ct-doc-link">
                                     Άνοιγμα αρχείου
-                                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 3H3v10h10v-3M9 2h5v5M14 2L7 9"/></svg>
+                                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M6 3H3v10h10v-3M9 2h5v5M14 2L7 9"/></svg>
                                   </a>
                                 )}
                               </div>
@@ -317,7 +317,7 @@ export default function ProjectDetail({ project, profile, onBack }) {
                                 {e.file_url && (
                                   <a href={e.file_url} target="_blank" rel="noopener" className="ct-doc-link">
                                     Άνοιγμα αρχείου
-                                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 3H3v10h10v-3M9 2h5v5M14 2L7 9"/></svg>
+                                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M6 3H3v10h10v-3M9 2h5v5M14 2L7 9"/></svg>
                                   </a>
                                 )}
                               </div>
