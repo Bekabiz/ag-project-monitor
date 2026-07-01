@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { Lock, Users, Mic, Camera, FileText, Check, RefreshCw } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 export default function InputTab({ profile }) {
@@ -347,13 +348,13 @@ export default function InputTab({ profile }) {
                 className={`vis-btn ${!teamVisible ? 'active' : ''}`}
                 onClick={() => setTeamVisible(false)}
               >
-                🔒 Μόνο εγώ
+                <Lock size={14} strokeWidth={1.6} /> Μόνο εγώ
               </button>
               <button
                 className={`vis-btn ${teamVisible ? 'active' : ''}`}
                 onClick={() => setTeamVisible(true)}
               >
-                👥 Η ομάδα
+                <Users size={14} strokeWidth={1.6} /> Η ομάδα
               </button>
             </div>
           )}
@@ -370,7 +371,7 @@ export default function InputTab({ profile }) {
                 className={`action-btn ${recording ? 'recording' : ''}`}
                 onClick={toggleRecording}
               >
-                {recording ? '■ Stop' : <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a2 2 0 0 1 2 2v4a2 2 0 1 1-4 0V3a2 2 0 0 1 2-2zM5 7a3 3 0 0 0 6 0h1a4 4 0 0 1-3.5 3.97V13H10v1H6v-1h1.5v-2.03A4 4 0 0 1 4 7h1z"/></svg>}
+                {recording ? '■ Stop' : <Mic size={18} strokeWidth={1.6} />}
               </button>
             )}
             <button
@@ -388,11 +389,11 @@ export default function InputTab({ profile }) {
           </div>
           <div className="upload-row">
             <div className="upload-btn" onClick={() => setShowFileModal('photo')}>
-              <svg width="22" height="22" viewBox="0 0 16 16" fill="currentColor"><path d="M2 3h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zm3 2a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm7.5 6l-2.5-3-2 2.5L6 8.5 2.5 12H13l-.5-1z"/></svg>
+              <Camera size={20} strokeWidth={1.6} />
               Φωτογραφία
             </div>
             <div className="upload-btn" onClick={() => setShowFileModal('document')}>
-              <svg width="22" height="22" viewBox="0 0 16 16" fill="currentColor"><path d="M4 1h5l4 4v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zm5 1v3h3L9 2z"/></svg>
+              <FileText size={20} strokeWidth={1.6} />
               Αρχείο
             </div>
           </div>
@@ -413,7 +414,7 @@ export default function InputTab({ profile }) {
               title="Επανάληψη ανάλυσης AI"
             >
               {extracting ? <span className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} /> : (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                <RefreshCw size={14} strokeWidth={1.6} />
               )}
               AI
             </button>
@@ -524,7 +525,7 @@ export default function InputTab({ profile }) {
               Χωρίς AI
             </button>
             <button className="action-btn primary" onClick={handleConfirm} disabled={sending}>
-              {sending ? '...' : '✓ Σωστό'}
+              {sending ? '...' : <><Check size={14} strokeWidth={2} style={{ marginRight: 3 }} /> Σωστό</>}
             </button>
           </div>
         </div>

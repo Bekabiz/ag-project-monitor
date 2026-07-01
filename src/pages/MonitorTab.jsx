@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { Check, X, PlusCircle, AlertTriangle, Paperclip, ChevronDown, Send, Mic, Plus, CheckCircle2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 export default function MonitorTab({ profile }) {
@@ -270,8 +271,8 @@ export default function MonitorTab({ profile }) {
                   <div className="monitor-person-name">{personName}</div>
                   <div className="monitor-person-meta">
                     {group.active} ενεργές
-                    {group.urgent > 0 && <span style={{ color: 'var(--red)', marginLeft: 8 }}>🔴 {group.urgent}</span>}
-                    {group.done > 0 && <span style={{ color: 'var(--green)', marginLeft: 8 }}>✓ {group.done}</span>}
+                    {group.urgent > 0 && <span style={{ color: 'var(--red)', marginLeft: 8, display: 'inline-flex', alignItems: 'center', gap: 3 }}><AlertTriangle size={12} strokeWidth={1.6} /> {group.urgent}</span>}
+                    {group.done > 0 && <span style={{ color: 'var(--green)', marginLeft: 8, display: 'inline-flex', alignItems: 'center', gap: 3 }}><Check size={12} strokeWidth={2} /> {group.done}</span>}
                   </div>
                 </div>
               </div>
@@ -301,7 +302,7 @@ export default function MonitorTab({ profile }) {
                         {task.description && <div className="monitor-exp-desc">{task.description}</div>}
                         {task.file_url && (
                           <a href={task.file_url} target="_blank" rel="noopener" className="step-file-link">
-                            📎 {task.file_name || 'Αρχείο'}
+                            <Paperclip size={14} strokeWidth={1.6} /> {task.file_name || 'Αρχείο'}
                           </a>
                         )}
                         {notes.length > 0 && (
@@ -318,7 +319,7 @@ export default function MonitorTab({ profile }) {
                           <input className="step-note-input" placeholder="Απάντηση..." value={replyText}
                             onChange={e => setReplyText(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendReply(task.id)} />
                           <button className="step-note-send" onClick={() => sendReply(task.id)} disabled={!replyText.trim()}>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                            <Send size={14} strokeWidth={1.6} />
                           </button>
                         </div>
                       </div>
@@ -334,7 +335,7 @@ export default function MonitorTab({ profile }) {
                 return (
                   <div key={task.id} className="monitor-task-card monitor-task-done" onClick={() => setExpandedTask(isExp ? null : task.id)}>
                     <div className="monitor-task-top">
-                      <span className="monitor-task-title" style={{ color: 'var(--green)' }}>✓ {task.title}</span>
+                      <span className="monitor-task-title" style={{ color: 'var(--green)', display: 'flex', alignItems: 'center', gap: 4 }}><Check size={14} strokeWidth={2} /> {task.title}</span>
                       <span className="monitor-review-badge">Αξιολόγηση</span>
                     </div>
                     <div className="monitor-task-meta">
@@ -346,7 +347,7 @@ export default function MonitorTab({ profile }) {
                         {task.description && <div className="monitor-exp-desc">{task.description}</div>}
                         {task.file_url && (
                           <a href={task.file_url} target="_blank" rel="noopener" className="step-file-link">
-                            📎 {task.file_name || 'Αρχείο'}
+                            <Paperclip size={14} strokeWidth={1.6} /> {task.file_name || 'Αρχείο'}
                           </a>
                         )}
                         {notes.length > 0 && (
@@ -361,8 +362,8 @@ export default function MonitorTab({ profile }) {
                         )}
                         {/* APPROVE / REJECT */}
                         <div className="monitor-review-actions">
-                          <button className="monitor-approve-btn" onClick={() => approveTask(task)}>✓ Εγκρίθηκε</button>
-                          <button className="monitor-reject-btn" onClick={() => rejectTask(task)}>↩ Απόρριψη</button>
+                          <button className="monitor-approve-btn" onClick={() => approveTask(task)}><Check size={14} strokeWidth={2} /> Εγκρίθηκε</button>
+                          <button className="monitor-reject-btn" onClick={() => rejectTask(task)}><X size={14} strokeWidth={2} /> Απόρριψη</button>
                         </div>
                       </div>
                     )}
@@ -374,10 +375,10 @@ export default function MonitorTab({ profile }) {
               {group.tasks.filter(t => t.status === 'done' && t.is_reviewed && t.review_result === 'approved' && !t.registered_to_timeline).map(task => (
                 <div key={task.id} className="monitor-task-card monitor-task-approved">
                   <div className="monitor-task-top">
-                    <span className="monitor-task-title">✓ {task.title}</span>
+                    <span className="monitor-task-title" style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Check size={14} strokeWidth={2} color="var(--green)" /> {task.title}</span>
                     <div className="monitor-register-actions">
-                      <button className="monitor-plus-btn" onClick={() => registerToTimeline(task)} title="Καταχώρηση στο έργο">➕</button>
-                      <button className="monitor-skip-btn" onClick={() => skipRegister(task.id)} title="Παράλειψη">✕</button>
+                      <button className="monitor-plus-btn" onClick={() => registerToTimeline(task)} title="Καταχώρηση στο έργο"><PlusCircle size={16} strokeWidth={1.6} /></button>
+                      <button className="monitor-skip-btn" onClick={() => skipRegister(task.id)} title="Παράλειψη"><X size={14} strokeWidth={1.6} /></button>
                     </div>
                   </div>
                   <div className="monitor-task-meta"><span>{task.projects?.name}</span></div>
@@ -388,7 +389,7 @@ export default function MonitorTab({ profile }) {
               {(() => {
                 const fullyDone = group.tasks.filter(t => t.status === 'done' && t.is_reviewed && t.registered_to_timeline)
                 return fullyDone.length > 0 && (
-                  <div className="monitor-done-summary">✓ {fullyDone.length} ολοκληρωμέν{fullyDone.length > 1 ? 'ες' : 'η'}</div>
+                  <div className="monitor-done-summary" style={{ display: 'flex', alignItems: 'center', gap: 4 }}><CheckCircle2 size={14} strokeWidth={1.6} /> {fullyDone.length} ολοκληρωμέν{fullyDone.length > 1 ? 'ες' : 'η'}</div>
                 )
               })()}
             </div>
@@ -400,7 +401,7 @@ export default function MonitorTab({ profile }) {
       {activeSection === 'planner' && (
         <div>
           <button className="new-task-fab" onClick={() => setShowPlanModal(true)} style={{ marginBottom: 16 }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <Plus size={18} strokeWidth={1.6} />
             Νέο σχέδιο
           </button>
 
@@ -417,8 +418,8 @@ export default function MonitorTab({ profile }) {
                 <div className="plan-card-date">{dl}</div>
                 <div className="plan-card-text">{plan.text}</div>
                 <div className="plan-card-actions">
-                  <button className="plan-action-btn plan-done-btn" onClick={() => markPlanDone(plan.id)}>✓</button>
-                  <button className="plan-action-btn plan-delete-btn" onClick={() => deletePlan(plan.id)}>✕</button>
+                  <button className="plan-action-btn plan-done-btn" onClick={() => markPlanDone(plan.id)}><Check size={14} strokeWidth={2} /></button>
+                  <button className="plan-action-btn plan-delete-btn" onClick={() => deletePlan(plan.id)}><X size={14} strokeWidth={2} /></button>
                 </div>
               </div>
             )
@@ -434,9 +435,7 @@ export default function MonitorTab({ profile }) {
                   <button className={`voice-btn ${isRecording ? 'voice-btn-recording' : ''}`}
                     onClick={isRecording ? stopRecording : startRecording} disabled={isTranscribing}>
                     {isTranscribing ? <div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} /> :
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill={isRecording ? 'white' : 'currentColor'}>
-                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3zM7 12a5 5 0 0 0 10 0h2a7 7 0 0 1-6 6.93V22h-2v-3.07A7 7 0 0 1 5 12h2z"/>
-                      </svg>}
+                      <Mic size={18} strokeWidth={1.6} />}
                   </button>
                 </div>
                 <input className="modal-input" type="date" value={planDate} onChange={e => setPlanDate(e.target.value)} />

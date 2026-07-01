@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { Megaphone, X, Plus, CheckSquare, MessageSquare, AlertTriangle, Paperclip, ChevronDown, Send, Mic, Sparkles, CircleDot, Clock, Pause, CheckCircle2, User, Users } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 export default function TodayTab({ profile, onBadgeCount }) {
@@ -452,7 +453,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
         <div className="announcements-section">
           {announcements.map(ann => (
             <div key={ann.id} className="announcement-card">
-              <div className="announcement-icon">📢</div>
+              <div className="announcement-icon"><Megaphone size={18} strokeWidth={1.6} /></div>
               <div style={{ flex: 1 }}>
                 <div className="announcement-text">{ann.text}</div>
                 <div className="announcement-meta">
@@ -460,7 +461,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
                 </div>
               </div>
               {profile?.role === 'owner' && (
-                <button className="announcement-dismiss" onClick={() => dismissAnnouncement(ann.id)}>✕</button>
+                <button className="announcement-dismiss" onClick={() => dismissAnnouncement(ann.id)}><X size={14} strokeWidth={1.6} /></button>
               )}
             </div>
           ))}
@@ -470,7 +471,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
       {/* Owner: New announcement button */}
       {profile?.role === 'owner' && (
         <button className="announcement-add-btn" onClick={() => setShowAnnouncementModal(true)}>
-          📢 Ανακοίνωση
+          <Megaphone size={16} strokeWidth={1.6} /> Ανακοίνωση
         </button>
       )}
 
@@ -478,13 +479,13 @@ export default function TodayTab({ profile, onBadgeCount }) {
       {todayPlans.length > 0 && (
         <div className="today-section">
           <div className="today-section-header">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" strokeWidth="1.5" strokeLinecap="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            <Sparkles size={16} strokeWidth={1.6} color="var(--purple)" />
             <span>Υπενθυμίσεις σήμερα</span>
           </div>
           {todayPlans.map(plan => (
             <div key={plan.id} className="plan-reminder-card">
               <span className="plan-reminder-text">{plan.text}</span>
-              <button className="plan-action-btn plan-done-btn" onClick={() => markPlanDone(plan.id)}>✓</button>
+              <button className="plan-action-btn plan-done-btn" onClick={() => markPlanDone(plan.id)}><CheckCircle2 size={16} strokeWidth={1.6} /></button>
             </div>
           ))}
         </div>
@@ -492,19 +493,19 @@ export default function TodayTab({ profile, onBadgeCount }) {
 
       {/* ===== NEW TASK BUTTON ===== */}
       <button className="new-task-fab" onClick={openTaskModal}>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <Plus size={18} strokeWidth={1.6} />
         Νέα εργασία
       </button>
 
       {/* ===== MY TASKS ===== */}
       <div className="today-section">
         <div className="today-section-header">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12l2 2 4-4"/></svg>
+          <CheckSquare size={16} strokeWidth={1.6} />
           <span>Οι εργασίες μου ({mySteps.length})</span>
           {overdueCount > 0 && <span className="overdue-badge">{overdueCount} εκπρόθεσμ{overdueCount > 1 ? 'ες' : 'η'}</span>}
         </div>
 
-        {mySteps.length === 0 && <div className="empty-state" style={{ padding: '24px 16px' }}>Δεν έχεις εκκρεμείς εργασίες 🎉</div>}
+        {mySteps.length === 0 && <div className="empty-state" style={{ padding: '24px 16px' }}><CheckCircle2 size={20} strokeWidth={1.6} color="var(--green)" style={{ marginRight: 6 }} /> Δεν έχεις εκκρεμείς εργασίες</div>}
 
         {mySteps.map(step => {
           const info = getDaysInfo(step)
@@ -529,9 +530,9 @@ export default function TodayTab({ profile, onBadgeCount }) {
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  {step.file_url && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" strokeWidth="1.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>}
+                  {step.file_url && <Paperclip size={12} strokeWidth={1.6} color="var(--text3)" />}
                   {notes.length > 0 && <span className="step-note-count">{notes.length}</span>}
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" strokeWidth="1.5" style={{ transform: isExpanded ? 'rotate(180deg)' : '', transition: '0.2s' }}><polyline points="6 9 12 15 18 9"/></svg>
+                  <ChevronDown size={14} strokeWidth={1.6} color="var(--text3)" style={{ transform: isExpanded ? 'rotate(180deg)' : '', transition: '0.2s' }} />
                 </div>
               </div>
 
@@ -547,7 +548,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
                   </div>
                   {step.file_url && (
                     <a href={step.file_url} target="_blank" rel="noopener" className="step-file-link">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                      <Paperclip size={14} strokeWidth={1.6} />
                       {step.file_name || 'Αρχείο'}
                     </a>
                   )}
@@ -561,7 +562,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
                     <input className="step-note-input" placeholder="Σημείωση..." value={taskNoteText}
                       onChange={e => setTaskNoteText(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTaskNote(step.id)} />
                     <button className="step-note-send" onClick={() => addTaskNote(step.id)} disabled={!taskNoteText.trim()}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                      <Send size={14} strokeWidth={1.6} />
                     </button>
                   </div>
                 </div>
@@ -574,7 +575,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
       {/* ===== UPDATES BY PERSON ===== */}
       <div className="today-section">
         <div className="today-section-header">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <MessageSquare size={16} strokeWidth={1.6} />
           <span>Ενημερώσεις σήμερα</span>
         </div>
         {Object.keys(personUpdates).length === 0 && <div className="empty-state" style={{ padding: '24px 16px' }}>Δεν υπάρχουν ενημερώσεις σήμερα</div>}
@@ -584,7 +585,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
               <div className="person-avatar">{name.charAt(0)}</div>
               <span className="person-name">{name}</span>
               <span className="person-count">{items.length} ενημ.</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ transform: expandedPerson === name ? 'rotate(180deg)' : '', transition: '0.2s' }}><polyline points="6 9 12 15 18 9"/></svg>
+              <ChevronDown size={14} strokeWidth={1.6} style={{ transform: expandedPerson === name ? 'rotate(180deg)' : '', transition: '0.2s' }} />
             </div>
             {expandedPerson === name && (
               <div className="person-update-list">
@@ -593,11 +594,11 @@ export default function TodayTab({ profile, onBadgeCount }) {
                     <div className="update-time">{item.time}</div>
                     {item.type === 'task_done' ? (
                       <div className="update-text update-done">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="3"><path d="M20 6L9 17l-5-5"/></svg>
+                        <CheckCircle2 size={12} strokeWidth={2} color="var(--green)" />
                         {item.text} <span className="update-project">({item.project})</span>
                       </div>
                     ) : <div className="update-text">{item.text}</div>}
-                    {item.file_url && <a href={item.file_url} target="_blank" rel="noopener" className="update-file">📎 Αρχείο</a>}
+                    {item.file_url && <a href={item.file_url} target="_blank" rel="noopener" className="update-file"><Paperclip size={12} strokeWidth={1.6} style={{ marginRight: 3 }} /> Αρχείο</a>}
                   </div>
                 ))}
               </div>
@@ -627,14 +628,12 @@ export default function TodayTab({ profile, onBadgeCount }) {
               disabled={isTranscribing} style={{ marginTop: 2, width: 40, height: 40, minWidth: 40 }}
             >
               {isTranscribing && voiceTarget === 'update' ? <div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} /> :
-                <svg width="16" height="16" viewBox="0 0 24 24" fill={isRecording && voiceTarget === 'update' ? 'white' : 'currentColor'}>
-                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3zM7 12a5 5 0 0 0 10 0h2a7 7 0 0 1-6 6.93V22h-2v-3.07A7 7 0 0 1 5 12h2z"/>
-                </svg>}
+                <Mic size={16} strokeWidth={1.6} />}
             </button>
           </div>
           <div className="today-update-actions">
             <label className="today-file-btn">
-              📎 <input type="file" accept="image/*" onChange={e => setUpdateFile(e.target.files[0])} hidden />
+              <Paperclip size={14} strokeWidth={1.6} /> <input type="file" accept="image/*" onChange={e => setUpdateFile(e.target.files[0])} hidden />
             </label>
             <div style={{ display: 'flex', gap: 6 }}>
               <button className="action-btn" onClick={() => { setShowAddUpdate(false); setUpdateText(''); setUpdateFile(null) }}>Ακύρωση</button>
@@ -645,7 +644,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
         </div>
       ) : (
         <button className="today-add-btn" onClick={() => setShowAddUpdate(true)}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <Plus size={16} strokeWidth={1.6} />
           Γενική ενημέρωση
         </button>
       )}
@@ -654,7 +653,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
       {showAnnouncementModal && (
         <div className="modal-overlay" onClick={() => setShowAnnouncementModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <p className="modal-title">📢 Νέα ανακοίνωση</p>
+            <p className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Megaphone size={18} strokeWidth={1.6} /> Νέα ανακοίνωση</p>
             <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
               <textarea className="modal-input" placeholder="Γράψε ή μίλα..." value={annText}
                 onChange={e => setAnnText(e.target.value)} rows={3} autoFocus style={{ flex: 1, resize: 'vertical', fontFamily: 'inherit' }} />
@@ -664,9 +663,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
                 disabled={isTranscribing}
               >
                 {isTranscribing && voiceTarget === 'announcement' ? <div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} /> :
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill={isRecording && voiceTarget === 'announcement' ? 'white' : 'currentColor'}>
-                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3zM7 12a5 5 0 0 0 10 0h2a7 7 0 0 1-6 6.93V22h-2v-3.07A7 7 0 0 1 5 12h2z"/>
-                  </svg>}
+                  <Mic size={18} strokeWidth={1.6} />}
               </button>
             </div>
             <div className="modal-actions">
@@ -691,9 +688,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
                 onClick={isRecording && voiceTarget === 'task' ? stopRecording : () => startRecording('task')}
                 disabled={isTranscribing}>
                 {isTranscribing && voiceTarget === 'task' ? <div className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} /> :
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill={isRecording && voiceTarget === 'task' ? 'white' : 'currentColor'}>
-                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3zM7 12a5 5 0 0 0 10 0h2a7 7 0 0 1-6 6.93V22h-2v-3.07A7 7 0 0 1 5 12h2z"/>
-                  </svg>}
+                  <Mic size={18} strokeWidth={1.6} />}
               </button>
             </div>
 
@@ -744,10 +739,10 @@ export default function TodayTab({ profile, onBadgeCount }) {
                 className={`urgent-toggle ${taskUrgent ? 'urgent-toggle-on' : ''}`}
                 onClick={() => setTaskUrgent(!taskUrgent)}
               >
-                <span style={{ fontSize: 16 }}>🔴</span> Επείγον
+                <AlertTriangle size={16} strokeWidth={1.6} /> Επείγον
               </button>
               <label className="task-attach-btn" style={{ flex: 1 }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                <Paperclip size={16} strokeWidth={1.6} />
                 {taskFile ? taskFile.name : 'Αρχείο'}
                 <input type="file" onChange={e => setTaskFile(e.target.files[0])} hidden />
               </label>

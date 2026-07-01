@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { CalendarDays, ChevronLeft, Check } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import StepsView from './StepsView'
 
@@ -156,7 +157,7 @@ export default function ProjectDetail({ project, profile, onBack }) {
       {/* Header */}
       <div className="detail-header">
         <button className="back-btn" onClick={onBack}>
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M14 4l-6 6 6 6"/></svg>
+          <ChevronLeft size={20} strokeWidth={1.6} />
         </button>
         <div style={{ flex: 1 }}>
           <div className="detail-name">{project.name}</div>
@@ -394,7 +395,7 @@ export default function ProjectDetail({ project, profile, onBack }) {
           <div style={{ padding: '12px 16px' }}>
             {deadlines.length === 0 && (
               <div className="empty-state">
-                <div className="icon">📅</div>
+                <div className="icon"><CalendarDays size={32} strokeWidth={1.5} /></div>
                 <p>Δεν υπάρχουν προθεσμίες</p>
               </div>
             )}
@@ -427,7 +428,7 @@ export default function ProjectDetail({ project, profile, onBack }) {
                         </button>
                       ) : (
                         <button className="deadline-complete" onClick={() => markDeadlineComplete(d.id)}>
-                          ✓ Έγινε
+                          <Check size={14} strokeWidth={2} /> Έγινε
                         </button>
                       )}
                     </div>
