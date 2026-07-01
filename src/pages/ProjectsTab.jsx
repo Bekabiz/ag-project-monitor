@@ -127,6 +127,7 @@ export default function ProjectsTab({ profile, onSelectProject }) {
 
   return (
     <div>
+      <div className="projects-grid">
       {/* Add Project button - owner only */}
       {profile?.role === 'owner' && (
         <div
@@ -177,6 +178,7 @@ export default function ProjectsTab({ profile, onSelectProject }) {
           </div>
         )
       })}
+      </div>
 
       {/* Add/Edit Project Modal */}
       {showModal && (

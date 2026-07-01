@@ -263,6 +263,7 @@ export default function MonitorTab({ profile }) {
             <div className="empty-state" style={{ padding: '40px 16px' }}>Δεν έχεις αναθέσει εργασίες</div>
           )}
 
+          <div className="monitor-person-groups-grid">
           {Object.entries(tasksByPerson).map(([personName, group]) => (
             <div key={personName} className="monitor-person-group">
               <div className="monitor-person-header">
@@ -394,6 +395,7 @@ export default function MonitorTab({ profile }) {
               })()}
             </div>
           ))}
+          </div>
         </div>
       )}
 
@@ -453,7 +455,7 @@ export default function MonitorTab({ profile }) {
 
       {/* ========== OVERVIEW ========== */}
       {activeSection === 'overview' && (
-        <div>
+        <div className="monitor-overview-grid">
           <div className="monitor-overview-section">
             <div className="monitor-overview-title">Προθεσμίες {deadlines.filter(d => d.status === 'overdue').length > 0 && <span className="overdue-badge" style={{ marginLeft: 8 }}>{deadlines.filter(d => d.status === 'overdue').length}</span>}</div>
             {deadlines.length === 0 && <div className="monitor-overview-empty">Καμία εκκρεμότητα</div>}

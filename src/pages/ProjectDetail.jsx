@@ -161,7 +161,7 @@ export default function ProjectDetail({ project, profile, onBack }) {
         </button>
         <div style={{ flex: 1 }}>
           <div className="detail-name">{project.name}</div>
-          <div style={{ fontSize: 13, color: 'var(--text2)' }}>{project.location}</div>
+          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)' }}>{project.location}</div>
         </div>
       </div>
 
