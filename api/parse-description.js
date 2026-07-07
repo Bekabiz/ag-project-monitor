@@ -11,18 +11,22 @@ export default async function handler(req, res) {
 
 Extract the complete building structure from this document. Return a JSON object with:
 
-1. project_info: basic project details (title, location, owner, total_sqm, building_count, max_height)
-2. buildings: array of buildings, each with floors and rooms
-3. systems: mechanical/electrical systems mentioned (plumbing, electrical, heating, insulation, etc.)
-4. exterior: outdoor areas (parking, garden, pool, paths, etc.)
-5. materials: key construction materials mentioned
-6. construction_phases: main phases of work described
+1. building_type: detect the type from context. One of: house, apartment_building, cafe, hotel, office, warehouse, commercial, mixed_use, other
+2. building_type_confidence: 0-100 how confident you are
+3. project_info: basic project details (title, location, owner, total_sqm, building_count, max_height)
+4. buildings: array of buildings, each with floors and rooms
+5. systems: mechanical/electrical systems mentioned (plumbing, electrical, heating, insulation, ventilation, etc.)
+6. exterior: outdoor areas (parking, garden, pool, paths, etc.)
+7. materials: key construction materials mentioned
+8. construction_phases: main phases of work described
 
 For each room include: name, sqm if mentioned, floor.
 For each system include: name, type, description.
 
 Return ONLY valid JSON. No markdown fences. Exact format:
 {
+  "building_type": "house",
+  "building_type_confidence": 95,
   "project_info": {
     "title": "string",
     "location": "string",

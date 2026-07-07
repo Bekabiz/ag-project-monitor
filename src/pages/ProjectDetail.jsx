@@ -37,6 +37,7 @@ export default function ProjectDetail({ project, profile, onBack }) {
   const [lightboxUrl, setLightboxUrl] = useState(null)
   const [showUpload, setShowUpload] = useState(false)
   const [uploadStatus, setUploadStatus] = useState(null)
+  const [parsedStructure, setParsedStructure] = useState(null)
 
   useEffect(() => { loadData() }, [project.id])
 
@@ -72,67 +73,72 @@ export default function ProjectDetail({ project, profile, onBack }) {
       const data = await res.json()
       
       if (data.structure) {
-        setUploadStatus('saving')
-        const structure = data.structure
-        const areasToInsert = []
-
-        // Extract rooms from buildings
-        structure.buildings?.forEach((building, bi) => {
-          building.floors?.forEach(floor => {
-            floor.rooms?.forEach(room => {
-              areasToInsert.push({
-                project_id: project.id,
-                area_type: 'room',
-                area_name: room.name,
-                parent_area: `${building.name || 'Building ' + (bi+1)} - ${floor.name}`,
-                sqm: room.sqm || null,
-                details: { floor: floor.name, building: building.name }
-              })
-            })
-          })
-        })
-
-        // Extract systems
-        structure.systems?.forEach(sys => {
-          areasToInsert.push({
-            project_id: project.id,
-            area_type: 'system',
-            area_name: sys.name,
-            details: { description: sys.description }
-          })
-        })
-
-        // Extract exterior
-        structure.exterior?.forEach(ext => {
-          areasToInsert.push({
-            project_id: project.id,
-            area_type: 'exterior',
-            area_name: ext.name,
-            details: { description: ext.details }
-          })
-        })
-
-        if (areasToInsert.length > 0) {
-          await supabase.from('project_areas').insert(areasToInsert)
-        }
-
-        // Update project info if available
-        if (structure.project_info) {
-          const info = structure.project_info
-          await supabase.from('projects').update({
-            location: info.location || project.location,
-          }).eq('id', project.id)
-        }
-
-        setUploadStatus('done')
-        await loadData()
-        setTimeout(() => setUploadStatus(null), 2000)
+        setUploadStatus(null)
+        setParsedStructure(data.structure)
       }
     } catch (err) {
       console.error('Tech desc upload error:', err)
       setUploadStatus('error')
       setTimeout(() => setUploadStatus(null), 3000)
     }
+  }
+
+  // Save confirmed structure
+  async function saveConfirmedStructure() {
+    if (!parsedStructure) return
+    setUploadStatus('saving')
+    const structure = parsedStructure
+    const areasToInsert = []
+
+    structure.buildings?.forEach((building, bi) => {
+      building.floors?.forEach(floor => {
+        floor.rooms?.forEach(room => {
+          areasToInsert.push({
+            project_id: project.id,
+            area_type: 'room',
+            area_name: room.name,
+            parent_area: `${building.name || 'Building ' + (bi+1)} - ${floor.name}`,
+            sqm: room.sqm || null,
+            details: { floor: floor.name, building: building.name }
+          })
+        })
+      })
+    })
+
+    structure.systems?.forEach(sys => {
+      areasToInsert.push({
+        project_id: project.id,
+        area_type: 'system',
+        area_name: sys.name,
+        details: { description: sys.description }
+      })
+    })
+
+    structure.exterior?.forEach(ext => {
+      areasToInsert.push({
+        project_id: project.id,
+        area_type: 'exterior',
+        area_name: ext.name,
+        details: { description: ext.details }
+      })
+    })
+
+    if (areasToInsert.length > 0) {
+      await supabase.from('project_areas').insert(areasToInsert)
+    }
+
+    // Save building type and project info
+    const updateData = {}
+    if (structure.building_type) updateData.building_type = structure.building_type
+    if (structure.project_info?.location) updateData.location = structure.project_info.location
+    if (Object.keys(updateData).length > 0) {
+      await supabase.from('projects').update(updateData).eq('id', project.id)
+    }
+
+    setParsedStructure(null)
+    setUploadStatus('done')
+    await loadData()
+    setTimeout(() => setUploadStatus(null), 2000)
   }
 
   // Resolve deadline
@@ -207,6 +213,69 @@ export default function ProjectDetail({ project, profile, onBack }) {
           {uploadStatus === 'saving' && 'Saving project areas...'}
           {uploadStatus === 'done' && 'Project structure ready!'}
           {uploadStatus === 'error' && 'Error parsing document'}
+        </div>
+      )}
+
+      {/* Confirmation card after parsing */}
+      {parsedStructure && (
+        <div className="pd-confirm-overlay">
+          <div className="pd-confirm-card">
+            <div className="pd-confirm-title">AI found this structure</div>
+            
+            {parsedStructure.building_type && (
+              <div className="pd-confirm-type">
+                <span className="pd-confirm-label">Building type</span>
+                <span className="pd-confirm-value">{parsedStructure.building_type.replace('_', ' ')}</span>
+                {parsedStructure.building_type_confidence && (
+                  <span className="pd-confirm-confidence">{parsedStructure.building_type_confidence}% confidence</span>
+                )}
+              </div>
+            )}
+
+            <div className="pd-confirm-label">Areas</div>
+            {parsedStructure.buildings?.map((b, bi) => (
+              <div key={bi} className="pd-confirm-building">
+                <div className="pd-confirm-building-name">{b.name || `Building ${bi+1}`} {b.sqm ? `(${b.sqm} sqm)` : ''}</div>
+                {b.floors?.map((f, fi) => (
+                  <div key={fi} className="pd-confirm-floor">
+                    <div className="pd-confirm-floor-name">{f.name}</div>
+                    <div className="pd-confirm-rooms">
+                      {f.rooms?.map((r, ri) => (
+                        <span key={ri} className="pd-confirm-room-chip">{r.name} {r.sqm ? `${r.sqm}m2` : ''}</span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
+
+            {parsedStructure.systems?.length > 0 && (
+              <>
+                <div className="pd-confirm-label" style={{ marginTop: 12 }}>Systems</div>
+                <div className="pd-confirm-rooms">
+                  {parsedStructure.systems.map((s, i) => (
+                    <span key={i} className="pd-confirm-room-chip pd-confirm-system">{s.name}</span>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {parsedStructure.exterior?.length > 0 && (
+              <>
+                <div className="pd-confirm-label" style={{ marginTop: 12 }}>Exterior</div>
+                <div className="pd-confirm-rooms">
+                  {parsedStructure.exterior.map((e, i) => (
+                    <span key={i} className="pd-confirm-room-chip pd-confirm-exterior">{e.name}</span>
+                  ))}
+                </div>
+              </>
+            )}
+
+            <div className="pd-confirm-actions">
+              <button className="pd-confirm-btn-cancel" onClick={() => setParsedStructure(null)}>Cancel</button>
+              <button className="pd-confirm-btn-save" onClick={saveConfirmedStructure}>Confirm and save</button>
+            </div>
+          </div>
         </div>
       )}
 
