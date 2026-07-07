@@ -61,14 +61,75 @@ export default function ProjectDetail({ project, profile, onBack }) {
     setUploadStatus('reading')
     
     try {
-      // Read file text
-      const text = await file.text()
+      let textContent = ''
+      
+      if (file.name.endsWith('.txt')) {
+        // Plain text: read directly
+        textContent = await file.text()
+      } else {
+        // PDF or Word: upload to Supabase, send URL to API for processing
+        const ext = file.name.split('.').pop()
+        const path = `tech-descriptions/${project.id}.${ext}`
+        const { error: upErr } = await supabase.storage.from('files').upload(path, file, { upsert: true })
+        if (upErr) throw upErr
+        const { data: urlData } = supabase.storage.from('files').getPublicUrl(path)
+        
+        // For PDFs: extract text on the client by reading as array buffer
+        if (file.name.endsWith('.pdf')) {
+          // Read the raw bytes and extract visible text using a simple pattern
+          const arrayBuf = await file.arrayBuffer()
+          const bytes = new Uint8Array(arrayBuf)
+          let raw = ''
+          for (let i = 0; i < bytes.length; i++) {
+            const b = bytes[i]
+            if ((b >= 32 && b <= 126) || b === 10 || b === 13) raw += String.fromCharCode(b)
+            else if (b >= 192) {
+              // Try to decode UTF-8 Greek characters
+              if (i + 1 < bytes.length) {
+                const b2 = bytes[i + 1]
+                if (b >= 0xCE && b <= 0xCF && b2 >= 0x80 && b2 <= 0xBF) {
+                  try {
+                    const decoder = new TextDecoder('utf-8')
+                    const char = decoder.decode(new Uint8Array([b, b2]))
+                    raw += char
+                    i++
+                  } catch { raw += ' ' }
+                }
+              }
+            }
+          }
+          // Clean: remove PDF operators and keep readable text
+          const lines = raw.split(/[\r\n]+/)
+          const readableLines = lines.filter(line => {
+            const trimmed = line.trim()
+            if (trimmed.length < 3) return false
+            if (/^[0-9\s.%<>\/\[\](){}]+$/.test(trimmed)) return false
+            if (/^(obj|endobj|stream|endstream|xref|trailer|startxref)/.test(trimmed)) return false
+            if (trimmed.includes('/Type') || trimmed.includes('/Font') || trimmed.includes('/Page')) return false
+            // Keep lines with Greek or enough Latin text
+            return /[α-ωΑ-Ωά-ώa-zA-Z]{3,}/.test(trimmed)
+          })
+          textContent = readableLines.join('\n')
+        } else {
+          // For docx and other formats, try reading as text
+          textContent = await file.text()
+        }
+      }
+      
+      if (!textContent || textContent.trim().length < 50) {
+        // Fallback: if text extraction failed, tell user
+        setUploadStatus('error')
+        alert('Could not read the document. Please copy the text from the PDF and save it as a .txt file, then upload that.')
+        setTimeout(() => setUploadStatus(null), 3000)
+        return
+      }
+      
       setUploadStatus('parsing')
       
       const res = await fetch('/api/parse-description', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text })
+        body: JSON.stringify({ text: textContent })
       })
       const data = await res.json()
       
