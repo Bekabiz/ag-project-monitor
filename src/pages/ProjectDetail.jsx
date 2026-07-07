@@ -151,13 +151,29 @@ export default function ProjectDetail({ project, profile, onBack }) {
     const structure = parsedStructure
     const areasToInsert = []
 
+    const totalBuildings = structure.buildings?.length || 0
+
     structure.buildings?.forEach((building, bi) => {
+      const bLabel = totalBuildings > 1 ? `B${bi+1}` : ''
+      
       building.floors?.forEach(floor => {
+        // Short floor label: Ground floor -> GF, First floor -> F1, etc.
+        const fName = floor.name || ''
+        let fLabel = fName
+        if (/ground|ισόγειο|isog/i.test(fName)) fLabel = 'GF'
+        else if (/first|1st|α.*όροφ/i.test(fName)) fLabel = 'F1'
+        else if (/second|2nd|β.*όροφ/i.test(fName)) fLabel = 'F2'
+        else if (/basement|υπόγ/i.test(fName)) fLabel = 'BS'
+        else if (/roof|δώμα|στέγ/i.test(fName)) fLabel = 'RF'
+        
+        const prefix = [bLabel, fLabel].filter(Boolean).join(' ')
+        
         floor.rooms?.forEach(room => {
+          const fullName = prefix ? `${prefix} ${room.name}` : room.name
           areasToInsert.push({
             project_id: project.id,
             area_type: 'room',
-            area_name: room.name,
+            area_name: fullName,
             parent_area: `${building.name || 'Building ' + (bi+1)} - ${floor.name}`,
             sqm: room.sqm || null,
             details: { floor: floor.name, building: building.name }
