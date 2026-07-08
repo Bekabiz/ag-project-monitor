@@ -77,7 +77,7 @@ export default function InputTab({ profile }) {
       const matchedProject = extracted?.project_name
         ? projects.find(p => p.name === extracted.project_name)
         : null
-      const targetProject = matchedProject || selected
+      const targetProject = selected
 
       // Handle multiple entries from AI (one voice message can produce multiple entries)
       const entries = extracted?.entries || []
