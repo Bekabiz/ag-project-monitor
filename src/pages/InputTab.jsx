@@ -36,21 +36,20 @@ export default function InputTab({ profile }) {
   async function handleTextSubmit() {
     if (!selected || !text.trim()) return
     
-    // Team members: save directly, no AI
-    if (profile?.role !== 'owner') {
-      await saveEntry(text.trim(), null)
-      setText('')
-      return
-    }
-
-    // Owner: go through AI extraction
+    // All users go through AI extraction for structured data
     setExtracting(true)
     try {
       const projectNames = projects.map(p => p.name)
+      // Load project areas for the selected project
+      let projectAreas = []
+      if (selected) {
+        const { data: areas } = await supabase.from('project_areas').select('area_name').eq('project_id', selected.id)
+        projectAreas = (areas || []).map(a => a.area_name)
+      }
       const res = await fetch('/api/extract', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: text.trim(), projectNames })
+        body: JSON.stringify({ text: text.trim(), projectNames, projectAreas })
       })
 
       if (!res.ok) {
@@ -71,7 +70,7 @@ export default function InputTab({ profile }) {
     setExtracting(false)
   }
 
-  // Save entry (with or without AI extraction)
+  // Save entry (with or without AI extraction) - now with structured fields
   async function saveEntry(rawText, extracted, type = 'text') {
     setSending(true)
     try {
@@ -80,22 +79,55 @@ export default function InputTab({ profile }) {
         : null
       const targetProject = matchedProject || selected
 
-      const { error } = await supabase.from('entries').insert({
-        project_id: targetProject.id,
-        user_id: profile.id,
-        entry_type: type,
-        raw_text: rawText,
-        ai_summary: extracted?.summary || rawText.substring(0, 200),
-        ai_extracted: extracted ? {
-          people: extracted.people,
-          deadline_description: extracted.deadline_description,
-          deadline_date: extracted.deadline_date,
-          budget_change: extracted.budget_change,
-          action_items: extracted.action_items
-        } : null,
-        is_team_visible: teamVisible
-      })
-      if (error) throw error
+      // Handle multiple entries from AI (one voice message can produce multiple entries)
+      const entries = extracted?.entries || []
+      
+      if (entries.length > 0) {
+        // Save each structured entry
+        for (const entry of entries) {
+          await supabase.from('entries').insert({
+            project_id: targetProject.id,
+            user_id: profile.id,
+            entry_type: type,
+            raw_text: entry.text || rawText,
+            ai_summary: extracted?.summary || entry.text?.substring(0, 200),
+            title: entry.title || null,
+            category: entry.category || null,
+            tags: entry.tags || null,
+            entry_status: entry.entry_status || null,
+            ai_extracted: extracted ? {
+              people: extracted.people,
+              deadline_description: extracted.deadline_description,
+              deadline_date: extracted.deadline_date,
+              budget_change: extracted.budget_change,
+              action_items: extracted.action_items
+            } : null,
+            is_team_visible: teamVisible,
+            submitter_name: profile.full_name
+          })
+        }
+      } else {
+        // Fallback: save as single entry (no AI entries array)
+        await supabase.from('entries').insert({
+          project_id: targetProject.id,
+          user_id: profile.id,
+          entry_type: type,
+          raw_text: rawText,
+          ai_summary: extracted?.summary || rawText.substring(0, 200),
+          title: extracted?.summary?.substring(0, 80) || null,
+          category: null,
+          tags: null,
+          ai_extracted: extracted ? {
+            people: extracted.people,
+            deadline_description: extracted.deadline_description,
+            deadline_date: extracted.deadline_date,
+            budget_change: extracted.budget_change,
+            action_items: extracted.action_items
+          } : null,
+          is_team_visible: teamVisible,
+          submitter_name: profile.full_name
+        })
+      }
 
       // If deadline extracted, save to deadlines table
       if (extracted?.deadline_date && extracted?.deadline_description) {
@@ -443,6 +475,37 @@ export default function InputTab({ profile }) {
                     <option key={p.id} value={p.name}>{p.name}</option>
                   ))}
                 </select>
+              </div>
+            )}
+
+            {/* Structured entries from AI */}
+            {confirm.extracted.entries?.length > 0 && (
+              <div className="confirm-field">
+                <div className="confirm-label">AI found {confirm.extracted.entries.length} {confirm.extracted.entries.length === 1 ? 'entry' : 'entries'}</div>
+                {confirm.extracted.entries.map((entry, i) => (
+                  <div key={i} className="confirm-entry-card">
+                    <div className="confirm-entry-header">
+                      <span className={`confirm-cat-pill confirm-cat-${entry.category}`}>
+                        {entry.category === 'work_update' ? 'Work update' : 
+                         entry.category === 'problem' ? 'Problem' :
+                         entry.category === 'decision' ? 'Decision' :
+                         entry.category === 'material' ? 'Material' :
+                         entry.category === 'client_request' ? 'Client' :
+                         'Note'}
+                      </span>
+                      {entry.entry_status && (
+                        <span className="confirm-status-pill">{entry.entry_status}</span>
+                      )}
+                    </div>
+                    <div className="confirm-entry-title">{entry.title}</div>
+                    <div className="confirm-entry-text">{entry.text}</div>
+                    {entry.tags?.length > 0 && (
+                      <div className="confirm-entry-tags">
+                        {entry.tags.map(t => <span key={t} className="confirm-tag">{t}</span>)}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
 

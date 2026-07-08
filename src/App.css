@@ -1913,3 +1913,58 @@ body {
   cursor: pointer; font-family: inherit;
 }
 .pd-confirm-btn-save:hover { background: #1d4ed8; }
+
+/* ===== SEARCH UI ===== */
+.search-bar { display: flex; gap: 8px; margin-bottom: 10px; }
+.search-input {
+  flex: 1; padding: 12px 14px; border-radius: 10px;
+  border: 1px solid #d1d5db; font-size: 15px; font-family: inherit;
+  background: white; color: #111827;
+}
+.search-input:focus { border-color: #2563eb; outline: none; box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
+.search-go-btn {
+  padding: 12px 20px; border-radius: 10px; border: none;
+  background: #2563eb; color: white; font-weight: 600;
+  font-size: 14px; cursor: pointer; font-family: inherit;
+}
+.search-go-btn:disabled { opacity: 0.5; }
+.search-filters { display: flex; gap: 6px; margin-bottom: 14px; overflow-x: auto; }
+.search-filter-chip {
+  padding: 6px 14px; border-radius: 100px; font-size: 12px; font-weight: 600;
+  border: 1px solid #e5e7eb; background: white; color: #6b7280;
+  cursor: pointer; white-space: nowrap; font-family: inherit;
+}
+.search-filter-chip.active { background: #2563eb; color: white; border-color: #2563eb; }
+.search-result-card {
+  background: white; border: 1px solid #e5e7eb; border-radius: 10px;
+  padding: 12px 14px; margin-bottom: 6px; border-left: 3px solid #e5e7eb;
+}
+.search-result-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.search-result-cat { font-size: 11px; font-weight: 700; text-transform: capitalize; }
+.search-result-date { font-size: 11px; color: #9ca3af; }
+.search-result-title { font-size: 14px; font-weight: 600; color: #111827; margin-bottom: 2px; }
+.search-result-meta { font-size: 12px; color: #9ca3af; }
+.search-result-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+.search-result-tag { font-size: 11px; padding: 2px 8px; border-radius: 4px; background: #f3f4f6; color: #6b7280; }
+
+/* ===== CONFIRMATION ENTRIES ===== */
+.confirm-entry-card {
+  background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px;
+  padding: 10px 12px; margin-bottom: 6px;
+}
+.confirm-entry-header { display: flex; gap: 6px; align-items: center; margin-bottom: 4px; }
+.confirm-cat-pill {
+  font-size: 11px; font-weight: 700; padding: 2px 10px;
+  border-radius: 100px; text-transform: capitalize;
+}
+.confirm-cat-work_update { background: #ecfdf5; color: #059669; }
+.confirm-cat-problem { background: #fef2f2; color: #dc2626; }
+.confirm-cat-decision { background: #eff6ff; color: #2563eb; }
+.confirm-cat-material { background: #f5f3ff; color: #7c3aed; }
+.confirm-cat-client_request { background: #fffbeb; color: #d97706; }
+.confirm-cat-note { background: #f3f4f6; color: #6b7280; }
+.confirm-status-pill { font-size: 11px; font-weight: 600; padding: 2px 10px; border-radius: 100px; background: #fef2f2; color: #dc2626; }
+.confirm-entry-title { font-size: 14px; font-weight: 600; color: #111827; }
+.confirm-entry-text { font-size: 13px; color: #6b7280; margin-top: 2px; }
+.confirm-entry-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+.confirm-tag { font-size: 11px; padding: 2px 8px; border-radius: 4px; background: #e5e7eb; color: #374151; }

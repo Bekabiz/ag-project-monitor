@@ -25,6 +25,12 @@ export default function MonitorTab({ profile }) {
   const mediaRecorderRef = useRef(null)
   const audioChunksRef = useRef([])
 
+  // Search
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState([])
+  const [searching, setSearching] = useState(false)
+  const [searchFilter, setSearchFilter] = useState({ category: null, project: null })
+
   useEffect(() => { loadData() }, [])
 
   async function loadData() {
@@ -169,10 +175,41 @@ export default function MonitorTab({ profile }) {
   async function registerToTimeline(task) {
     if (!task.project_id) return
     const latestNote = taskNotes[task.id]?.[0]?.text || ''
+    const fullText = `Task completed: ${task.title}${latestNote ? '. Note: ' + latestNote : ''}`
+    
+    // Call AI to categorize the completed task
+    let category = 'work_update'
+    let tags = []
+    let title = task.title
+    try {
+      const { data: projs } = await supabase.from('projects').select('name').eq('status', 'active')
+      const { data: areas } = await supabase.from('project_areas').select('area_name').eq('project_id', task.project_id)
+      const res = await fetch('/api/extract', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: fullText,
+          projectNames: (projs || []).map(p => p.name),
+          projectAreas: (areas || []).map(a => a.area_name)
+        })
+      })
+      if (res.ok) {
+        const { extracted } = await res.json()
+        if (extracted?.entries?.[0]) {
+          category = extracted.entries[0].category || 'work_update'
+          tags = extracted.entries[0].tags || []
+          title = extracted.entries[0].title || task.title
+        }
+      }
+    } catch (err) { console.log('AI categorize skipped:', err) }
+
     await supabase.from('entries').insert({
       project_id: task.project_id, user_id: profile.id, entry_type: 'text',
-      raw_text: `✅ ${task.title}${latestNote ? ' \u2014 ' + latestNote : ''}`,
-      ai_summary: `Ολοκλήρωση: ${task.title}. ${task.assigned_to_name || ''}`,
+      raw_text: fullText,
+      ai_summary: title,
+      title: title,
+      category: category,
+      tags: tags.length > 0 ? tags : null,
       is_team_visible: true, submitter_name: task.assigned_to_name || profile.full_name
     })
     await supabase.from('steps').update({ registered_to_timeline: true }).eq('id', task.id)
@@ -232,9 +269,11 @@ export default function MonitorTab({ profile }) {
           Εργασίες
           {pendingReview > 0 && <span className="monitor-sw-count" style={{ background: 'var(--red)' }}>{pendingReview}</span>}
         </button>
+        <button className={`monitor-sw-btn ${activeSection === 'search' ? 'active' : ''}`} onClick={() => setActiveSection('search')}>
+          Αναζήτηση
+        </button>
         <button className={`monitor-sw-btn ${activeSection === 'planner' ? 'active' : ''}`} onClick={() => setActiveSection('planner')}>
           Σχεδιασμός
-          {plans.length > 0 && <span className="monitor-sw-count">{plans.length}</span>}
         </button>
         <button className={`monitor-sw-btn ${activeSection === 'overview' ? 'active' : ''}`} onClick={() => setActiveSection('overview')}>
           Εποπτεία
@@ -396,6 +435,94 @@ export default function MonitorTab({ profile }) {
             </div>
           ))}
           </div>
+        </div>
+      )}
+
+      {/* ========== SEARCH ========== */}
+      {activeSection === 'search' && (
+        <div>
+          <div className="search-bar">
+            <input
+              className="search-input"
+              placeholder="Search projects, problems, decisions..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && searchQuery.trim()) {
+                  setSearching(true)
+                  fetch('/api/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      query: searchQuery.trim(),
+                      projectId: searchFilter.project || undefined,
+                      category: searchFilter.category || undefined
+                    })
+                  }).then(r => r.json()).then(data => {
+                    setSearchResults(data.results || [])
+                    setSearching(false)
+                  }).catch(() => setSearching(false))
+                }
+              }}
+            />
+            <button className="search-go-btn" onClick={() => {
+              if (!searchQuery.trim()) return
+              setSearching(true)
+              fetch('/api/search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  query: searchQuery.trim(),
+                  projectId: searchFilter.project || undefined,
+                  category: searchFilter.category || undefined
+                })
+              }).then(r => r.json()).then(data => {
+                setSearchResults(data.results || [])
+                setSearching(false)
+              }).catch(() => setSearching(false))
+            }} disabled={searching || !searchQuery.trim()}>
+              {searching ? '...' : 'Go'}
+            </button>
+          </div>
+
+          {/* Filter chips */}
+          <div className="search-filters">
+            {['problem','decision','material','work_update','client_request'].map(cat => (
+              <button key={cat} className={`search-filter-chip ${searchFilter.category === cat ? 'active' : ''}`}
+                onClick={() => setSearchFilter(prev => ({ ...prev, category: prev.category === cat ? null : cat }))}>
+                {cat === 'problem' ? 'Problems' : cat === 'decision' ? 'Decisions' : cat === 'material' ? 'Materials' : cat === 'work_update' ? 'Work' : 'Client'}
+              </button>
+            ))}
+          </div>
+
+          {/* Results */}
+          {searching && <div className="loading-inline"><div className="spinner" /></div>}
+          {!searching && searchResults.length === 0 && searchQuery && (
+            <div style={{ textAlign: 'center', padding: '40px 16px', color: '#9ca3af', fontSize: 14 }}>
+              No results found
+            </div>
+          )}
+          {searchResults.map(r => {
+            const catColors = { problem: '#dc2626', decision: '#2563eb', material: '#7c3aed', work_update: '#059669', client_request: '#d97706', note: '#6b7280' }
+            return (
+              <div key={r.id} className="search-result-card" style={{ borderLeftColor: catColors[r.category] || '#e5e7eb' }}>
+                <div className="search-result-top">
+                  {r.category && <span className="search-result-cat" style={{ color: catColors[r.category] }}>{r.category.replace('_', ' ')}</span>}
+                  <span className="search-result-date">{new Date(r.created_at).toLocaleDateString('el-GR', { day: 'numeric', month: 'short' })}</span>
+                </div>
+                <div className="search-result-title">{r.title || r.ai_summary || r.raw_text?.slice(0, 80)}</div>
+                <div className="search-result-meta">
+                  <span>{r.projects?.name || ''}</span>
+                  {r.submitter_name && <><span style={{ margin: '0 4px', opacity: 0.3 }}>.</span><span>{r.submitter_name}</span></>}
+                </div>
+                {r.tags?.length > 0 && (
+                  <div className="search-result-tags">
+                    {r.tags.map(t => <span key={t} className="search-result-tag">{t}</span>)}
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
       )}
 
