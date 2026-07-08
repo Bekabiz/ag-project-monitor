@@ -28,11 +28,10 @@ Rules:
 
 STRUCTURED CLASSIFICATION (NEW):
 - category: classify as exactly ONE of: work_update, problem, decision, material, client_request, note
-- tags: generate 2-4 normalized Greek keywords describing the topic (e.g. "μπάνιο", "υδραυλικά", "πλακάκια", "στέγη"). Use consistent normalized words, not variations.
+- tags: generate 2-4 tags describing the topic. IMPORTANT: If "Known project areas" are listed above, you MUST use those EXACT area names as tags when the content relates to one of those areas (e.g. if areas include "B1 GF Kitchen" and the text mentions kitchen work, use "B1 GF Kitchen" as a tag, NOT "κουζίνα"). You may add additional descriptive tags in Greek alongside the area tag (e.g. ["B1 GF Kitchen", "υδραυλικά"]). If no area matches, use normalized Greek keywords.
 - entry_status: for problems set "open", for decisions set null, for everything else set null
 - title: a short Greek title (5-10 words) summarizing the entry
 - If the input contains MULTIPLE distinct topics (e.g. a material delivery AND a problem), split into multiple entries in the "entries" array.
-- If known project areas are provided, match tags to the closest area names.
 
 Return ONLY valid JSON, no markdown fences, no explanation. Exact format:
 {"project_name":"string or null","people":["string"],"deadline_description":"string or empty","deadline_date":"YYYY-MM-DD or null","budget_change":0,"action_items":["string"],"summary":"Greek summary","entries":[{"category":"work_update","title":"short Greek title","text":"Greek description","tags":["tag1","tag2"],"entry_status":null}]}`

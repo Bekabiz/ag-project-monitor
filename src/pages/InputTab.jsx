@@ -140,7 +140,9 @@ export default function InputTab({ profile }) {
       }
 
       setText('')
-      setConfirm(null)
+      // setTimeout prevents React DOM "removeChild" crash
+      // when confirmation card unmounts during render cycle
+      setTimeout(() => setConfirm(null), 100)
       showToast('Αποθηκεύτηκε')
     } catch (err) {
       showToast('Σφάλμα: ' + err.message, true)
