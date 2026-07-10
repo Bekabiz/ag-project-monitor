@@ -1980,17 +1980,17 @@ body {
 
 /* Header: clean teal like Upstream sidebar */
 .app-header {
-  background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%);
+  background: #1a1d1c;
   border-bottom: none;
   padding: 14px 20px;
 }
 .app-header h1 { color: #ffffff; font-weight: 700; letter-spacing: -0.02em; }
 .ag-logo {
-  background: rgba(255,255,255,0.95);
-  color: #0f766e;
+  background: #0d9488;
+  color: #ffffff;
   font-weight: 700;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(4, 47, 46, 0.18);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 .user-badge {
   background: rgba(255,255,255,0.14);
@@ -2001,7 +2001,7 @@ body {
 }
 .user-badge:hover { background: rgba(255,255,255,0.24); color: #fff; }
 
-.detail-header { background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%); }
+.detail-header { background: #1a1d1c; }
 .detail-name { color: #fff; font-weight: 700; }
 .back-btn {
   background: rgba(255,255,255,0.16);
@@ -2352,3 +2352,71 @@ body {
 .login-card { border-radius: 20px; border: 1px solid var(--border); box-shadow: 0 12px 40px rgba(11,21,18,0.06); }
 .login-form button { border-radius: 100px; background: var(--accent); }
 .login-form input { border-radius: 100px; }
+
+/* ============================================================
+   CHARCOAL REFINEMENT — dark ink header, real card depth
+   ============================================================ */
+
+/* Header: charcoal, not green */
+.app-header, .detail-header { background: #1a1d1c; }
+.login-logo { background: #1a1d1c; box-shadow: 0 8px 24px rgba(0,0,0,0.20); }
+
+/* Cards: real soft shadow, visible lift */
+.project-card, .step-card, .person-update-card, .monitor-person-group,
+.monitor-overview-section, .search-result-card, .plan-card, .deadline-card,
+.monitor-stat, .confirm-entry-card, .announcement-card {
+  border: 1px solid rgba(11, 21, 18, 0.05);
+  box-shadow:
+    0 1px 2px rgba(11, 21, 18, 0.04),
+    0 4px 12px rgba(11, 21, 18, 0.05);
+}
+.project-card:hover, .person-update-card:hover, .step-card:hover {
+  border-color: rgba(11, 21, 18, 0.08);
+  box-shadow:
+    0 2px 4px rgba(11, 21, 18, 0.05),
+    0 10px 24px rgba(11, 21, 18, 0.09);
+  transform: translateY(-2px);
+}
+
+/* Monitor person group: header strip tinted */
+.monitor-person-header { background: #fbfcfc; }
+
+/* Accent stays teal but used sparingly: buttons, active states only */
+.new-task-fab {
+  background: #1a1d1c;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+}
+.new-task-fab:hover { background: #0b0e0d; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24); }
+.action-btn.primary { background: #1a1d1c; box-shadow: 0 2px 8px rgba(0,0,0,0.14); }
+.action-btn.primary:hover { background: #0b0e0d; }
+.search-go-btn { background: #1a1d1c; }
+.search-go-btn:hover { background: #0b0e0d; }
+.login-form button { background: #1a1d1c; }
+.pd-confirm-btn-save { background: #1a1d1c; }
+.pd-confirm-btn-save:hover { background: #0b0e0d; }
+
+/* Active states keep teal as the single chromatic accent */
+.tab.active { color: #0d9488; }
+.tab.active .tab-icon-wrap { background: #ccfbf1; }
+.monitor-sw-btn.active { color: #0d9488; }
+.step-status-btn.step-status-active { background: #0d9488; border-color: #0d9488; }
+.search-filter-chip.active { background: #1a1d1c; border-color: #1a1d1c; }
+
+/* Avatars: charcoal with teal ring */
+.person-avatar, .monitor-person-avatar {
+  background: #1a1d1c;
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 3.5px #0d948833;
+}
+
+/* Stat numbers: first stat teal, rest semantic */
+.monitor-stat:nth-child(1) .monitor-stat-num { color: #0d9488; }
+
+/* Section tick: teal kept as eyebrow accent */
+.today-section-header::before { background: #0d9488; }
+
+/* User badge on dark header */
+.user-badge {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.14);
+}
+.user-badge:hover { background: rgba(255,255,255,0.16); }
