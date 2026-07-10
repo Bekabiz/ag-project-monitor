@@ -448,6 +448,19 @@ export default function TodayTab({ profile, onBadgeCount }) {
 
   return (
     <div>
+      {/* ===== GREETING HEADER ===== */}
+      <div className="today-greeting">
+        <div>
+          <div className="today-date">{new Date().toLocaleDateString('el-GR', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
+          <h2 className="today-hello">Καλημέρα, {profile?.full_name?.split(' ')[0] || ''}</h2>
+        </div>
+        {profile?.role === 'owner' && (
+          <button className="announcement-add-compact" onClick={() => setShowAnnouncementModal(true)}>
+            <Bell size={15} strokeWidth={1.8} /> Ανακοίνωση
+          </button>
+        )}
+      </div>
+
       {/* ===== ANNOUNCEMENTS (pinned) ===== */}
       {announcements.length > 0 && (
         <div className="announcements-section">
@@ -466,13 +479,6 @@ export default function TodayTab({ profile, onBadgeCount }) {
             </div>
           ))}
         </div>
-      )}
-
-      {/* Owner: New announcement button */}
-      {profile?.role === 'owner' && (
-        <button className="announcement-add-btn" onClick={() => setShowAnnouncementModal(true)}>
-          <Bell size={16} strokeWidth={1.6} /> Ανακοίνωση
-        </button>
       )}
 
       {/* ===== PLAN REMINDERS (owner only) ===== */}
@@ -578,7 +584,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
           <MessageCircle size={16} strokeWidth={1.6} />
           <span>Ενημερώσεις σήμερα</span>
         </div>
-        {Object.keys(personUpdates).length === 0 && <div className="empty-state" style={{ padding: '24px 16px' }}>Δεν υπάρχουν ενημερώσεις σήμερα</div>}
+        {Object.keys(personUpdates).length === 0 && <div className="updates-quiet-note">Καμία ενημέρωση ακόμη σήμερα</div>}
         {Object.entries(personUpdates).map(([name, items]) => (
           <div key={name} className="person-update-card" onClick={() => setExpandedPerson(expandedPerson === name ? null : name)}>
             <div className="person-update-header">
