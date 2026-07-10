@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './lib/supabase'
-import { CalendarDays, LayoutGrid, PlusCircle, Activity, LogOut } from 'lucide-react'
+import { Home, FolderOpen, Mic, BarChart3, LogOut, ChevronDown } from 'lucide-react'
 import Login from './pages/Login'
 import TodayTab from './pages/TodayTab'
 import InputTab from './pages/InputTab'
@@ -62,8 +62,11 @@ export default function App() {
               setProfile(null)
             }
           }} style={{ cursor: 'pointer' }}>
-            <LogOut size={14} strokeWidth={1.6} style={{ opacity: 0.5, marginRight: 4 }} />
+            <span style={{ width: 26, height: 26, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600 }}>
+              {profile.full_name?.charAt(0)}
+            </span>
             {profile.full_name}
+            <ChevronDown size={14} strokeWidth={1.8} style={{ opacity: 0.5 }} />
           </span>
         )}
       </header>
@@ -83,7 +86,7 @@ export default function App() {
           onClick={() => { setActiveTab('today'); setTodayBadge(0) }}
         >
           <div className="tab-icon-wrap" style={{ position: 'relative', display: 'inline-flex' }}>
-            <CalendarDays size={20} strokeWidth={1.6} />
+            <Home size={20} strokeWidth={1.8} />
             {todayBadge > 0 && activeTab !== 'today' && <span className="nav-badge">{todayBadge > 9 ? '9+' : todayBadge}</span>}
           </div>
           <span>Σήμερα</span>
@@ -93,7 +96,7 @@ export default function App() {
           onClick={() => setActiveTab('projects')}
         >
           <div className="tab-icon-wrap">
-            <LayoutGrid size={20} strokeWidth={1.6} />
+            <FolderOpen size={20} strokeWidth={1.8} />
           </div>
           <span>Έργα</span>
         </button>
@@ -102,7 +105,7 @@ export default function App() {
           onClick={() => setActiveTab('input')}
         >
           <div className="tab-icon-wrap">
-            <PlusCircle size={20} strokeWidth={1.6} />
+            <Mic size={20} strokeWidth={1.8} />
           </div>
           <span>Εισαγωγή</span>
         </button>
@@ -112,7 +115,7 @@ export default function App() {
             onClick={() => setActiveTab('summary')}
           >
             <div className="tab-icon-wrap">
-              <Activity size={20} strokeWidth={1.6} />
+              <BarChart3 size={20} strokeWidth={1.8} />
             </div>
             <span>Κέντρο</span>
           </button>

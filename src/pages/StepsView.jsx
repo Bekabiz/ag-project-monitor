@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { AlertTriangle, Plus, Paperclip, ChevronDown, Send, Mic } from 'lucide-react'
+import { AlertTriangle, Plus, Paperclip, ChevronDown, Send, Mic, Clock, Flag } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 export default function StepsView({ project, profile }) {

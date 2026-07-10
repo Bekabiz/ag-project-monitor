@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Pencil, Briefcase } from 'lucide-react'
+import { Plus, Pencil, Building2, MapPin } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 export default function ProjectsTab({ profile, onSelectProject }) {
@@ -118,7 +118,7 @@ export default function ProjectsTab({ profile, onSelectProject }) {
     return (
       <div className="empty-state">
         <div className="icon">
-          <Briefcase size={32} strokeWidth={1.5} />
+          <Building2 size={32} strokeWidth={1.5} />
         </div>
         <p>Δεν υπάρχουν έργα</p>
       </div>

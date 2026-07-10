@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Lock, Users, Mic, Camera, FileText, Check, RefreshCw } from 'lucide-react'
+import { Eye, EyeOff, Mic, Camera, FileUp, Check, RotateCcw } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 export default function InputTab({ profile }) {
@@ -382,13 +382,13 @@ export default function InputTab({ profile }) {
                 className={`vis-btn ${!teamVisible ? 'active' : ''}`}
                 onClick={() => setTeamVisible(false)}
               >
-                <Lock size={14} strokeWidth={1.6} /> Μόνο εγώ
+                <Eye size={14} strokeWidth={1.6} /> Μόνο εγώ
               </button>
               <button
                 className={`vis-btn ${teamVisible ? 'active' : ''}`}
                 onClick={() => setTeamVisible(true)}
               >
-                <Users size={14} strokeWidth={1.6} /> Η ομάδα
+                <EyeOff size={14} strokeWidth={1.6} /> Η ομάδα
               </button>
             </div>
           )}
@@ -427,7 +427,7 @@ export default function InputTab({ profile }) {
               Φωτογραφία
             </div>
             <div className="upload-btn" onClick={() => setShowFileModal('document')}>
-              <FileText size={20} strokeWidth={1.6} />
+              <FileUp size={20} strokeWidth={1.6} />
               Αρχείο
             </div>
           </div>
@@ -448,7 +448,7 @@ export default function InputTab({ profile }) {
               title="Επανάληψη ανάλυσης AI"
             >
               {extracting ? <span className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} /> : (
-                <RefreshCw size={14} strokeWidth={1.6} />
+                <RotateCcw size={14} strokeWidth={1.6} />
               )}
               AI
             </button>

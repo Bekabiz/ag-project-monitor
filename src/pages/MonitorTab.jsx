@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Check, X, PlusCircle, AlertTriangle, Paperclip, ChevronDown, Send, Mic, Plus, CheckCircle2 } from 'lucide-react'
+import { Check, X, PlusCircle, AlertTriangle, Paperclip, ChevronDown, Send, Mic, Plus, CheckCircle2, Search, Calendar, Filter, Eye } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 export default function MonitorTab({ profile }) {

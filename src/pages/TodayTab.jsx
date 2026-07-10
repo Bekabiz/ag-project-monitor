@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Megaphone, X, Plus, CheckSquare, MessageSquare, AlertTriangle, Paperclip, ChevronDown, Send, Mic, Sparkles, CircleDot, Clock, Pause, CheckCircle2, User, Users } from 'lucide-react'
+import { Bell, X, Plus, ClipboardCheck, MessageCircle, AlertTriangle, Paperclip, ChevronDown, Send, Mic, Sparkles, CircleDot, Clock, Square, CheckCircle2, User, Users } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 export default function TodayTab({ profile, onBadgeCount }) {
@@ -453,7 +453,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
         <div className="announcements-section">
           {announcements.map(ann => (
             <div key={ann.id} className="announcement-card">
-              <div className="announcement-icon"><Megaphone size={18} strokeWidth={1.6} /></div>
+              <div className="announcement-icon"><Bell size={18} strokeWidth={1.6} /></div>
               <div style={{ flex: 1 }}>
                 <div className="announcement-text">{ann.text}</div>
                 <div className="announcement-meta">
@@ -471,7 +471,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
       {/* Owner: New announcement button */}
       {profile?.role === 'owner' && (
         <button className="announcement-add-btn" onClick={() => setShowAnnouncementModal(true)}>
-          <Megaphone size={16} strokeWidth={1.6} /> Ανακοίνωση
+          <Bell size={16} strokeWidth={1.6} /> Ανακοίνωση
         </button>
       )}
 
@@ -500,7 +500,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
       {/* ===== MY TASKS ===== */}
       <div className="today-section">
         <div className="today-section-header">
-          <CheckSquare size={16} strokeWidth={1.6} />
+          <ClipboardCheck size={16} strokeWidth={1.6} />
           <span>Οι εργασίες μου ({mySteps.length})</span>
           {overdueCount > 0 && <span className="overdue-badge">{overdueCount} εκπρόθεσμ{overdueCount > 1 ? 'ες' : 'η'}</span>}
         </div>
@@ -575,7 +575,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
       {/* ===== UPDATES BY PERSON ===== */}
       <div className="today-section">
         <div className="today-section-header">
-          <MessageSquare size={16} strokeWidth={1.6} />
+          <MessageCircle size={16} strokeWidth={1.6} />
           <span>Ενημερώσεις σήμερα</span>
         </div>
         {Object.keys(personUpdates).length === 0 && <div className="empty-state" style={{ padding: '24px 16px' }}>Δεν υπάρχουν ενημερώσεις σήμερα</div>}
@@ -653,7 +653,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
       {showAnnouncementModal && (
         <div className="modal-overlay" onClick={() => setShowAnnouncementModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <p className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Megaphone size={18} strokeWidth={1.6} /> Νέα ανακοίνωση</p>
+            <p className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Bell size={18} strokeWidth={1.6} /> Νέα ανακοίνωση</p>
             <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
               <textarea className="modal-input" placeholder="Γράψε ή μίλα..." value={annText}
                 onChange={e => setAnnText(e.target.value)} rows={3} autoFocus style={{ flex: 1, resize: 'vertical', fontFamily: 'inherit' }} />
