@@ -3,12 +3,12 @@ import { db, dbRead, supabase } from '../lib/db'
 import StepsView from './StepsView'
 
 const CAT_CONFIG = {
-  problem: { label: 'Problems', icon: 'M12 9v2m0 4h.01M5.07 19H19a2 2 0 001.75-2.96L13.75 4a2 2 0 00-3.5 0L3.32 16.04A2 2 0 005.07 19z', color: '#dc2626', bg: '#fef2f2' },
-  decision: { label: 'Decisions', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', color: '#0d9488', bg: '#f0fdfa' },
-  material: { label: 'Materials', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', color: '#7c3aed', bg: '#f5f3ff' },
-  work_update: { label: 'Work updates', icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4', color: '#059669', bg: '#ecfdf5' },
-  client_request: { label: 'Client requests', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z', color: '#d97706', bg: '#fffbeb' },
-  note: { label: 'Notes', icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z', color: '#6b7280', bg: '#f3f4f6' }
+  problem: { label: 'Προβλήματα', icon: 'M12 9v2m0 4h.01M5.07 19H19a2 2 0 001.75-2.96L13.75 4a2 2 0 00-3.5 0L3.32 16.04A2 2 0 005.07 19z', color: '#dc2626', bg: '#fef2f2' },
+  decision: { label: 'Αποφάσεις', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', color: '#0d9488', bg: '#f0fdfa' },
+  material: { label: 'Υλικά', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', color: '#7c3aed', bg: '#f5f3ff' },
+  work_update: { label: 'Ενημερώσεις εργασιών', icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4', color: '#059669', bg: '#ecfdf5' },
+  client_request: { label: 'Αιτήματα πελάτη', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z', color: '#d97706', bg: '#fffbeb' },
+  note: { label: 'Σημειώσεις', icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z', color: '#6b7280', bg: '#f3f4f6' }
 }
 
 function CatIcon({ path, color, size = 18 }) {
@@ -17,7 +17,7 @@ function CatIcon({ path, color, size = 18 }) {
 
 function StatusPill({ status }) {
   if (!status) return null
-  const colors = { open: { bg: '#fef2f2', color: '#dc2626', label: 'Open' }, resolved: { bg: '#ecfdf5', color: '#059669', label: 'Resolved' } }
+  const colors = { open: { bg: '#fef2f2', color: '#dc2626', label: 'Ανοιχτό' }, resolved: { bg: '#ecfdf5', color: '#059669', label: 'Επιλύθηκε' } }
   const c = colors[status] || colors.open
   return <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 10px', borderRadius: 100, background: c.bg, color: c.color }}>{c.label}</span>
 }
@@ -128,7 +128,7 @@ export default function ProjectDetail({ project, profile, onBack }) {
       if (!textContent || textContent.trim().length < 50) {
         // Fallback: if text extraction failed, tell user
         setUploadStatus('error')
-        alert('Could not read the document. Please copy the text from the PDF and save it as a .txt file, then upload that.')
+        showToast('Δεν ήταν δυνατή η ανάγνωση του εγγράφου. Αντιγράψτε το κείμενο σε αρχείο .txt και δοκιμάστε ξανά.', true)
         setTimeout(() => setUploadStatus(null), 3000)
         return
       }
@@ -358,7 +358,7 @@ export default function ProjectDetail({ project, profile, onBack }) {
 
             {parsedStructure.exterior?.length > 0 && (
               <>
-                <div className="pd-confirm-label" style={{ marginTop: 12 }}>Exterior</div>
+                <div className="pd-confirm-label" style={{ marginTop: 12 }}>Εξωτερικοί χώροι</div>
                 <div className="pd-confirm-rooms">
                   {parsedStructure.exterior.map((e, i) => (
                     <span key={i} className="pd-confirm-room-chip pd-confirm-exterior">{e.name}</span>
@@ -368,8 +368,8 @@ export default function ProjectDetail({ project, profile, onBack }) {
             )}
 
             <div className="pd-confirm-actions">
-              <button className="pd-confirm-btn-cancel" onClick={() => setParsedStructure(null)}>Cancel</button>
-              <button className="pd-confirm-btn-save" onClick={saveConfirmedStructure}>Confirm and save</button>
+              <button className="pd-confirm-btn-cancel" onClick={() => setParsedStructure(null)}>Ακύρωση</button>
+              <button className="pd-confirm-btn-save" onClick={saveConfirmedStructure}>Επιβεβαίωση και αποθήκευση</button>
             </div>
           </div>
         </div>
@@ -379,12 +379,12 @@ export default function ProjectDetail({ project, profile, onBack }) {
       <div className="detail-tabs">
         {['overview','memory','tasks','photos','timeline','report'].map(t => (
           <button key={t} className={`detail-tab ${tab === t ? 'active' : ''}`} onClick={() => { setTab(t); setCatFilter(null) }}>
-            {t === 'overview' && 'Overview'}
-            {t === 'memory' && 'Memory'}
-            {t === 'tasks' && 'Tasks'}
-            {t === 'photos' && `Photos (${photos.length})`}
-            {t === 'timeline' && 'Timeline'}
-            {t === 'report' && 'Report'}
+            {t === 'overview' && 'Επισκόπηση'}
+            {t === 'memory' && 'Μνήμη'}
+            {t === 'tasks' && 'Εργασίες'}
+            {t === 'photos' && `Φωτογραφίες (${photos.length})`}
+            {t === 'timeline' && 'Χρονολόγιο'}
+            {t === 'report' && 'Αναφορά'}
           </button>
         ))}
       </div>
@@ -397,15 +397,15 @@ export default function ProjectDetail({ project, profile, onBack }) {
             <div className="pd-stats">
               <div className="pd-stat" onClick={() => { setTab('memory'); setCatFilter('problem') }}>
                 <div className="pd-stat-n" style={{ color: '#dc2626' }}>{openProblems.length}</div>
-                <div className="pd-stat-l">Open problems</div>
+                <div className="pd-stat-l">Ανοιχτά προβλήματα</div>
               </div>
               <div className="pd-stat" onClick={() => setTab('tasks')}>
                 <div className="pd-stat-n" style={{ color: '#2563eb' }}>{entries.filter(e => e.category === 'work_update').length}</div>
-                <div className="pd-stat-l">Work updates</div>
+                <div className="pd-stat-l">Ενημερώσεις εργασιών</div>
               </div>
               <div className="pd-stat" onClick={() => { setTab('memory'); setCatFilter('decision') }}>
                 <div className="pd-stat-n" style={{ color: '#7c3aed' }}>{decisions.length}</div>
-                <div className="pd-stat-l">Decisions</div>
+                <div className="pd-stat-l">Αποφάσεις</div>
               </div>
               <div className="pd-stat">
                 <div className="pd-stat-n" style={{ color: '#d97706' }}>{overdueDeadlines.length}</div>
@@ -545,7 +545,7 @@ export default function ProjectDetail({ project, profile, onBack }) {
                 <div className="pd-cat-icon" style={{ background: '#ecfdf5' }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="1.5" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
                 </div>
-                <span className="pd-cat-name">Photos</span>
+                <span className="pd-cat-name">Φωτογραφίες</span>
                 <span className="pd-cat-count">{photos.length}</span>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
               </div>
@@ -563,13 +563,13 @@ export default function ProjectDetail({ project, profile, onBack }) {
         {/* ========== PHOTOS ========== */}
         {tab === 'photos' && (
           <div style={{ padding: '12px 16px' }}>
-            {photos.length === 0 && <div className="pd-empty">No photos yet</div>}
+            {photos.length === 0 && <div className="pd-empty">Δεν υπάρχουν φωτογραφίες ακόμη</div>}
             <div className="pd-photo-grid">
               {photos.map(p => (
                 <div key={p.id} className="pd-photo-card" onClick={() => setLightboxUrl(p.file_url)}>
                   <img src={p.file_url} alt="" className="pd-photo-img" loading="lazy" />
                   <div className="pd-photo-meta">
-                    <span>{p.ai_summary?.slice(0, 40) || 'Photo'}</span>
+                    <span>{p.ai_summary?.slice(0, 40) || 'Φωτογραφία'}</span>
                     <span style={{ color: '#9ca3af' }}>{formatDate(p.created_at)}</span>
                   </div>
                   {(p.tags || []).length > 0 && (
@@ -609,23 +609,23 @@ export default function ProjectDetail({ project, profile, onBack }) {
               <div className="pd-report-header">
                 <div className="pd-report-title">{project.name}</div>
                 <div className="pd-report-sub">{project.location}</div>
-                <div className="pd-report-date">Report generated: {new Date().toLocaleDateString('el-GR')}</div>
+                <div className="pd-report-date">Δημιουργήθηκε: {new Date().toLocaleDateString('el-GR')}</div>
               </div>
 
               <div className="pd-report-section">
-                <div className="pd-report-label">Summary</div>
-                <div className="pd-report-row"><span>Total entries</span><span>{entries.length}</span></div>
-                <div className="pd-report-row"><span>Work updates</span><span>{catCounts.work_update || 0}</span></div>
-                <div className="pd-report-row"><span>Problems (open / total)</span><span>{openProblems.length} / {problems.length}</span></div>
-                <div className="pd-report-row"><span>Decisions</span><span>{decisions.length}</span></div>
-                <div className="pd-report-row"><span>Materials</span><span>{catCounts.material || 0}</span></div>
-                <div className="pd-report-row"><span>Photos</span><span>{photos.length}</span></div>
-                <div className="pd-report-row"><span>Deadlines (overdue)</span><span>{overdueDeadlines.length} / {deadlines.length}</span></div>
+                <div className="pd-report-label">Σύνοψη</div>
+                <div className="pd-report-row"><span>Σύνολο καταχωρίσεων</span><span>{entries.length}</span></div>
+                <div className="pd-report-row"><span>Ενημερώσεις εργασιών</span><span>{catCounts.work_update || 0}</span></div>
+                <div className="pd-report-row"><span>Προβλήματα (ανοιχτά / σύνολο)</span><span>{openProblems.length} / {problems.length}</span></div>
+                <div className="pd-report-row"><span>Αποφάσεις</span><span>{decisions.length}</span></div>
+                <div className="pd-report-row"><span>Υλικά</span><span>{catCounts.material || 0}</span></div>
+                <div className="pd-report-row"><span>Φωτογραφίες</span><span>{photos.length}</span></div>
+                <div className="pd-report-row"><span>Προθεσμίες (εκπρόθεσμες)</span><span>{overdueDeadlines.length} / {deadlines.length}</span></div>
               </div>
 
               {openProblems.length > 0 && (
                 <div className="pd-report-section">
-                  <div className="pd-report-label">Open problems</div>
+                  <div className="pd-report-label">Ανοιχτά προβλήματα</div>
                   {openProblems.map(p => (
                     <div key={p.id} className="pd-report-item">
                       <span>{p.title || p.raw_text?.slice(0, 60)}</span>
@@ -637,7 +637,7 @@ export default function ProjectDetail({ project, profile, onBack }) {
 
               {decisions.length > 0 && (
                 <div className="pd-report-section">
-                  <div className="pd-report-label">Decisions made</div>
+                  <div className="pd-report-label">Ληφθείσες αποφάσεις</div>
                   {decisions.map(d => (
                     <div key={d.id} className="pd-report-item">
                       <span>{d.title || d.raw_text?.slice(0, 60)}</span>
@@ -649,7 +649,7 @@ export default function ProjectDetail({ project, profile, onBack }) {
 
               {overdueDeadlines.length > 0 && (
                 <div className="pd-report-section">
-                  <div className="pd-report-label">Overdue deadlines</div>
+                  <div className="pd-report-label">Εκπρόθεσμες προθεσμίες</div>
                   {overdueDeadlines.map(d => (
                     <div key={d.id} className="pd-report-item">
                       <span>{d.description}</span>

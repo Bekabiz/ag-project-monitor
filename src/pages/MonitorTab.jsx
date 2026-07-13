@@ -14,6 +14,9 @@ export default function MonitorTab({ profile }) {
   const [activeSection, setActiveSection] = useState('tasks')
   const [expandedTask, setExpandedTask] = useState(null)
   const [replyText, setReplyText] = useState('')
+  const [rejectingTask, setRejectingTask] = useState(null)
+  const [rejectComment, setRejectComment] = useState('')
+  const [rejectSaving, setRejectSaving] = useState(false)
 
   // Plan creation
   const [showPlanModal, setShowPlanModal] = useState(false)
@@ -129,20 +132,30 @@ export default function MonitorTab({ profile }) {
     }
   }
 
-  async function rejectTask(task) {
-    const comment = prompt('Σχόλιο απόρριψης:')
-    if (comment === null) return
+  function rejectTask(task) {
+    setRejectingTask(task)
+    setRejectComment('')
+  }
+
+  async function confirmRejectTask() {
+    if (!rejectingTask) return
+    setRejectSaving(true)
     try {
       await db(supabase.from('steps').update({
         status: 'in_progress', is_reviewed: false, review_result: 'rejected'
-      }).eq('id', task.id))
+      }).eq('id', rejectingTask.id))
       await db(supabase.from('step_notes').insert({
-        step_id: task.id, user_id: profile.id,
-        user_name: profile.full_name, text: '↩ Απόρριψη: ' + (comment || 'Χρειάζεται διόρθωση')
+        step_id: rejectingTask.id, user_id: profile.id,
+        user_name: profile.full_name, text: '↩ Απόρριψη: ' + (rejectComment.trim() || 'Χρειάζεται διόρθωση')
       }))
+      setRejectingTask(null)
+      setRejectComment('')
+      showToast('Η εργασία επέστρεψε για διόρθωση')
       await loadData()
     } catch (err) {
       showToast('Σφάλμα απόρριψης', true)
+    } finally {
+      setRejectSaving(false)
     }
   }
 
@@ -569,6 +582,23 @@ export default function MonitorTab({ profile }) {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+
+      {rejectingTask && (
+        <div className="dialog-backdrop" role="presentation" onMouseDown={() => !rejectSaving && setRejectingTask(null)}>
+          <div className="confirm-dialog reject-dialog" role="dialog" aria-modal="true" aria-labelledby="reject-title" onMouseDown={e => e.stopPropagation()}>
+            <div className="confirm-dialog-icon"><X size={22} /></div>
+            <h2 id="reject-title">Επιστροφή εργασίας για διόρθωση</h2>
+            <p>{rejectingTask.title}</p>
+            <label className="dialog-field-label" htmlFor="reject-comment">Σχόλιο προς το μέλος της ομάδας</label>
+            <textarea id="reject-comment" className="modal-input" value={rejectComment} onChange={e => setRejectComment(e.target.value)} placeholder="Τι χρειάζεται να διορθωθεί;" autoFocus />
+            <div className="confirm-dialog-actions">
+              <button className="action-btn" onClick={() => setRejectingTask(null)} disabled={rejectSaving}>Ακύρωση</button>
+              <button className="action-btn primary" onClick={confirmRejectTask} disabled={rejectSaving}>{rejectSaving ? 'Αποθήκευση…' : 'Επιστροφή για διόρθωση'}</button>
+            </div>
+          </div>
         </div>
       )}
 

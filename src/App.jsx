@@ -7,7 +7,6 @@ import InputTab from './pages/InputTab'
 import ProjectsTab from './pages/ProjectsTab'
 import MonitorTab from './pages/MonitorTab'
 import ProjectDetail from './pages/ProjectDetail'
-import './professional.css'
 
 const NAV_ITEMS = [
   { id: 'today', label: 'Σήμερα', description: 'Εργασίες και ενημερώσεις', icon: Home },

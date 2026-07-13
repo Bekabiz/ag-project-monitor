@@ -13,6 +13,7 @@ export default function ProjectsTab({ profile, onSelectProject }) {
   const [modalLocation, setModalLocation] = useState('')
   const [modalDesc, setModalDesc] = useState('')
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
 
   useEffect(() => { loadProjects() }, [])
 
@@ -29,11 +30,11 @@ export default function ProjectsTab({ profile, onSelectProject }) {
       for (const p of projs) {
         const daysSinceUpdate = p.last_entry_at
           ? Math.floor((Date.now() - new Date(p.last_entry_at)) / 86400000)
-          : 999
+          : null
 
         let status = 'green'
         if ((p.overdue_deadlines || 0) > 0) status = 'red'
-        else if (daysSinceUpdate >= 7) status = 'yellow'
+        else if (daysSinceUpdate === null || daysSinceUpdate >= 7) status = 'yellow'
 
         statsMap[p.id] = {
           status,
@@ -83,6 +84,7 @@ export default function ProjectsTab({ profile, onSelectProject }) {
   async function handleSaveProject() {
     if (!modalName.trim()) return
     setSaving(true)
+    setSaveError('')
     try {
       if (showModal === 'add') {
         const { error } = await supabase.from('projects').insert({
@@ -104,9 +106,10 @@ export default function ProjectsTab({ profile, onSelectProject }) {
       setShowModal(false)
       await loadProjects()
     } catch (err) {
-      alert('Σφάλμα: ' + err.message)
+      setSaveError(err.message || 'Δεν ήταν δυνατή η αποθήκευση του έργου.')
+    } finally {
+      setSaving(false)
     }
-    setSaving(false)
   }
 
   if (loading) return <div className="loading-screen"><div className="spinner" /></div>
@@ -158,14 +161,16 @@ export default function ProjectsTab({ profile, onSelectProject }) {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 {profile?.role === 'owner' && (
-                  <span
+                  <button
+                    type="button"
+                    className="project-edit-button"
+                    aria-label={`Επεξεργασία ${p.name}`}
                     onClick={(e) => openEditModal(e, p)}
-                    style={{ cursor: 'pointer', padding: 4, borderRadius: 4, display: 'flex', alignItems: 'center' }}
                   >
                     <Pencil size={16} strokeWidth={1.6} color="var(--text3)" />
-                  </span>
+                  </button>
                 )}
-                <span className={`status-dot status-${s.status || 'green'}`} />
+                <span className={`project-status-label project-status-${s.status || 'green'}`}>{s.status === 'red' ? 'Απαιτεί προσοχή' : s.status === 'yellow' ? 'Χρειάζεται ενημέρωση' : 'Σε εξέλιξη'}</span>
               </div>
             </div>
             {s.overdueCount > 0 && (
@@ -175,7 +180,7 @@ export default function ProjectsTab({ profile, onSelectProject }) {
             )}
             {s.status === 'yellow' && (
               <div style={{ fontSize: 12, color: 'var(--yellow)', marginTop: 6, fontWeight: 500 }}>
-                {s.daysSinceUpdate} μέρες χωρίς ενημέρωση
+                {s.daysSinceUpdate === null ? 'Δεν υπάρχουν ενημερώσεις' : `${s.daysSinceUpdate} ημέρες χωρίς ενημέρωση`}
               </div>
             )}
             <div className="card-meta">
@@ -211,6 +216,7 @@ export default function ProjectsTab({ profile, onSelectProject }) {
               value={modalDesc}
               onChange={e => setModalDesc(e.target.value)}
             />
+            {saveError && <div className="inline-form-error" role="alert">{saveError}</div>}
             <div className="modal-actions">
               <button className="action-btn" onClick={() => setShowModal(false)}>Ακύρωση</button>
               <button
