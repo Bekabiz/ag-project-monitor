@@ -17,45 +17,34 @@ export default function ProjectsTab({ profile, onSelectProject }) {
 
   async function loadProjects() {
     try {
-    const { data: projs } = await supabase
-      .from('projects').select('*').eq('status', 'active').order('name')
-    
-    if (!projs) { setLoading(false); return }
+      // Single query via SQL view — replaces N+1 loop (was 2 queries per project)
+      const { data: projs } = await supabase
+        .from('project_dashboard_stats').select('*').eq('status', 'active').order('name')
 
-    // Load stats for each project
-    const statsMap = {}
-    for (const p of projs) {
-      const { data: entries } = await supabase
-        .from('entries').select('entry_type, created_at')
-        .eq('project_id', p.id).order('created_at', { ascending: false }).limit(50)
+      if (!projs) { setLoading(false); return }
 
-      const { data: deadlines } = await supabase
-        .from('deadlines').select('*')
-        .eq('project_id', p.id).eq('status', 'overdue')
+      const statsMap = {}
+      for (const p of projs) {
+        const daysSinceUpdate = p.last_entry_at
+          ? Math.floor((Date.now() - new Date(p.last_entry_at)) / 86400000)
+          : 999
 
-      const lastEntry = entries?.[0]
-      const lastPhoto = entries?.find(e => e.entry_type === 'photo')
-      const overdueCount = deadlines?.length || 0
-      const daysSinceUpdate = lastEntry 
-        ? Math.floor((Date.now() - new Date(lastEntry.created_at)) / 86400000) 
-        : 999
+        let status = 'green'
+        if ((p.overdue_deadlines || 0) > 0) status = 'red'
+        else if (daysSinceUpdate >= 7) status = 'yellow'
 
-      let status = 'green'
-      if (overdueCount > 0) status = 'red'
-      else if (daysSinceUpdate >= 7) status = 'yellow'
-
-      statsMap[p.id] = {
-        status,
-        overdueCount,
-        daysSinceUpdate,
-        lastUpdate: lastEntry?.created_at,
-        lastPhoto: lastPhoto?.created_at,
-        totalEntries: entries?.length || 0
+        statsMap[p.id] = {
+          status,
+          overdueCount: p.overdue_deadlines || 0,
+          daysSinceUpdate,
+          lastUpdate: p.last_entry_at,
+          lastPhoto: p.last_photo_at,
+          totalEntries: p.total_entries || 0
+        }
       }
-    }
 
-    setProjects(projs)
-    setStats(statsMap)
+      setProjects(projs)
+      setStats(statsMap)
     } catch (err) {
       console.error('Load error:', err)
     } finally {
