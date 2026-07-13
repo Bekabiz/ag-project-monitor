@@ -1,0 +1,31 @@
+name: Apply verified UX redesign
+
+on:
+  push:
+    branches:
+      - ux/professional-workspace-redesign
+    paths:
+      - '.github/workflows/apply-redesign.yml'
+      - 'redesign.patch.gz.b64'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply verified redesign patch
+        run: |
+          base64 -d redesign.patch.gz.b64 | gzip -d > /tmp/redesign.patch
+          git apply --check /tmp/redesign.patch
+          git apply /tmp/redesign.patch
+          rm redesign.patch.gz.b64 .github/workflows/apply-redesign.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "ui: complete professional UX redesign"
+          git push
