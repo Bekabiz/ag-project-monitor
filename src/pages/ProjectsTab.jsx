@@ -6,6 +6,7 @@ export default function ProjectsTab({ profile, onSelectProject }) {
   const [projects, setProjects] = useState([])
   const [stats, setStats] = useState({})
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   // Add/Edit project modal
   const [showModal, setShowModal] = useState(false) // 'add' | project object for edit | false
   const [modalName, setModalName] = useState('')
@@ -17,6 +18,7 @@ export default function ProjectsTab({ profile, onSelectProject }) {
 
   async function loadProjects() {
     try {
+      setLoadError(false)
       // Single query via SQL view — replaces N+1 loop (was 2 queries per project)
       const { data: projs } = await supabase
         .from('project_dashboard_stats').select('*').eq('status', 'active').order('name')
@@ -47,6 +49,7 @@ export default function ProjectsTab({ profile, onSelectProject }) {
       setStats(statsMap)
     } catch (err) {
       console.error('Load error:', err)
+      setLoadError(true)
     } finally {
       setLoading(false)
     }
@@ -107,6 +110,16 @@ export default function ProjectsTab({ profile, onSelectProject }) {
   }
 
   if (loading) return <div className="loading-screen"><div className="spinner" /></div>
+
+  if (loadError) {
+    return (
+      <div className="empty-state">
+        <div className="icon" style={{ fontSize: 32 }}>⚠️</div>
+        <p>Σφάλμα φόρτωσης</p>
+        <button className="action-btn primary" onClick={loadProjects} style={{ marginTop: 12 }}>Δοκιμή ξανά</button>
+      </div>
+    )
+  }
 
   if (projects.length === 0) {
     return (

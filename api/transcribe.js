@@ -29,8 +29,12 @@ export default async function handler(req, res) {
 
     const audioBuffer = Buffer.from(await audioRes.arrayBuffer());
 
-    // Create file for OpenAI
-    const file = await toFile(audioBuffer, 'recording.webm', { type: 'audio/webm' });
+    // Detect format from URL extension
+    const isM4a = fileUrl.includes('.m4a') || fileUrl.includes('.mp4')
+    const fileName = isM4a ? 'recording.m4a' : 'recording.webm'
+    const fileType = isM4a ? 'audio/mp4' : 'audio/webm'
+
+    const file = await toFile(audioBuffer, fileName, { type: fileType });
 
     // Transcribe with Whisper
     const transcription = await openai.audio.transcriptions.create({

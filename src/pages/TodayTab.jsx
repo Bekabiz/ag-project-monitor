@@ -13,6 +13,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
   const [profiles, setProfiles] = useState([])
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [showAddUpdate, setShowAddUpdate] = useState(false)
   const [updateText, setUpdateText] = useState('')
   const [updateFile, setUpdateFile] = useState(null)
@@ -59,6 +60,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
   async function loadData() {
     setLoading(true)
     try {
+      setLoadError(false)
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     const tomorrow = new Date(today)
@@ -142,6 +144,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
     localStorage.setItem('ag_last_seen', new Date().toISOString())
     } catch (err) {
       console.error('Load error:', err)
+      setLoadError(true)
       showToast('Σφάλμα φόρτωσης', true)
     } finally {
       setLoading(false)
@@ -458,6 +461,14 @@ export default function TodayTab({ profile, onBadgeCount }) {
   ]
 
   if (loading) return <div className="loading-inline"><div className="spinner" /></div>
+
+  if (loadError) return (
+    <div className="empty-state" style={{ padding: '40px 20px' }}>
+      <div style={{ fontSize: 32, marginBottom: 12 }}>⚠️</div>
+      <p style={{ marginBottom: 12 }}>Σφάλμα φόρτωσης</p>
+      <button className="action-btn primary" onClick={loadData}>Δοκιμή ξανά</button>
+    </div>
+  )
 
   const overdueCount = getOverdueCount(mySteps)
   const personUpdates = getPersonUpdates()

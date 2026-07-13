@@ -41,7 +41,9 @@ export function useVoiceRecorder() {
       resolveRef.current = resolve
       rec.onstop = () => {
         stream.getTracks().forEach(t => t.stop())
-        const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
+        const ext = mimeType.includes('mp4') ? 'm4a' : 'webm'
+        const blob = new Blob(chunksRef.current, { type: mimeType })
+        blob._ext = ext  // carry the correct extension for upload
         resolve(blob)
       }
       rec.start()
@@ -64,9 +66,12 @@ export function useVoiceRecorder() {
    */
   const transcribeBlob = useCallback(async (blob) => {
     setTranscribing(true)
-    const path = `voice/${Date.now()}_${Math.random().toString(36).slice(2, 6)}.webm`
+    const ext = blob._ext || (blob.type?.includes('mp4') ? 'm4a' : 'webm')
+    const path = `voice/${Date.now()}_${Math.random().toString(36).slice(2, 6)}.${ext}`
     try {
-      const { error: upErr } = await supabase.storage.from('files').upload(path, blob)
+      const { error: upErr } = await supabase.storage.from('files').upload(path, blob, {
+        contentType: blob.type || 'audio/webm'
+      })
       if (upErr) throw new Error('Σφάλμα αποστολής ήχου')
 
       const { data: urlData } = supabase.storage.from('files').getPublicUrl(path)
