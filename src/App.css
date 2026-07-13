@@ -2742,3 +2742,283 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto!important; animation-duration: .01ms!important; animation-iteration-count: 1!important; transition-duration: .01ms!important; }
 }
+
+/* ============================================================
+   PREMIUM VISUAL SYSTEM — snow-white canvas, framed workspace,
+   restrained semantic colours, and task-first hierarchy
+   ============================================================ */
+:root {
+  --ag-ink: #141925;
+  --ag-ink-2: #252d3d;
+  --ag-teal: #3449aa;
+  --ag-teal-bright: #5065d3;
+  --ag-teal-soft: #eef1ff;
+  --ag-canvas: #ffffff;
+  --ag-surface: #ffffff;
+  --ag-surface-alt: #f7f8fb;
+  --ag-surface-quiet: #fbfbfd;
+  --ag-border: #e6e8ef;
+  --ag-border-strong: #d7dae4;
+  --ag-muted: #6c7382;
+  --ag-sidebar: #141a2a;
+  --ag-sidebar-2: #1c2438;
+  --ag-shadow-sm: 0 1px 2px rgba(20,25,37,.035), 0 5px 16px rgba(20,25,37,.035);
+  --ag-shadow-md: 0 18px 44px rgba(20,25,37,.10);
+  --ag-radius: 15px;
+  --ag-radius-lg: 22px;
+  --accent: #3449aa;
+  --accent-hover: #293c91;
+  --accent-light: #eef1ff;
+  --blue: #3449aa;
+  --green: #587064;
+  --red: #8b4b3f;
+  --yellow: #9b6a32;
+  --purple: #667085;
+}
+
+html, body, #root, .app-shell, .app-workspace, .detail-page { background: #ffffff; }
+body { color: var(--ag-ink); }
+.app-shell { background: #ffffff; }
+
+/* Deep navy + cobalt replaces the generic teal dashboard treatment */
+.desktop-sidebar {
+  background:
+    radial-gradient(circle at 8% 0%, rgba(92,111,220,.18), transparent 30%),
+    linear-gradient(180deg, #171e30 0%, #111624 100%);
+  box-shadow: 18px 0 44px rgba(17,22,36,.08);
+}
+.sidebar-brand .ag-logo,
+.ag-logo-large {
+  background: linear-gradient(145deg,#5369d8,#2f4095)!important;
+  box-shadow: 0 10px 24px rgba(52,73,170,.24)!important;
+}
+.sidebar-item.active {
+  background: linear-gradient(135deg,rgba(80,101,211,.22),rgba(255,255,255,.055));
+  border-color: rgba(154,168,255,.18);
+  box-shadow: inset 3px 0 0 #8294f2;
+}
+.sidebar-item.active .sidebar-item-icon { background: rgba(95,116,224,.20); color: #bdc7ff; }
+.profile-avatar { background: #eef1ff; color: #30439d; box-shadow: inset 0 0 0 1px #d9def9; }
+
+.workspace-header {
+  background: rgba(255,255,255,.94);
+  border-bottom: 1px solid var(--ag-border);
+  box-shadow: 0 1px 0 rgba(20,25,37,.015);
+}
+.workspace-main { background: #ffffff; }
+.workspace-kicker { color: #3449aa; }
+.header-icon-button,
+.header-profile-button,
+.mobile-menu-button { background: #ffffff; border-color: var(--ag-border); box-shadow: none; }
+.header-icon-button:hover,
+.header-profile-button:hover,
+.mobile-menu-button:hover { background: #f8f9fc; border-color: var(--ag-border-strong); }
+.header-icon-button span { background: #9a584a; }
+
+/* Intentional frames: snow-white page, soft framed sections, white content cards */
+.today-page,
+.monitor-page { width: 100%; }
+.today-section,
+.monitor-overview-section,
+.monitor-person-group,
+.input-container,
+.projects-grid {
+  background: var(--ag-surface-alt);
+  border: 1px solid var(--ag-border);
+  border-radius: 20px;
+  box-shadow: 0 1px 0 rgba(255,255,255,.9) inset;
+}
+.today-section { margin: 18px 0 0; padding: 16px; }
+.today-section-header {
+  margin: 0 0 12px!important;
+  padding: 0 2px 12px;
+  border-bottom: 1px solid #e8eaf0;
+  color: #353d4d;
+}
+.today-section-header::before { display: none; }
+.today-section-header > span:first-of-type { font-size: 13px; font-weight: 700; letter-spacing: -.01em; }
+.projects-grid { padding: 16px; gap: 14px; }
+.input-container { padding: clamp(16px,2vw,24px); }
+.monitor-page { display: grid; gap: 16px; }
+.monitor-switcher { padding: 5px; border: 1px solid var(--ag-border); background: #f6f7fa; border-radius: 14px; }
+.monitor-sw-btn.active { background: #ffffff; color: #3449aa; box-shadow: 0 1px 4px rgba(20,25,37,.08); }
+.monitor-stats-bar { padding: 14px; border: 1px solid var(--ag-border); border-radius: 18px; background: var(--ag-surface-alt); }
+
+.workspace-main .project-card,
+.workspace-main .step-card,
+.workspace-main .person-update-card,
+.workspace-main .monitor-task-card,
+.workspace-main .monitor-stat,
+.workspace-main .search-result-card,
+.workspace-main .plan-card,
+.workspace-main .deadline-card,
+.workspace-main .announcement-card,
+.workspace-main .confirm-entry-card {
+  background: #ffffff;
+  border: 1px solid var(--ag-border);
+  box-shadow: none;
+}
+.workspace-main .project-card:hover,
+.workspace-main .step-card:hover,
+.workspace-main .person-update-card:hover,
+.workspace-main .monitor-task-card:hover {
+  border-color: #d0d4df;
+  box-shadow: 0 10px 26px rgba(20,25,37,.07);
+  transform: translateY(-1px);
+}
+.project-card { border-radius: 16px; }
+.card-meta { border-top: 1px solid #eef0f4; }
+
+/* Greeting actions stay compact; teammates see only a premium plus control */
+.today-greeting { margin-bottom: 16px; align-items: center; }
+.today-greeting-actions { display: flex; align-items: center; gap: 8px; }
+.new-task-compact,
+.announcement-add-compact {
+  min-height: 40px!important;
+  height: 40px;
+  border-radius: 11px;
+  font-size: 12px;
+  font-weight: 650;
+  transition: border-color .15s ease, background .15s ease, transform .15s ease, box-shadow .15s ease;
+}
+.new-task-compact {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 14px;
+  border: 1px solid #2e409a;
+  background: #3449aa;
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(52,73,170,.16);
+}
+.new-task-compact:hover { background: #293c91; border-color: #293c91; transform: translateY(-1px); }
+.new-task-compact.member { width: 40px; padding: 0; border-radius: 12px; }
+.announcement-add-compact { background: #ffffff; border-color: var(--ag-border); color: #515969; box-shadow: none; }
+.announcement-add-compact:hover { background: #f7f8fb; border-color: #d3d7e1; color: #3449aa; }
+.new-task-fab { display: none!important; }
+
+/* Premium task cards: semantic cues are small, calm and text-led */
+.step-card {
+  padding: 15px 16px;
+  border-radius: 14px;
+  background: #ffffff;
+}
+.step-card + .step-card { margin-top: 9px; }
+.step-title { color: #1d2431; font-size: 14px; font-weight: 680; letter-spacing: -.01em; }
+.step-meta { color: #747b89; }
+.step-card.step-overdue {
+  background: #ffffff!important;
+  border-color: #e7d8d4!important;
+  box-shadow: inset 3px 0 0 #9a584a!important;
+}
+.step-card.step-overdue .step-meta { color: #76564f; }
+.overdue-badge {
+  padding: 3px 8px!important;
+  border: 1px solid #e7d5d0!important;
+  background: #f7efed!important;
+  color: #7d4439!important;
+  font-size: 10px!important;
+  font-weight: 680!important;
+  box-shadow: none!important;
+}
+.urgent-badge {
+  width: 18px; height: 18px;
+  display: inline-grid; place-items: center;
+  border-radius: 6px;
+  background: #8b4b3f!important;
+  color: #fff!important;
+  font-size: 11px;
+  box-shadow: none!important;
+}
+.step-card.step-soon { border-color: #e6ddcc; box-shadow: inset 3px 0 0 #a8793e; }
+.step-card.step-progress { border-color: #dce1f6; box-shadow: inset 3px 0 0 #566bc8; }
+.step-card.step-waiting { border-color: #e7e0d2; box-shadow: inset 3px 0 0 #9b7443; }
+
+/* Real icon buttons replace Unicode status symbols */
+.step-status-row { gap: 7px; margin: 13px 0 11px; }
+.step-status-btn {
+  min-height: 34px!important;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  border: 1px solid #e1e4eb;
+  border-radius: 10px!important;
+  background: #ffffff;
+  color: #626a79;
+  font-size: 10.5px;
+  font-weight: 620;
+  box-shadow: none;
+}
+.step-status-btn svg { flex: 0 0 auto; }
+.step-status-btn:hover { background: #f8f9fb; border-color: #cfd3dd; }
+.step-status-btn.step-status-active { box-shadow: none!important; }
+.step-status-not_started.step-status-active { background: #f0f1f4!important; border-color: #d7dae1!important; color: #4d5563!important; }
+.step-status-in_progress.step-status-active { background: #eef1ff!important; border-color: #cfd6fb!important; color: #30439d!important; }
+.step-status-waiting.step-status-active { background: #f7f2e9!important; border-color: #e7dbc5!important; color: #7c5a2f!important; }
+.step-status-done.step-status-active { background: #eef3f0!important; border-color: #d4dfd8!important; color: #4f675b!important; }
+
+/* Quiet success and warning language throughout the management screens */
+.monitor-review-badge { background: #f1f3fa; color: #455387; border: 1px solid #dce1f2; }
+.monitor-task-urgent { background: #fff!important; border-color: #e6d7d3!important; box-shadow: inset 3px 0 0 #9a584a!important; }
+.monitor-approve-btn { background: #536b60!important; border-color: #536b60!important; }
+.monitor-reject-btn { background: #fff!important; border-color: #e2d2ce!important; color: #82483d!important; }
+.monitor-stat:nth-child(1) .monitor-stat-num { color: #3449aa!important; }
+.monitor-stat:nth-child(2) .monitor-stat-num,
+.monitor-stat:nth-child(3) .monitor-stat-num { color: #7d5147!important; }
+
+/* Empty states become framed, useful, and less visually vacant */
+.empty-state {
+  min-height: 170px;
+  padding: 30px 22px;
+  border: 1px dashed #d8dbe4;
+  border-radius: 16px;
+  background: #fafbfc;
+  color: #737a88;
+}
+.empty-state .icon { background: #eef1ff; color: #3449aa; }
+.updates-quiet-note { padding: 18px 14px; border: 1px dashed #d8dbe4; border-radius: 13px; background: #fff; font-style: normal; text-align: center; }
+.person-no-update { background: rgba(255,255,255,.72)!important; }
+
+/* Details and tabs use the same framed snow-white language */
+.detail-page { background: #ffffff; }
+.detail-header { background: #171e30; }
+.detail-main { background: #ffffff; }
+.detail-tabs { background: rgba(255,255,255,.96); border-bottom-color: var(--ag-border); }
+.detail-tab.active { background: #eef1ff; color: #3449aa; }
+.pd-stat, .pd-cat-row, .pd-report, .pd-photo-card { border-color: var(--ag-border)!important; box-shadow: none!important; }
+
+.mobile-tab-bar {
+  border-color: #e0e3eb!important;
+  background: rgba(255,255,255,.96)!important;
+  box-shadow: 0 14px 38px rgba(20,25,37,.14)!important;
+}
+.mobile-tab-bar .mobile-primary-tab .tab-icon-wrap { background: #27366f!important; box-shadow: 0 8px 18px rgba(39,54,111,.22)!important; }
+.mobile-tab-bar .mobile-primary-tab.active .tab-icon-wrap { background: #3449aa!important; }
+.tab.active { color: #3449aa!important; }
+.tab.active .tab-icon-wrap { background: #eef1ff!important; }
+
+@media (max-width: 900px) {
+  .workspace-main { background: #ffffff; }
+  .today-section { padding: 13px; border-radius: 17px; }
+  .today-greeting { align-items: center; }
+  .today-greeting-actions { gap: 6px; }
+  .today-member .today-greeting { margin-bottom: 12px; }
+  .today-member .new-task-compact.member { width: 42px; height: 42px; }
+  .announcement-add-compact { width: 42px; padding: 0; justify-content: center; }
+  .announcement-add-compact span { display: none; }
+  .projects-grid { padding: 12px; border-radius: 17px; }
+  .step-status-row { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .step-status-btn { justify-content: center; min-height: 38px!important; }
+}
+
+@media (max-width: 520px) {
+  .today-hello { font-size: 22px; }
+  .today-date { color: #7b8290; }
+  .today-section { margin-top: 14px; }
+  .step-card { padding: 14px; }
+  .step-title { font-size: 13.5px; }
+  .overdue-badge { margin-left: auto; }
+}
