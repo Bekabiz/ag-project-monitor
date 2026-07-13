@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Bell, X, Plus, ClipboardCheck, MessageCircle, AlertTriangle, Paperclip, ChevronDown, Send, Mic, Sparkles, CircleDot, Clock, Square, CheckCircle2, User, Users } from 'lucide-react'
+import { Bell, X, Plus, ClipboardCheck, MessageCircle, AlertTriangle, Paperclip, ChevronDown, Send, Mic, Sparkles, Circle, Play, Pause, Check, CheckCircle2, User, Users } from 'lucide-react'
 import { db, dbRead, supabase } from '../lib/db'
 import { getDaysInfo, formatDueTime, getOverdueCount } from '../lib/dates'
 import { extractText } from '../lib/voice'
@@ -454,10 +454,10 @@ export default function TodayTab({ profile, onBadgeCount }) {
   }
 
   const statusOptions = [
-    { value: 'not_started', label: 'Νέα', icon: '○' },
-    { value: 'in_progress', label: 'Σε εξέλιξη', icon: '◐' },
-    { value: 'waiting', label: 'Αναμονή', icon: '⏸' },
-    { value: 'done', label: 'Έγινε', icon: '✓' }
+    { value: 'not_started', label: 'Δεν ξεκίνησε', icon: Circle },
+    { value: 'in_progress', label: 'Σε εξέλιξη', icon: Play },
+    { value: 'waiting', label: 'Σε αναμονή', icon: Pause },
+    { value: 'done', label: 'Ολοκληρώθηκε', icon: Check }
   ]
 
   if (loading) return <div className="loading-inline"><div className="spinner" /></div>
@@ -477,18 +477,29 @@ export default function TodayTab({ profile, onBadgeCount }) {
   const isStaffTask = taskProject === 'staff'
 
   return (
-    <div>
+    <div className={`today-page ${profile?.role === 'owner' ? 'today-owner' : 'today-member'}`}>
       {/* ===== GREETING HEADER ===== */}
       <div className="today-greeting">
         <div>
           <div className="today-date">{new Date().toLocaleDateString('el-GR', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
           <h2 className="today-hello">Καλημέρα, {profile?.full_name?.split(' ')[0] || ''}</h2>
         </div>
-        {profile?.role === 'owner' && (
-          <button className="announcement-add-compact" onClick={() => setShowAnnouncementModal(true)}>
-            <Bell size={15} strokeWidth={1.8} /> Ανακοίνωση
+        <div className="today-greeting-actions">
+          {profile?.role === 'owner' && (
+            <button className="announcement-add-compact" onClick={() => setShowAnnouncementModal(true)}>
+              <Bell size={15} strokeWidth={1.8} /> <span>Ανακοίνωση</span>
+            </button>
+          )}
+          <button
+            className={`new-task-compact ${profile?.role === 'owner' ? 'owner' : 'member'}`}
+            onClick={openTaskModal}
+            aria-label="Νέα εργασία"
+            title="Νέα εργασία"
+          >
+            <Plus size={17} strokeWidth={2} />
+            {profile?.role === 'owner' && <span>Νέα εργασία</span>}
           </button>
-        )}
+        </div>
       </div>
 
       {/* ===== ANNOUNCEMENTS (pinned) ===== */}
@@ -526,12 +537,6 @@ export default function TodayTab({ profile, onBadgeCount }) {
           ))}
         </div>
       )}
-
-      {/* ===== NEW TASK BUTTON ===== */}
-      <button className="new-task-fab" onClick={openTaskModal}>
-        <Plus size={18} strokeWidth={1.6} />
-        Νέα εργασία
-      </button>
 
       {/* ===== MY TASKS ===== */}
       <div className="today-section">
@@ -575,12 +580,18 @@ export default function TodayTab({ profile, onBadgeCount }) {
               {isExpanded && (
                 <div className="step-expanded" onClick={e => e.stopPropagation()}>
                   <div className="step-status-row">
-                    {statusOptions.map(opt => (
-                      <button key={opt.value}
-                        className={`step-status-btn ${step.status === opt.value ? 'step-status-active' : ''}`}
-                        onClick={() => updateTaskStatus(step, opt.value)}
-                      >{opt.icon} {opt.label}</button>
-                    ))}
+                    {statusOptions.map(opt => {
+                      const StatusIcon = opt.icon
+                      return (
+                        <button key={opt.value}
+                          className={`step-status-btn step-status-${opt.value} ${step.status === opt.value ? 'step-status-active' : ''}`}
+                          onClick={() => updateTaskStatus(step, opt.value)}
+                        >
+                          <StatusIcon size={13} strokeWidth={2} />
+                          <span>{opt.label}</span>
+                        </button>
+                      )
+                    })}
                   </div>
                   {step.file_url && (
                     <a href={step.file_url} target="_blank" rel="noopener" className="step-file-link">
