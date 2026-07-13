@@ -167,7 +167,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
       mediaRecorderRef.current = mediaRecorder
       setVoiceTarget(target)
       setIsRecording(true)
-    } catch (err) { alert('Δεν μπορώ να ανοίξω το μικρόφωνο') }
+    } catch (err) { showToast('Δεν ήταν δυνατή η πρόσβαση στο μικρόφωνο. Ελέγξτε την άδεια του browser.', true) }
   }
 
   function stopRecording() {
