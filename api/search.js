@@ -1,13 +1,20 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  'https://elanqwsguvlnstjzfpmv.supabase.co',
-  process.env.SUPABASE_SERVICE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVsYW5xd3NndXZsbnN0anpmcG12Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTY2ODcsImV4cCI6MjA5NjczMjY4N30.t0hPmuJCagKEaXn-qQ1mnX4lJIi7POyiAS9rEs86i8I'
-)
+const supabaseUrl = process.env.SUPABASE_URL
+const supabaseKey = process.env.SUPABASE_SERVICE_KEY
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Missing SUPABASE_URL or SUPABASE_SERVICE_KEY environment variables')
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
+  if (!supabaseUrl || !supabaseKey) {
+    return res.status(500).json({ error: 'Server configuration error' })
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseKey)
   const { query, projectId, category, person, dateFrom, dateTo, limit = 20 } = req.body
   if (!query) return res.status(400).json({ error: 'No query provided' })
 
@@ -39,12 +46,12 @@ export default async function handler(req, res) {
       tagQuery = tagQuery.or(orConditions)
     }
 
-    // Also search by person name in submitter_name
     if (person) {
       tagQuery = tagQuery.ilike('submitter_name', `%${person}%`)
     }
 
-    const { data: tagResults } = await tagQuery
+    const { data: tagResults, error: tagErr } = await tagQuery
+    if (tagErr) console.error('Tag search error:', tagErr.message)
     results = tagResults || []
 
     // Also search entries with matching tags
@@ -57,7 +64,6 @@ export default async function handler(req, res) {
         .limit(limit)
       
       if (taggedResults) {
-        // Merge and deduplicate
         const existingIds = new Set(results.map(r => r.id))
         taggedResults.forEach(r => {
           if (!existingIds.has(r.id)) results.push(r)
@@ -65,10 +71,9 @@ export default async function handler(req, res) {
       }
     }
 
-    // Layer 2: Semantic search with embeddings (if API key available)
+    // Layer 2: Semantic search with embeddings (if available)
     if (apiKey && results.length < limit) {
       try {
-        // Create embedding for the search query
         const embRes = await fetch('https://api.openai.com/v1/embeddings', {
           method: 'POST',
           headers: {
@@ -86,7 +91,6 @@ export default async function handler(req, res) {
           const queryEmbedding = embData.data?.[0]?.embedding
 
           if (queryEmbedding) {
-            // Search by vector similarity using Supabase RPC
             const { data: semanticResults } = await supabase.rpc('search_entries', {
               query_embedding: queryEmbedding,
               match_threshold: 0.3,

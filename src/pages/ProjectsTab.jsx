@@ -16,6 +16,7 @@ export default function ProjectsTab({ profile, onSelectProject }) {
   useEffect(() => { loadProjects() }, [])
 
   async function loadProjects() {
+    try {
     const { data: projs } = await supabase
       .from('projects').select('*').eq('status', 'active').order('name')
     
@@ -55,7 +56,11 @@ export default function ProjectsTab({ profile, onSelectProject }) {
 
     setProjects(projs)
     setStats(statsMap)
-    setLoading(false)
+    } catch (err) {
+      console.error('Load error:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   function formatDate(iso) {

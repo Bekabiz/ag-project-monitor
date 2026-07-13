@@ -4,6 +4,11 @@ export const config = {
   maxDuration: 30,
 };
 
+/**
+ * /api/transcribe — Whisper transcription ONLY.
+ * One job: audio → text. No GPT extraction here.
+ * All structured extraction goes through /api/extract (one brain, two input modes).
+ */
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -13,10 +18,8 @@ export default async function handler(req, res) {
   const openai = new OpenAI({ apiKey });
 
   try {
-    const { fileUrl, projectNames, transcribeOnly } = req.body;
+    const { fileUrl } = req.body;
     if (!fileUrl) return res.status(400).json({ error: 'No file URL' });
-
-    console.log('Fetching audio from:', fileUrl);
 
     // Download audio from Supabase storage URL
     const audioRes = await fetch(fileUrl);
@@ -25,12 +28,11 @@ export default async function handler(req, res) {
     }
 
     const audioBuffer = Buffer.from(await audioRes.arrayBuffer());
-    console.log('Audio downloaded:', audioBuffer.length, 'bytes');
 
     // Create file for OpenAI
     const file = await toFile(audioBuffer, 'recording.webm', { type: 'audio/webm' });
 
-    // Step 1: Transcribe
+    // Transcribe with Whisper
     const transcription = await openai.audio.transcriptions.create({
       file: file,
       model: 'whisper-1',
@@ -38,49 +40,12 @@ export default async function handler(req, res) {
     });
 
     const transcript = transcription.text;
-    console.log('Transcript:', transcript);
 
     if (!transcript || transcript.trim().length === 0) {
-      return res.status(200).json({ transcript: '', extracted: null });
+      return res.status(200).json({ transcript: '' });
     }
 
-    // If transcribeOnly, return just the transcript (used for voice task titles)
-    if (transcribeOnly) {
-      return res.status(200).json({ transcript, extracted: null });
-    }
-
-    // Step 2: Extract structured data
-    const names = (projectNames || []).join(', ');
-    const todayDate = new Date().toISOString().split('T')[0];
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      temperature: 0.1,
-      messages: [
-        { role: 'system', content: `You extract structured project data from Greek construction office notes.
-Active projects: ${names}
-TODAY'S DATE: ${todayDate}
-Rules:
-- project_name MUST match one from active projects (closest match)
-- When a date is mentioned without a year (e.g. "20 Ιουλίου", "Παρασκευή"), assume the NEXT upcoming occurrence from TODAY'S DATE. Never use a past year.
-- deadline_date: ISO YYYY-MM-DD or null
-- deadline_description: SPECIFIC descriptive Greek text so user knows what the deadline is for (e.g. "Παράδοση χάλυβα", "Σκυροδέτηση θεμελίων"). NEVER generic like "Προθεσμία έργου". Describe the actual task.
-- budget_change: number (positive=increase, negative=decrease, 0=none)
-- summary: 1-2 sentences in Greek
-- action_items: specific tasks in Greek
-- people: first names only
-Return ONLY valid JSON:
-{"project_name":"string or null","people":["string"],"deadline_description":"string or empty","deadline_date":"YYYY-MM-DD or null","budget_change":0,"action_items":["string"],"summary":"Greek summary"}` },
-        { role: 'user', content: transcript }
-      ]
-    });
-
-    let extracted = null;
-    const raw = completion.choices?.[0]?.message?.content || '';
-    try {
-      extracted = JSON.parse(raw.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim());
-    } catch (e) {}
-
-    return res.status(200).json({ transcript, extracted });
+    return res.status(200).json({ transcript });
 
   } catch (err) {
     console.error('Transcribe error:', err.message);

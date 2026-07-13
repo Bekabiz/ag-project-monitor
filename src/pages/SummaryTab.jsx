@@ -19,21 +19,26 @@ export default function SummaryTab({ profile }) {
 
   async function loadData() {
     setLoading(true)
-    const fromISO = new Date(dateFrom).toISOString()
-    const toISO = new Date(dateTo + 'T23:59:59').toISOString()
+    try {
+      const fromISO = new Date(dateFrom).toISOString()
+      const toISO = new Date(dateTo + 'T23:59:59').toISOString()
 
-    const [projRes, entryRes, dlRes, sumRes] = await Promise.all([
-      supabase.from('projects').select('*').eq('status', 'active'),
-      supabase.from('entries').select('*').gte('created_at', fromISO).lte('created_at', toISO),
-      supabase.from('deadlines').select('*, projects(name)').in('status', ['overdue', 'pending']).order('due_date'),
-      supabase.from('ai_summaries').select('*').eq('scope', 'overall').order('generated_at', { ascending: false }).limit(1)
-    ])
+      const [projRes, entryRes, dlRes, sumRes] = await Promise.all([
+        supabase.from('projects').select('*').eq('status', 'active'),
+        supabase.from('entries').select('*').gte('created_at', fromISO).lte('created_at', toISO),
+        supabase.from('deadlines').select('*, projects(name)').in('status', ['overdue', 'pending']).order('due_date'),
+        supabase.from('ai_summaries').select('*').eq('scope', 'overall').order('generated_at', { ascending: false }).limit(1)
+      ])
 
-    setProjects(projRes.data || [])
-    setEntries(entryRes.data || [])
-    setDeadlines(dlRes.data || [])
-    setSummary(sumRes.data?.[0] || null)
-    setLoading(false)
+      setProjects(projRes.data || [])
+      setEntries(entryRes.data || [])
+      setDeadlines(dlRes.data || [])
+      setSummary(sumRes.data?.[0] || null)
+    } catch (err) {
+      console.error('Load error:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (loading) return <div className="loading-screen"><div className="spinner" /></div>

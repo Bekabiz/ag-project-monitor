@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { supabase } from '../lib/supabase'
+import { db, supabase } from '../lib/db'
 import StepsView from './StepsView'
 
 const CAT_CONFIG = {
@@ -39,19 +39,28 @@ export default function ProjectDetail({ project, profile, onBack }) {
   const [uploadStatus, setUploadStatus] = useState(null)
   const [parsedStructure, setParsedStructure] = useState(null)
 
+  const [toast, setToast] = useState(null)
+  function showToast(msg, isError) { setToast({ msg, isError }); setTimeout(() => setToast(null), 2500) }
+
   useEffect(() => { loadData() }, [project.id])
 
   async function loadData() {
     setLoading(true)
-    const [entriesRes, areasRes, deadlinesRes] = await Promise.all([
-      supabase.from('entries').select('*').eq('project_id', project.id).order('created_at', { ascending: false }).limit(200),
-      supabase.from('project_areas').select('*').eq('project_id', project.id).order('area_type', { ascending: true }),
-      supabase.from('deadlines').select('*').eq('project_id', project.id).order('due_date')
-    ])
-    setEntries(entriesRes.data || [])
-    setAreas(areasRes.data || [])
-    setDeadlines(deadlinesRes.data || [])
-    setLoading(false)
+    try {
+      const [entriesRes, areasRes, deadlinesRes] = await Promise.all([
+        supabase.from('entries').select('*').eq('project_id', project.id).order('created_at', { ascending: false }).limit(200),
+        supabase.from('project_areas').select('*').eq('project_id', project.id).order('area_type', { ascending: true }),
+        supabase.from('deadlines').select('*').eq('project_id', project.id).order('due_date')
+      ])
+      setEntries(entriesRes.data || [])
+      setAreas(areasRes.data || [])
+      setDeadlines(deadlinesRes.data || [])
+    } catch (err) {
+      console.error('Load error:', err)
+      showToast('Σφάλμα φόρτωσης', true)
+    } finally {
+      setLoading(false)
+    }
   }
 
   // Upload Technical Description
@@ -200,36 +209,46 @@ export default function ProjectDetail({ project, profile, onBack }) {
       })
     })
 
-    if (areasToInsert.length > 0) {
-      await supabase.from('project_areas').insert(areasToInsert)
-    }
+    try {
+      if (areasToInsert.length > 0) {
+        await db(supabase.from('project_areas').insert(areasToInsert))
+      }
 
-    // Save building type and project info
-    const updateData = {}
-    if (structure.building_type) updateData.building_type = structure.building_type
-    if (structure.project_info?.location) updateData.location = structure.project_info.location
-    if (Object.keys(updateData).length > 0) {
-      await supabase.from('projects').update(updateData).eq('id', project.id)
-    }
+      const updateData = {}
+      if (structure.building_type) updateData.building_type = structure.building_type
+      if (structure.project_info?.location) updateData.location = structure.project_info.location
+      if (Object.keys(updateData).length > 0) {
+        await db(supabase.from('projects').update(updateData).eq('id', project.id))
+      }
 
-    setParsedStructure(null)
-    setUploadStatus('done')
-    await loadData()
-    setTimeout(() => setUploadStatus(null), 2000)
+      setParsedStructure(null)
+      setUploadStatus('done')
+      await loadData()
+      setTimeout(() => setUploadStatus(null), 2000)
+    } catch (err) {
+      showToast('Σφάλμα αποθήκευσης δομής: ' + err.message, true)
+      setUploadStatus(null)
+    }
   }
 
-  // Resolve deadline
   async function toggleDeadline(d) {
     const newStatus = d.status === 'completed' ? (new Date(d.due_date) < new Date() ? 'overdue' : 'pending') : 'completed'
-    await supabase.from('deadlines').update({ status: newStatus }).eq('id', d.id)
-    setDeadlines(deadlines.map(dl => dl.id === d.id ? { ...dl, status: newStatus } : dl))
+    try {
+      await db(supabase.from('deadlines').update({ status: newStatus }).eq('id', d.id))
+      setDeadlines(deadlines.map(dl => dl.id === d.id ? { ...dl, status: newStatus } : dl))
+    } catch (err) {
+      showToast('Σφάλμα', true)
+    }
   }
 
-  // Resolve problem
   async function toggleProblemStatus(entryId, currentStatus) {
     const newStatus = currentStatus === 'open' ? 'resolved' : 'open'
-    await supabase.from('entries').update({ entry_status: newStatus }).eq('id', entryId)
-    setEntries(entries.map(e => e.id === entryId ? { ...e, entry_status: newStatus } : e))
+    try {
+      await db(supabase.from('entries').update({ entry_status: newStatus }).eq('id', entryId))
+      setEntries(entries.map(e => e.id === entryId ? { ...e, entry_status: newStatus } : e))
+    } catch (err) {
+      showToast('Σφάλμα', true)
+    }
   }
 
   // Filters

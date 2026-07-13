@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Check, X, PlusCircle, AlertTriangle, Paperclip, ChevronDown, Send, Mic, Plus, CheckCircle2, Search, Calendar, Filter, Eye } from 'lucide-react'
-import { supabase } from '../lib/supabase'
+import { db, supabase } from '../lib/db'
+import { getDaysInfo, getStatusColor, getStatusLabel } from '../lib/dates'
 
 export default function MonitorTab({ profile }) {
   const [assignedTasks, setAssignedTasks] = useState([])
@@ -30,11 +31,18 @@ export default function MonitorTab({ profile }) {
   const [searchResults, setSearchResults] = useState([])
   const [searching, setSearching] = useState(false)
   const [searchFilter, setSearchFilter] = useState({ category: null, project: null })
+  const [toast, setToast] = useState(null)
+
+  function showToast(msg, isError) {
+    setToast({ msg, isError })
+    setTimeout(() => setToast(null), 2500)
+  }
 
   useEffect(() => { loadData() }, [])
 
   async function loadData() {
     setLoading(true)
+    try {
     const { data: tasks } = await supabase
       .from('steps')
       .select('*, projects:project_id(name)')
@@ -73,8 +81,12 @@ export default function MonitorTab({ profile }) {
     const { data: projs } = await supabase
       .from('projects').select('*').eq('status', 'active').order('name')
     setProjects(projs || [])
-
-    setLoading(false)
+    } catch (err) {
+      console.error('Load error:', err)
+      showToast('Σφάλμα φόρτωσης', true)
+    } finally {
+      setLoading(false)
+    }
   }
 
   // === VOICE FOR PLANNER ===
@@ -128,124 +140,132 @@ export default function MonitorTab({ profile }) {
   }
 
   function getDaysText(step) {
-    if (!step.due_date) return ''
-    const now = new Date(); now.setHours(0,0,0,0)
-    const due = new Date(step.due_date); due.setHours(0,0,0,0)
-    const diff = Math.ceil((due - now) / 86400000)
-    if (diff < 0) return `${Math.abs(diff)} ημ. καθυστ.`
-    if (diff === 0) return 'Σήμερα'
-    if (diff <= 3) return `${diff} ημ.`
-    return due.toLocaleDateString('el-GR', { day: 'numeric', month: 'short' })
-  }
-
-  function getStatusColor(s) {
-    if (s === 'done') return 'var(--green)'
-    if (s === 'in_progress') return 'var(--blue)'
-    if (s === 'waiting') return 'var(--yellow)'
-    return 'var(--text3)'
-  }
-
-  function getStatusLabel(s) {
-    return { not_started: 'Νέα', in_progress: 'Σε εξέλιξη', waiting: 'Αναμονή', done: 'Ολοκληρ.' }[s] || s
+    return getDaysInfo(step).text
   }
 
   // === APPROVE / REJECT ===
   async function approveTask(task) {
-    await supabase.from('steps').update({ is_reviewed: true, review_result: 'approved' }).eq('id', task.id)
-    await supabase.from('step_notes').insert({
-      step_id: task.id, user_id: profile.id,
-      user_name: profile.full_name, text: '✓ Εγκρίθηκε'
-    })
-    await loadData()
+    try {
+      await db(supabase.from('steps').update({ is_reviewed: true, review_result: 'approved' }).eq('id', task.id))
+      await db(supabase.from('step_notes').insert({
+        step_id: task.id, user_id: profile.id,
+        user_name: profile.full_name, text: '✓ Εγκρίθηκε'
+      }))
+      await loadData()
+    } catch (err) {
+      showToast('Σφάλμα έγκρισης', true)
+    }
   }
 
   async function rejectTask(task) {
     const comment = prompt('Σχόλιο απόρριψης:')
     if (comment === null) return
-    await supabase.from('steps').update({
-      status: 'in_progress', is_reviewed: false, review_result: 'rejected'
-    }).eq('id', task.id)
-    await supabase.from('step_notes').insert({
-      step_id: task.id, user_id: profile.id,
-      user_name: profile.full_name, text: '↩ Απόρριψη: ' + (comment || 'Χρειάζεται διόρθωση')
-    })
-    await loadData()
+    try {
+      await db(supabase.from('steps').update({
+        status: 'in_progress', is_reviewed: false, review_result: 'rejected'
+      }).eq('id', task.id))
+      await db(supabase.from('step_notes').insert({
+        step_id: task.id, user_id: profile.id,
+        user_name: profile.full_name, text: '↩ Απόρριψη: ' + (comment || 'Χρειάζεται διόρθωση')
+      }))
+      await loadData()
+    } catch (err) {
+      showToast('Σφάλμα απόρριψης', true)
+    }
   }
 
   async function registerToTimeline(task) {
     if (!task.project_id) return
-    const latestNote = taskNotes[task.id]?.[0]?.text || ''
-    const fullText = `Task completed: ${task.title}${latestNote ? '. Note: ' + latestNote : ''}`
-    
-    // Call AI to categorize the completed task
-    let category = 'work_update'
-    let tags = []
-    let title = task.title
     try {
-      const { data: projs } = await supabase.from('projects').select('name').eq('status', 'active')
-      const { data: areas } = await supabase.from('project_areas').select('area_name').eq('project_id', task.project_id)
-      const res = await fetch('/api/extract', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text: fullText,
-          projectNames: (projs || []).map(p => p.name),
-          projectAreas: (areas || []).map(a => a.area_name)
+      const latestNote = taskNotes[task.id]?.[0]?.text || ''
+      const fullText = `Task completed: ${task.title}${latestNote ? '. Note: ' + latestNote : ''}`
+      
+      let category = 'work_update'
+      let tags = []
+      let title = task.title
+      try {
+        const { data: projs } = await supabase.from('projects').select('name').eq('status', 'active')
+        const { data: areas } = await supabase.from('project_areas').select('area_name').eq('project_id', task.project_id)
+        const res = await fetch('/api/extract', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: fullText,
+            projectNames: (projs || []).map(p => p.name),
+            projectAreas: (areas || []).map(a => a.area_name)
+          })
         })
-      })
-      if (res.ok) {
-        const { extracted } = await res.json()
-        if (extracted?.entries?.[0]) {
-          category = extracted.entries[0].category || 'work_update'
-          tags = extracted.entries[0].tags || []
-          title = extracted.entries[0].title || task.title
+        if (res.ok) {
+          const { extracted } = await res.json()
+          if (extracted?.entries?.[0]) {
+            category = extracted.entries[0].category || 'work_update'
+            tags = extracted.entries[0].tags || []
+            title = extracted.entries[0].title || task.title
+          }
         }
-      }
-    } catch (err) { console.log('AI categorize skipped:', err) }
+      } catch (aiErr) { console.log('AI categorize skipped:', aiErr) }
 
-    await supabase.from('entries').insert({
-      project_id: task.project_id, user_id: profile.id, entry_type: 'text',
-      raw_text: fullText,
-      ai_summary: title,
-      title: title,
-      category: category,
-      tags: tags.length > 0 ? tags : null,
-      is_team_visible: true, submitter_name: task.assigned_to_name || profile.full_name
-    })
-    await supabase.from('steps').update({ registered_to_timeline: true }).eq('id', task.id)
-    await loadData()
+      await db(supabase.from('entries').insert({
+        project_id: task.project_id, user_id: profile.id, entry_type: 'text',
+        raw_text: fullText, ai_summary: title, title: title,
+        category: category, tags: tags.length > 0 ? tags : null,
+        is_team_visible: true, submitter_name: task.assigned_to_name || profile.full_name
+      }))
+      await db(supabase.from('steps').update({ registered_to_timeline: true }).eq('id', task.id))
+      await loadData()
+    } catch (err) {
+      showToast('Σφάλμα καταχώρησης', true)
+    }
   }
 
   async function skipRegister(taskId) {
-    await supabase.from('steps').update({ registered_to_timeline: true }).eq('id', taskId)
-    await loadData()
+    try {
+      await db(supabase.from('steps').update({ registered_to_timeline: true }).eq('id', taskId))
+      await loadData()
+    } catch (err) {
+      showToast('Σφάλμα', true)
+    }
   }
 
   // === REPLY ===
   async function sendReply(taskId) {
     if (!replyText.trim()) return
-    await supabase.from('step_notes').insert({
-      step_id: taskId, user_id: profile.id,
-      user_name: profile.full_name, text: replyText.trim()
-    })
-    setReplyText('')
-    await loadData()
+    try {
+      await db(supabase.from('step_notes').insert({
+        step_id: taskId, user_id: profile.id,
+        user_name: profile.full_name, text: replyText.trim()
+      }))
+      setReplyText('')
+      await loadData()
+    } catch (err) {
+      showToast('Σφάλμα αποστολής', true)
+    }
   }
 
   // === PLANS ===
   async function savePlan() {
     if (!planText.trim() || !planDate) return
     setPlanSaving(true)
-    await supabase.from('manager_plans').insert({
-      user_id: profile.id, plan_date: planDate, text: planText.trim()
-    })
-    setPlanText(''); setPlanDate(''); setShowPlanModal(false); setPlanSaving(false)
-    await loadData()
+    try {
+      await db(supabase.from('manager_plans').insert({
+        user_id: profile.id, plan_date: planDate, text: planText.trim()
+      }))
+      setPlanText(''); setPlanDate(''); setShowPlanModal(false)
+      await loadData()
+    } catch (err) {
+      showToast('Σφάλμα αποθήκευσης', true)
+    } finally {
+      setPlanSaving(false)
+    }
   }
 
   async function markPlanDone(id) {
-    await supabase.from('manager_plans').update({ is_done: true }).eq('id', id)
-    await loadData()
+    try {
+      await db(supabase.from('manager_plans').update({ is_done: true }).eq('id', id))
+      await loadData()
+    } catch (err) {
+      showToast('Σφάλμα', true)
+    }
   }
 
   async function deletePlan(id) {

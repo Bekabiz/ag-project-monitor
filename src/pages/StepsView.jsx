@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { AlertTriangle, Plus, Paperclip, ChevronDown, Send, Mic, Clock, Flag } from 'lucide-react'
-import { supabase } from '../lib/supabase'
+import { db, supabase } from '../lib/db'
+import { getDaysInfo, formatDueTime, getStepCardClass } from '../lib/dates'
 
 export default function StepsView({ project, profile }) {
   const [steps, setSteps] = useState([])
@@ -26,10 +27,14 @@ export default function StepsView({ project, profile }) {
   const mediaRecorderRef = useRef(null)
   const audioChunksRef = useRef([])
 
+  const [toast, setToast] = useState(null)
+  function showToast(msg, isError) { setToast({ msg, isError }); setTimeout(() => setToast(null), 2500) }
+
   useEffect(() => { loadSteps() }, [project.id])
 
   async function loadSteps() {
     setLoading(true)
+    try {
     const { data: stps } = await supabase
       .from('steps')
       .select('*')
@@ -55,7 +60,12 @@ export default function StepsView({ project, profile }) {
       })
       setStepNotes(grouped)
     }
-    setLoading(false)
+    } catch (err) {
+      console.error('Load error:', err)
+      showToast('Σφάλμα φόρτωσης', true)
+    } finally {
+      setLoading(false)
+    }
   }
 
   // === VOICE ===
@@ -136,118 +146,83 @@ export default function StepsView({ project, profile }) {
   async function handleSave() {
     if (!title.trim()) return
     setSaving(true)
+    try {
+      const assignedProfile = profiles.find(p => p.id === assignedTo)
 
-    const assignedProfile = profiles.find(p => p.id === assignedTo)
-
-    // Handle file upload
-    let fileUrl = editStep?.file_url || null
-    let fileName = editStep?.file_name || null
-    if (stepFile) {
-      const ext = stepFile.name.split('.').pop()
-      const path = `task-files/${Date.now()}.${ext}`
-      const { error: upErr } = await supabase.storage.from('files').upload(path, stepFile)
-      if (!upErr) {
+      let fileUrl = editStep?.file_url || null
+      let fileName = editStep?.file_name || null
+      if (stepFile) {
+        const ext = stepFile.name.split('.').pop()
+        const path = `task-files/${Date.now()}.${ext}`
+        const { error: upErr } = await supabase.storage.from('files').upload(path, stepFile)
+        if (upErr) throw new Error('Σφάλμα μεταφόρτωσης')
         const { data: urlData } = supabase.storage.from('files').getPublicUrl(path)
         fileUrl = urlData.publicUrl
         fileName = stepFile.name
       }
-    }
 
-    // Build due datetime
-    let dueDatetime = null
-    if (dueDate) {
-      dueDatetime = `${dueDate}T${dueTime || '17:00'}:00`
-    }
+      let dueDatetime = null
+      if (dueDate) dueDatetime = `${dueDate}T${dueTime || '17:00'}:00`
 
-    if (editStep) {
-      await supabase.from('steps').update({
-        title: title.trim(),
-        description: description.trim() || null,
-        assigned_to: assignedTo || null,
-        assigned_to_name: assignedProfile?.full_name || null,
-        due_date: dueDatetime,
-        file_url: fileUrl,
-        file_name: fileName,
-        updated_by: profile.id,
-        is_urgent: isUrgent
-      }).eq('id', editStep.id)
-    } else {
-      const maxPos = steps.length > 0 ? Math.max(...steps.map(s => s.position || 0)) : 0
-      await supabase.from('steps').insert({
-        project_id: project.id,
-        title: title.trim(),
-        description: description.trim() || null,
-        assigned_to: assignedTo || null,
-        assigned_to_name: assignedProfile?.full_name || null,
-        created_by: profile.id,
-        created_by_name: profile.full_name,
-        due_date: dueDatetime,
-        status: 'not_started',
-        position: maxPos + 1,
-        file_url: fileUrl,
-        file_name: fileName,
-        updated_by: profile.id,
-        is_urgent: isUrgent
-      })
-    }
+      if (editStep) {
+        await db(supabase.from('steps').update({
+          title: title.trim(),
+          description: description.trim() || null,
+          assigned_to: assignedTo || null,
+          assigned_to_name: assignedProfile?.full_name || null,
+          due_date: dueDatetime,
+          file_url: fileUrl, file_name: fileName,
+          updated_by: profile.id, is_urgent: isUrgent
+        }).eq('id', editStep.id))
+      } else {
+        const maxPos = steps.length > 0 ? Math.max(...steps.map(s => s.position || 0)) : 0
+        await db(supabase.from('steps').insert({
+          project_id: project.id,
+          title: title.trim(),
+          description: description.trim() || null,
+          assigned_to: assignedTo || null,
+          assigned_to_name: assignedProfile?.full_name || null,
+          created_by: profile.id, created_by_name: profile.full_name,
+          due_date: dueDatetime, status: 'not_started',
+          position: maxPos + 1,
+          file_url: fileUrl, file_name: fileName,
+          updated_by: profile.id, is_urgent: isUrgent
+        }))
+      }
 
-    setShowAdd(false)
-    setSaving(false)
-    await loadSteps()
+      setShowAdd(false)
+      await loadSteps()
+    } catch (err) {
+      showToast('Σφάλμα αποθήκευσης: ' + err.message, true)
+    } finally {
+      setSaving(false)
+    }
   }
 
   async function updateStatus(stepId, newStatus) {
-    await supabase.from('steps').update({
-      status: newStatus,
-      updated_by: profile.id
-    }).eq('id', stepId)
-    await loadSteps()
+    try {
+      await db(supabase.from('steps').update({ status: newStatus, updated_by: profile.id }).eq('id', stepId))
+      await loadSteps()
+    } catch (err) {
+      showToast('Σφάλμα ενημέρωσης', true)
+    }
   }
 
   async function addNote(stepId) {
     if (!noteText.trim()) return
-    await supabase.from('step_notes').insert({
-      step_id: stepId,
-      user_id: profile.id,
-      user_name: profile.full_name,
-      text: noteText.trim()
-    })
-    setNoteText('')
-    await loadSteps()
+    try {
+      await db(supabase.from('step_notes').insert({
+        step_id: stepId, user_id: profile.id,
+        user_name: profile.full_name, text: noteText.trim()
+      }))
+      setNoteText('')
+      await loadSteps()
+    } catch (err) {
+      showToast('Σφάλμα σημείωσης', true)
+    }
   }
 
-  function getDaysInfo(step) {
-    if (!step.due_date) return { text: '', className: '' }
-    const now = new Date()
-    now.setHours(0, 0, 0, 0)
-    const due = new Date(step.due_date)
-    const dueDay = new Date(due)
-    dueDay.setHours(0, 0, 0, 0)
-    const diff = Math.ceil((dueDay - now) / 86400000)
-    if (step.status === 'done') return { text: 'Έγινε', className: 'step-done' }
-    if (diff < 0) return { text: `${Math.abs(diff)} ημ.`, className: 'step-overdue' }
-    if (diff === 0) return { text: 'Σήμερα', className: 'step-today' }
-    if (diff <= 3) return { text: `${diff} ημ.`, className: 'step-soon' }
-    return { text: dueDay.toLocaleDateString('el-GR', { day: 'numeric', month: 'short' }), className: '' }
-  }
-
-  function formatDueTime(step) {
-    if (!step.due_date) return ''
-    const d = new Date(step.due_date)
-    const h = d.getHours(); const m = d.getMinutes()
-    if (h === 0 && m === 0) return ''
-    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`
-  }
-
-  function getStepBg(step) {
-    if (step.status === 'done') return 'step-card step-done'
-    const info = getDaysInfo(step)
-    if (info.className === 'step-overdue') return 'step-card step-overdue'
-    if (info.className === 'step-today' || info.className === 'step-soon') return 'step-card step-soon'
-    if (step.status === 'waiting') return 'step-card step-waiting'
-    if (step.status === 'in_progress') return 'step-card step-progress'
-    return 'step-card'
-  }
+  // getDaysInfo, formatDueTime, getStepCardClass imported from lib/dates
 
   const statusOptions = [
     { value: 'not_started', label: 'Νέα', icon: '○' },
@@ -281,7 +256,7 @@ export default function StepsView({ project, profile }) {
         const dueTime = formatDueTime(step)
 
         return (
-          <div key={step.id} className={getStepBg(step)} onClick={() => setExpandedStep(isExpanded ? null : step.id)}>
+          <div key={step.id} className={getStepCardClass(step)} onClick={() => setExpandedStep(isExpanded ? null : step.id)}>
             <div className="step-card-top">
               <div style={{ flex: 1 }}>
                 <span className={`step-title ${step.status === 'done' ? 'step-title-done' : ''}`}>

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Eye, EyeOff, Mic, Camera, FileUp, Check, RotateCcw } from 'lucide-react'
-import { supabase } from '../lib/supabase'
+import { db, supabase } from '../lib/db'
 
 export default function InputTab({ profile }) {
   const [projects, setProjects] = useState([])
@@ -85,7 +85,7 @@ export default function InputTab({ profile }) {
       if (entries.length > 0) {
         // Save each structured entry
         for (const entry of entries) {
-          await supabase.from('entries').insert({
+          await db(supabase.from('entries').insert({
             project_id: targetProject.id,
             user_id: profile.id,
             entry_type: type,
@@ -104,11 +104,10 @@ export default function InputTab({ profile }) {
             } : null,
             is_team_visible: teamVisible,
             submitter_name: profile.full_name
-          })
+          }))
         }
       } else {
-        // Fallback: save as single entry (no AI entries array)
-        await supabase.from('entries').insert({
+        await db(supabase.from('entries').insert({
           project_id: targetProject.id,
           user_id: profile.id,
           entry_type: type,
@@ -126,17 +125,17 @@ export default function InputTab({ profile }) {
           } : null,
           is_team_visible: teamVisible,
           submitter_name: profile.full_name
-        })
+        }))
       }
 
       // If deadline extracted, save to deadlines table
       if (extracted?.deadline_date && extracted?.deadline_description) {
-        await supabase.from('deadlines').insert({
+        await db(supabase.from('deadlines').insert({
           project_id: targetProject.id,
           description: extracted.deadline_description,
           due_date: extracted.deadline_date,
           status: new Date(extracted.deadline_date) < new Date() ? 'overdue' : 'pending'
-        })
+        }))
       }
 
       setText('')
@@ -232,26 +231,23 @@ export default function InputTab({ profile }) {
       const { data: urlData } = supabase.storage.from('files').getPublicUrl(path)
       const fileUrl = urlData.publicUrl
 
-      // Step 2: Send URL to transcribe API
-      const projectNames = projects.map(p => p.name)
-      const res = await fetch('/api/transcribe', {
+      // Step 2: Transcribe audio (Whisper only)
+      const transRes = await fetch('/api/transcribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fileUrl, projectNames })
+        body: JSON.stringify({ fileUrl })
       })
 
-      if (!res.ok) {
-        // Clean up audio file
-        await supabase.storage.from('files').remove([path])
+      // Always clean up audio file
+      await supabase.storage.from('files').remove([path]).catch(() => {})
+
+      if (!transRes.ok) {
         showToast('Η μεταγραφή απέτυχε', true)
         setExtracting(false)
         return
       }
 
-      const { transcript, extracted } = await res.json()
-
-      // Delete audio file - we only need the text
-      await supabase.storage.from('files').remove([path])
+      const { transcript } = await transRes.json()
 
       if (!transcript || transcript.trim().length === 0) {
         showToast('Δεν αναγνωρίστηκε ομιλία', true)
@@ -259,10 +255,28 @@ export default function InputTab({ profile }) {
         return
       }
 
+      // Step 3: Extract structured data (same pipeline as text — one brain, two mouths)
+      const projectNames = projects.map(p => p.name)
+      let projectAreas = []
+      if (selected) {
+        const { data: areas } = await supabase.from('project_areas').select('area_name').eq('project_id', selected.id)
+        projectAreas = (areas || []).map(a => a.area_name)
+      }
+      const extRes = await fetch('/api/extract', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: transcript, projectNames, projectAreas })
+      })
+      let extracted = null
+      if (extRes.ok) {
+        const extData = await extRes.json()
+        extracted = extData.extracted || null
+      }
+
       // Show confirmation with transcript + extracted data
       setConfirm({
         rawText: transcript,
-        extracted: extracted || null,
+        extracted,
         entryType: 'voice'
       })
     } catch (err) {

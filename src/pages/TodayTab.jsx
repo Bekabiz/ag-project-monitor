@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { Bell, X, Plus, ClipboardCheck, MessageCircle, AlertTriangle, Paperclip, ChevronDown, Send, Mic, Sparkles, CircleDot, Clock, Square, CheckCircle2, User, Users } from 'lucide-react'
-import { supabase } from '../lib/supabase'
+import { db, supabase } from '../lib/db'
+import { getDaysInfo, formatDueTime, getOverdueCount } from '../lib/dates'
+import { extractText } from '../lib/voice'
 
 export default function TodayTab({ profile, onBadgeCount }) {
   const [mySteps, setMySteps] = useState([])
@@ -38,6 +40,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false)
   const [annText, setAnnText] = useState('')
   const [annSaving, setAnnSaving] = useState(false)
+  const [toast, setToast] = useState(null)
 
   // Voice recording (shared for task title + announcements)
   const [isRecording, setIsRecording] = useState(false)
@@ -48,8 +51,14 @@ export default function TodayTab({ profile, onBadgeCount }) {
 
   useEffect(() => { loadData() }, [])
 
+  function showToast(msg, isError) {
+    setToast({ msg, isError })
+    setTimeout(() => setToast(null), 2500)
+  }
+
   async function loadData() {
     setLoading(true)
+    try {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     const tomorrow = new Date(today)
@@ -131,8 +140,12 @@ export default function TodayTab({ profile, onBadgeCount }) {
       .neq('updated_by', profile.id)
     if (onBadgeCount) onBadgeCount(count || 0)
     localStorage.setItem('ag_last_seen', new Date().toISOString())
-
-    setLoading(false)
+    } catch (err) {
+      console.error('Load error:', err)
+      showToast('Σφάλμα φόρτωσης', true)
+    } finally {
+      setLoading(false)
+    }
   }
 
   // === VOICE RECORDING ===
@@ -163,81 +176,93 @@ export default function TodayTab({ profile, onBadgeCount }) {
     setIsTranscribing(true)
     try {
       const path = `voice-tasks/${Date.now()}.webm`
-      await supabase.storage.from('files').upload(path, blob)
+      const { error: upErr } = await supabase.storage.from('files').upload(path, blob)
+      if (upErr) throw new Error('Σφάλμα αποστολής ήχου')
       const { data: urlData } = supabase.storage.from('files').getPublicUrl(path)
-      const projectNames = projects.map(p => p.name)
-      const useFullExtraction = target === 'task'
       const res = await fetch('/api/transcribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fileUrl: urlData.publicUrl,
-          transcribeOnly: !useFullExtraction,
-          projectNames: useFullExtraction ? projectNames : undefined
-        })
+        body: JSON.stringify({ fileUrl: urlData.publicUrl })
       })
+      // Always clean up audio file
+      await supabase.storage.from('files').remove([path]).catch(() => {})
+
+      if (!res.ok) throw new Error('Η μεταγραφή απέτυχε')
       const data = await res.json()
-      if (data.transcript) {
-        if (target === 'task') {
-          // Smart extraction: try to auto-fill from AI
-          if (data.extracted) {
-            const ex = data.extracted
-            // Set title from summary or transcript
-            setTaskTitle(ex.summary || data.transcript)
-            // Match project name
-            if (ex.project_name) {
-              const matchedProj = projects.find(p =>
-                p.name.toLowerCase().includes(ex.project_name.toLowerCase()) ||
-                ex.project_name.toLowerCase().includes(p.name.toLowerCase())
-              )
-              if (matchedProj) setTaskProject(matchedProj.id)
-            }
-            // Match people to assignees
-            if (ex.people && ex.people.length > 0) {
-              const matchedIds = []
-              ex.people.forEach(personName => {
-                const match = profiles.find(p =>
-                  p.full_name?.toLowerCase().includes(personName.toLowerCase()) ||
-                  personName.toLowerCase().includes(p.full_name?.split(' ')[0]?.toLowerCase() || '')
-                )
-                if (match) matchedIds.push(match.id)
-              })
-              if (matchedIds.length > 0) setTaskAssignees(matchedIds)
-            }
-            // Set date
-            if (ex.deadline_date) setTaskDate(ex.deadline_date)
-            // Set description from action items
-            if (ex.action_items?.length > 0) setTaskDesc(ex.action_items.join(', '))
-          } else {
-            setTaskTitle(prev => prev ? prev + ' ' + data.transcript : data.transcript)
-          }
-        } else if (target === 'announcement') setAnnText(prev => prev ? prev + ' ' + data.transcript : data.transcript)
-        else if (target === 'update') setUpdateText(prev => prev ? prev + ' ' + data.transcript : data.transcript)
+      if (!data.transcript?.trim()) {
+        showToast('Δεν αναγνωρίστηκε ομιλία', true)
+        return
       }
-      await supabase.storage.from('files').remove([path])
-    } catch (err) { console.error('Voice error:', err) }
-    setIsTranscribing(false)
-    setVoiceTarget(null)
+
+      if (target === 'task') {
+        // Use the SAME extraction pipeline as text input (one brain, two mouths)
+        const extracted = await extractText(data.transcript, projects.map(p => p.name))
+        if (extracted) {
+          setTaskTitle(extracted.summary || data.transcript)
+          if (extracted.project_name) {
+            const matchedProj = projects.find(p =>
+              p.name.toLowerCase().includes(extracted.project_name.toLowerCase()) ||
+              extracted.project_name.toLowerCase().includes(p.name.toLowerCase())
+            )
+            if (matchedProj) setTaskProject(matchedProj.id)
+          }
+          if (extracted.people?.length > 0) {
+            const matchedIds = []
+            extracted.people.forEach(personName => {
+              const match = profiles.find(p =>
+                p.full_name?.toLowerCase().includes(personName.toLowerCase()) ||
+                personName.toLowerCase().includes(p.full_name?.split(' ')[0]?.toLowerCase() || '')
+              )
+              if (match) matchedIds.push(match.id)
+            })
+            if (matchedIds.length > 0) setTaskAssignees(matchedIds)
+          }
+          if (extracted.deadline_date) setTaskDate(extracted.deadline_date)
+          if (extracted.action_items?.length > 0) setTaskDesc(extracted.action_items.join(', '))
+        } else {
+          setTaskTitle(prev => prev ? prev + ' ' + data.transcript : data.transcript)
+        }
+      } else if (target === 'announcement') {
+        setAnnText(prev => prev ? prev + ' ' + data.transcript : data.transcript)
+      } else if (target === 'update') {
+        setUpdateText(prev => prev ? prev + ' ' + data.transcript : data.transcript)
+      }
+    } catch (err) {
+      console.error('Voice error:', err)
+      showToast(err.message || 'Σφάλμα φωνής', true)
+    } finally {
+      setIsTranscribing(false)
+      setVoiceTarget(null)
+    }
   }
 
   // === ANNOUNCEMENTS ===
   async function saveAnnouncement() {
     if (!annText.trim()) return
     setAnnSaving(true)
-    await supabase.from('announcements').insert({
-      user_id: profile.id,
-      user_name: profile.full_name,
-      text: annText.trim()
-    })
-    setAnnText('')
-    setShowAnnouncementModal(false)
-    setAnnSaving(false)
-    await loadData()
+    try {
+      await db(supabase.from('announcements').insert({
+        user_id: profile.id,
+        user_name: profile.full_name,
+        text: annText.trim()
+      }))
+      setAnnText('')
+      setShowAnnouncementModal(false)
+      await loadData()
+    } catch (err) {
+      showToast('Σφάλμα αποθήκευσης ανακοίνωσης', true)
+    } finally {
+      setAnnSaving(false)
+    }
   }
 
   async function dismissAnnouncement(id) {
-    await supabase.from('announcements').update({ is_active: false }).eq('id', id)
-    await loadData()
+    try {
+      await db(supabase.from('announcements').update({ is_active: false }).eq('id', id))
+      await loadData()
+    } catch (err) {
+      showToast('Σφάλμα', true)
+    }
   }
 
   // === TASK CREATION ===
@@ -268,11 +293,10 @@ export default function TodayTab({ profile, onBadgeCount }) {
         const ext = taskFile.name.split('.').pop()
         const path = `task-files/${Date.now()}.${ext}`
         const { error: upErr } = await supabase.storage.from('files').upload(path, taskFile)
-        if (!upErr) {
-          const { data: urlData } = supabase.storage.from('files').getPublicUrl(path)
-          fileUrl = urlData.publicUrl
-          fileName = taskFile.name
-        }
+        if (upErr) throw new Error('Σφάλμα μεταφόρτωσης αρχείου')
+        const { data: urlData } = supabase.storage.from('files').getPublicUrl(path)
+        fileUrl = urlData.publicUrl
+        fileName = taskFile.name
       }
 
       let dueDate = null
@@ -282,12 +306,10 @@ export default function TodayTab({ profile, onBadgeCount }) {
       const isStaff = taskProject === 'staff'
       const projectId = (isPersonal || isStaff) ? null : (taskProject || null)
 
-      // Determine assignees
       let assigneeList = []
       if (isPersonal) {
         assigneeList = [{ id: profile.id, name: profile.full_name }]
       } else if (isStaff) {
-        // All team members
         assigneeList = profiles.map(p => ({ id: p.id, name: p.full_name }))
       } else if (taskAssignees.length > 0) {
         assigneeList = taskAssignees.map(id => {
@@ -295,23 +317,21 @@ export default function TodayTab({ profile, onBadgeCount }) {
           return { id, name: p?.full_name || '' }
         })
       } else {
-        // No one selected = unassigned
         assigneeList = [{ id: null, name: null }]
       }
 
-      // Get max position
       let maxPos = 0
       if (projectId) {
-        const { data: ex } = await supabase.from('steps').select('position')
-          .eq('project_id', projectId).order('position', { ascending: false }).limit(1)
+        const ex = await db(supabase.from('steps').select('position')
+          .eq('project_id', projectId).order('position', { ascending: false }).limit(1))
         maxPos = ex?.[0]?.position || 0
       }
 
-      // Multi-assign: create one step per person with shared group_id
       const groupId = assigneeList.length > 1 ? crypto.randomUUID() : null
 
+      // Multi-assign: each insert checked — if one fails, user is told immediately
       for (let i = 0; i < assigneeList.length; i++) {
-        await supabase.from('steps').insert({
+        await db(supabase.from('steps').insert({
           project_id: projectId,
           title: taskTitle.trim(),
           description: taskDesc.trim() || null,
@@ -327,75 +347,81 @@ export default function TodayTab({ profile, onBadgeCount }) {
           updated_by: profile.id,
           is_urgent: taskUrgent,
           group_id: groupId
-        })
+        }))
       }
 
       setShowTaskModal(false)
       await loadData()
-    } catch (err) { console.error('Save task error:', err) }
-    setTaskSaving(false)
+    } catch (err) {
+      console.error('Save task error:', err)
+      showToast('Σφάλμα αποθήκευσης εργασίας: ' + err.message, true)
+    } finally {
+      setTaskSaving(false)
+    }
   }
 
   // === INLINE TASK STATUS ===
   async function updateTaskStatus(step, newStatus) {
-    await supabase.from('steps').update({ status: newStatus, updated_by: profile.id }).eq('id', step.id)
-    await loadData()
+    try {
+      await db(supabase.from('steps').update({ status: newStatus, updated_by: profile.id }).eq('id', step.id))
+      await loadData()
+    } catch (err) {
+      showToast('Σφάλμα ενημέρωσης κατάστασης', true)
+    }
   }
 
   async function addTaskNote(stepId) {
     if (!taskNoteText.trim()) return
-    await supabase.from('step_notes').insert({
-      step_id: stepId, user_id: profile.id,
-      user_name: profile.full_name, text: taskNoteText.trim()
-    })
-    setTaskNoteText('')
-    await loadData()
+    try {
+      await db(supabase.from('step_notes').insert({
+        step_id: stepId, user_id: profile.id,
+        user_name: profile.full_name, text: taskNoteText.trim()
+      }))
+      setTaskNoteText('')
+      await loadData()
+    } catch (err) {
+      showToast('Σφάλμα αποθήκευσης σημείωσης', true)
+    }
   }
 
   // === GENERAL UPDATE ===
   async function handleAddUpdate() {
     if (!updateText.trim()) return
     setSending(true)
-    let fileUrl = null
-    if (updateFile) {
-      const ext = updateFile.name.split('.').pop()
-      const path = `general/${Date.now()}.${ext}`
-      const { error: upErr } = await supabase.storage.from('files').upload(path, updateFile)
-      if (!upErr) {
+    try {
+      let fileUrl = null
+      if (updateFile) {
+        const ext = updateFile.name.split('.').pop()
+        const path = `general/${Date.now()}.${ext}`
+        const { error: upErr } = await supabase.storage.from('files').upload(path, updateFile)
+        if (upErr) throw new Error('Σφάλμα μεταφόρτωσης')
         const { data: urlData } = supabase.storage.from('files').getPublicUrl(path)
         fileUrl = urlData.publicUrl
       }
+      await db(supabase.from('general_updates').insert({
+        user_id: profile.id, user_name: profile.full_name,
+        text: updateText.trim(), file_url: fileUrl
+      }))
+      setUpdateText(''); setUpdateFile(null); setShowAddUpdate(false)
+      await loadData()
+    } catch (err) {
+      showToast('Σφάλμα αποθήκευσης', true)
+    } finally {
+      setSending(false)
     }
-    await supabase.from('general_updates').insert({
-      user_id: profile.id, user_name: profile.full_name,
-      text: updateText.trim(), file_url: fileUrl
-    })
-    setUpdateText(''); setUpdateFile(null); setShowAddUpdate(false); setSending(false)
-    await loadData()
   }
 
   // === PLAN REMINDERS ===
   async function markPlanDone(planId) {
-    await supabase.from('manager_plans').update({ is_done: true }).eq('id', planId)
-    await loadData()
+    try {
+      await db(supabase.from('manager_plans').update({ is_done: true }).eq('id', planId))
+      await loadData()
+    } catch (err) {
+      showToast('Σφάλμα', true)
+    }
   }
 
   // === HELPERS ===
-  function getOverdueCount() {
-    const now = new Date()
-    return mySteps.filter(s => s.due_date && new Date(s.due_date) < now && s.status !== 'done').length
-  }
-
-  function getDaysInfo(step) {
-    if (!step.due_date) return { text: 'Χωρίς ημ/νία', className: '' }
-    const now = new Date(); now.setHours(0, 0, 0, 0)
-    const due = new Date(step.due_date); const dueDay = new Date(due); dueDay.setHours(0, 0, 0, 0)
-    const diff = Math.ceil((dueDay - now) / 86400000)
-    if (diff < 0) return { text: `${Math.abs(diff)} ημ. καθυστ.`, className: 'step-overdue' }
-    if (diff === 0) return { text: 'Σήμερα', className: 'step-today' }
-    if (diff <= 3) return { text: `${diff} ημ.`, className: 'step-soon' }
-    return { text: dueDay.toLocaleDateString('el-GR', { day: 'numeric', month: 'short' }), className: '' }
-  }
 
   function getStatusClass(step) {
     if (step.status === 'done') return 'step-done'
@@ -405,13 +431,6 @@ export default function TodayTab({ profile, onBadgeCount }) {
     if (step.status === 'waiting') return 'step-waiting'
     if (step.status === 'in_progress') return 'step-progress'
     return ''
-  }
-
-  function formatDueTime(step) {
-    if (!step.due_date) return ''
-    const d = new Date(step.due_date)
-    if (d.getHours() === 0 && d.getMinutes() === 0) return ''
-    return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
   }
 
   function getPersonUpdates() {
@@ -440,7 +459,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
 
   if (loading) return <div className="loading-inline"><div className="spinner" /></div>
 
-  const overdueCount = getOverdueCount()
+  const overdueCount = getOverdueCount(mySteps)
   const personUpdates = getPersonUpdates()
   const otherProfiles = profiles.filter(p => p.id !== profile.id)
   const isPersonalTask = taskProject === 'personal'
@@ -763,6 +782,8 @@ export default function TodayTab({ profile, onBadgeCount }) {
           </div>
         </div>
       )}
+
+      {toast && <div className={`toast ${toast.isError ? "toast-error" : "toast-success"}`}>{toast.msg}</div>}
     </div>
   )
 }
