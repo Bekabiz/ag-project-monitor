@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { Check, X, PlusCircle, AlertTriangle, Paperclip, ChevronDown, Send, Mic, Plus, CheckCircle2, Search, Calendar, Filter, Eye } from 'lucide-react'
 import { db, supabase } from '../lib/db'
 import { getDaysInfo, getStatusColor, getStatusLabel } from '../lib/dates'
+import { useVoiceRecorder } from '../lib/voice'
 
 export default function MonitorTab({ profile }) {
   const [assignedTasks, setAssignedTasks] = useState([])
@@ -21,10 +22,7 @@ export default function MonitorTab({ profile }) {
   const [planSaving, setPlanSaving] = useState(false)
 
   // Voice for planner
-  const [isRecording, setIsRecording] = useState(false)
-  const [isTranscribing, setIsTranscribing] = useState(false)
-  const mediaRecorderRef = useRef(null)
-  const audioChunksRef = useRef([])
+  const voice = useVoiceRecorder()
 
   // Search
   const [searchQuery, setSearchQuery] = useState('')
@@ -89,40 +87,15 @@ export default function MonitorTab({ profile }) {
     }
   }
 
-  // === VOICE FOR PLANNER ===
-  async function startRecording() {
+  // === VOICE FOR PLANNER (shared hook) ===
+  async function handlePlanVoice() {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const mr = new MediaRecorder(stream, { mimeType: 'audio/webm' })
-      audioChunksRef.current = []
-      mr.ondataavailable = e => { if (e.data.size > 0) audioChunksRef.current.push(e.data) }
-      mr.onstop = async () => {
-        stream.getTracks().forEach(t => t.stop())
-        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
-        setIsTranscribing(true)
-        try {
-          const path = `voice-tasks/${Date.now()}.webm`
-          await supabase.storage.from('files').upload(path, blob)
-          const { data: urlData } = supabase.storage.from('files').getPublicUrl(path)
-          const res = await fetch('/api/transcribe', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ fileUrl: urlData.publicUrl, transcribeOnly: true })
-          })
-          const data = await res.json()
-          if (data.transcript) setPlanText(prev => prev ? prev + ' ' + data.transcript : data.transcript)
-          await supabase.storage.from('files').remove([path])
-        } catch (err) { console.error('Voice error:', err) }
-        setIsTranscribing(false)
-      }
-      mr.start()
-      mediaRecorderRef.current = mr
-      setIsRecording(true)
-    } catch (err) { alert('Mic not available') }
-  }
-
-  function stopRecording() {
-    if (mediaRecorderRef.current?.state === 'recording') mediaRecorderRef.current.stop()
-    setIsRecording(false)
+      const blob = await voice.startRecording()
+      const transcript = await voice.transcribeBlob(blob)
+      setPlanText(prev => prev ? prev + ' ' + transcript : transcript)
+    } catch (err) {
+      showToast(err.message || 'Σφάλμα μικροφώνου', true)
+    }
   }
 
   // === TASK HELPERS ===
@@ -581,9 +554,9 @@ export default function MonitorTab({ profile }) {
                 <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
                   <textarea className="modal-input" placeholder="Τι πρέπει να γίνει..." value={planText}
                     onChange={e => setPlanText(e.target.value)} rows={3} autoFocus style={{ flex: 1, resize: 'vertical', fontFamily: 'inherit' }} />
-                  <button className={`voice-btn ${isRecording ? 'voice-btn-recording' : ''}`}
-                    onClick={isRecording ? stopRecording : startRecording} disabled={isTranscribing}>
-                    {isTranscribing ? <div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} /> :
+                  <button className={`voice-btn ${voice.recording ? 'voice-btn-recording' : ''}`}
+                    onClick={voice.recording ? voice.stopRecording : handlePlanVoice} disabled={voice.transcribing}>
+                    {voice.transcribing ? <div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} /> :
                       <Mic size={18} strokeWidth={1.6} />}
                   </button>
                 </div>

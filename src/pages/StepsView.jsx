@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { AlertTriangle, Plus, Paperclip, ChevronDown, Send, Mic, Clock, Flag } from 'lucide-react'
 import { db, supabase } from '../lib/db'
 import { getDaysInfo, formatDueTime, getStepCardClass } from '../lib/dates'
+import { useVoiceRecorder } from '../lib/voice'
 
 export default function StepsView({ project, profile }) {
   const [steps, setSteps] = useState([])
@@ -21,11 +22,8 @@ export default function StepsView({ project, profile }) {
   const [noteText, setNoteText] = useState('')
   const [stepNotes, setStepNotes] = useState({})
 
-  // Voice recording
-  const [isRecording, setIsRecording] = useState(false)
-  const [isTranscribing, setIsTranscribing] = useState(false)
-  const mediaRecorderRef = useRef(null)
-  const audioChunksRef = useRef([])
+  // Voice recording (shared hook)
+  const voice = useVoiceRecorder()
 
   const [toast, setToast] = useState(null)
   function showToast(msg, isError) { setToast({ msg, isError }); setTimeout(() => setToast(null), 2500) }
@@ -68,45 +66,15 @@ export default function StepsView({ project, profile }) {
     }
   }
 
-  // === VOICE ===
-  async function startRecording() {
+  // === VOICE (shared hook) ===
+  async function handleTitleVoice() {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' })
-      audioChunksRef.current = []
-      mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunksRef.current.push(e.data) }
-      mediaRecorder.onstop = async () => {
-        stream.getTracks().forEach(t => t.stop())
-        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
-        await transcribeAudio(blob)
-      }
-      mediaRecorder.start()
-      mediaRecorderRef.current = mediaRecorder
-      setIsRecording(true)
-    } catch (err) { alert('Δεν μπορώ να ανοίξω το μικρόφωνο') }
-  }
-
-  function stopRecording() {
-    if (mediaRecorderRef.current?.state === 'recording') mediaRecorderRef.current.stop()
-    setIsRecording(false)
-  }
-
-  async function transcribeAudio(blob) {
-    setIsTranscribing(true)
-    try {
-      const path = `voice-tasks/${Date.now()}.webm`
-      await supabase.storage.from('files').upload(path, blob)
-      const { data: urlData } = supabase.storage.from('files').getPublicUrl(path)
-      const res = await fetch('/api/transcribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fileUrl: urlData.publicUrl, transcribeOnly: true })
-      })
-      const data = await res.json()
-      if (data.transcript) setTitle(prev => prev ? prev + ' ' + data.transcript : data.transcript)
-      await supabase.storage.from('files').remove([path])
-    } catch (err) { console.error('Voice error:', err) }
-    setIsTranscribing(false)
+      const blob = await voice.startRecording()
+      const transcript = await voice.transcribeBlob(blob)
+      setTitle(prev => prev ? prev + ' ' + transcript : transcript)
+    } catch (err) {
+      showToast(err.message || 'Σφάλμα μικροφώνου', true)
+    }
   }
 
   function openAdd() {
@@ -343,11 +311,11 @@ export default function StepsView({ project, profile }) {
             <div className="task-title-row">
               <input className="modal-input" placeholder="Τίτλος *" value={title} onChange={e => setTitle(e.target.value)} autoFocus style={{ flex: 1 }} />
               <button
-                className={`voice-btn ${isRecording ? 'voice-btn-recording' : ''}`}
-                onClick={isRecording ? stopRecording : startRecording}
-                disabled={isTranscribing}
+                className={`voice-btn ${voice.recording ? 'voice-btn-recording' : ''}`}
+                onClick={voice.recording ? voice.stopRecording : handleTitleVoice}
+                disabled={voice.transcribing}
               >
-                {isTranscribing ? (
+                {voice.transcribing ? (
                   <div className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />
                 ) : (
                   <Mic size={18} strokeWidth={1.6} />
