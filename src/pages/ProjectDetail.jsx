@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { db, supabase } from '../lib/db'
+import { db, dbRead, supabase } from '../lib/db'
 import StepsView from './StepsView'
 
 const CAT_CONFIG = {
@@ -47,14 +47,14 @@ export default function ProjectDetail({ project, profile, onBack }) {
   async function loadData() {
     setLoading(true)
     try {
-      const [entriesRes, areasRes, deadlinesRes] = await Promise.all([
-        supabase.from('entries').select('*').eq('project_id', project.id).order('created_at', { ascending: false }).limit(200),
-        supabase.from('project_areas').select('*').eq('project_id', project.id).order('area_type', { ascending: true }),
-        supabase.from('deadlines').select('*').eq('project_id', project.id).order('due_date')
+      const [entriesData, areasData, deadlinesData] = await Promise.all([
+        dbRead(supabase.from('entries').select('*').eq('project_id', project.id).order('created_at', { ascending: false }).limit(200)),
+        dbRead(supabase.from('project_areas').select('*').eq('project_id', project.id).order('area_type', { ascending: true })),
+        dbRead(supabase.from('deadlines').select('*').eq('project_id', project.id).order('due_date'))
       ])
-      setEntries(entriesRes.data || [])
-      setAreas(areasRes.data || [])
-      setDeadlines(deadlinesRes.data || [])
+      setEntries(entriesData)
+      setAreas(areasData)
+      setDeadlines(deadlinesData)
     } catch (err) {
       console.error('Load error:', err)
       showToast('Σφάλμα φόρτωσης', true)

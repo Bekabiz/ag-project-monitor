@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { AlertTriangle, Plus, Paperclip, ChevronDown, Send, Mic, Clock, Flag } from 'lucide-react'
-import { db, supabase } from '../lib/db'
+import { db, dbRead, supabase } from '../lib/db'
 import { getDaysInfo, formatDueTime, getStepCardClass } from '../lib/dates'
 import { useVoiceRecorder } from '../lib/voice'
 
@@ -33,26 +33,26 @@ export default function StepsView({ project, profile }) {
   async function loadSteps() {
     setLoading(true)
     try {
-    const { data: stps } = await supabase
+    const stps = await dbRead(supabase
       .from('steps')
       .select('*')
       .eq('project_id', project.id)
       .order('position', { ascending: true })
-      .order('created_at', { ascending: true })
-    setSteps(stps || [])
+      .order('created_at', { ascending: true }))
+    setSteps(stps)
 
-    const { data: profs } = await supabase.from('profiles').select('id, full_name')
-    setProfiles(profs || [])
+    const profs = await dbRead(supabase.from('profiles').select('id, full_name'))
+    setProfiles(profs)
 
-    if (stps && stps.length > 0) {
+    if (stps.length > 0) {
       const stepIds = stps.map(s => s.id)
-      const { data: notes } = await supabase
+      const notes = await dbRead(supabase
         .from('step_notes')
         .select('*')
         .in('step_id', stepIds)
-        .order('created_at', { ascending: false })
+        .order('created_at', { ascending: false }))
       const grouped = {}
-      ;(notes || []).forEach(n => {
+      notes.forEach(n => {
         if (!grouped[n.step_id]) grouped[n.step_id] = []
         grouped[n.step_id].push(n)
       })

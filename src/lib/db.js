@@ -6,8 +6,8 @@ import { supabase } from './supabase'
  * can use try/catch and the UI can show real failure messages.
  *
  * Usage:
- *   await db(supabase.from('steps').insert(payload))
- *   // throws Error if insert fails
+ *   await db(supabase.from('steps').insert(payload))  // mutations
+ *   const rows = await dbRead(supabase.from('steps').select('*'))  // reads
  */
 export async function db(query) {
   const result = await query
@@ -32,3 +32,16 @@ export async function dbWrite(query, context = '') {
 }
 
 export { supabase }
+
+/**
+ * Safe SELECT wrapper. Returns data or throws on error.
+ * Prevents the "empty state vs failed load" bug.
+ */
+export async function dbRead(query) {
+  const result = await query
+  if (result.error) {
+    console.error('[DB Read Error]', result.error.message)
+    throw new Error(result.error.message || 'Failed to load data')
+  }
+  return result.data || []
+}

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Bell, X, Plus, ClipboardCheck, MessageCircle, AlertTriangle, Paperclip, ChevronDown, Send, Mic, Sparkles, CircleDot, Clock, Square, CheckCircle2, User, Users } from 'lucide-react'
-import { db, supabase } from '../lib/db'
+import { db, dbRead, supabase } from '../lib/db'
 import { getDaysInfo, formatDueTime, getOverdueCount } from '../lib/dates'
 import { extractText } from '../lib/voice'
 
@@ -66,50 +66,50 @@ export default function TodayTab({ profile, onBadgeCount }) {
     const tomorrow = new Date(today)
     tomorrow.setDate(tomorrow.getDate() + 1)
 
-    const { data: profs } = await supabase.from('profiles').select('*')
-    setProfiles(profs || [])
+    const profs = await dbRead(supabase.from('profiles').select('*'))
+    setProfiles(profs)
 
-    const { data: projs } = await supabase.from('projects').select('*').eq('status', 'active').order('name')
-    setProjects(projs || [])
+    const projs = await dbRead(supabase.from('projects').select('*').eq('status', 'active').order('name'))
+    setProjects(projs)
 
     // Active announcements
-    const { data: anns } = await supabase
+    const anns = await dbRead(supabase
       .from('announcements')
       .select('*')
       .eq('is_active', true)
-      .order('created_at', { ascending: false })
-    setAnnouncements(anns || [])
+      .order('created_at', { ascending: false }))
+    setAnnouncements(anns)
 
     // Today's plan reminders (owner only)
     if (profile?.role === 'owner') {
       const todayStr = new Date().toISOString().split('T')[0]
-      const { data: plans } = await supabase
+      const plans = await dbRead(supabase
         .from('manager_plans')
         .select('*')
         .eq('user_id', profile.id)
         .eq('plan_date', todayStr)
-        .eq('is_done', false)
-      setTodayPlans(plans || [])
+        .eq('is_done', false))
+      setTodayPlans(plans)
     }
 
     // My assigned steps
-    const { data: steps } = await supabase
+    const steps = await dbRead(supabase
       .from('steps')
       .select('*, projects:project_id(name)')
       .eq('assigned_to', profile.id)
       .neq('status', 'done')
       .order('is_urgent', { ascending: false })
-      .order('due_date', { ascending: true, nullsFirst: false })
-    setMySteps(steps || [])
+      .order('due_date', { ascending: true, nullsFirst: false }))
+    setMySteps(steps)
 
     // Load notes
-    if (steps && steps.length > 0) {
+    if (steps.length > 0) {
       const stepIds = steps.map(s => s.id)
-      const { data: notes } = await supabase
+      const notes = await dbRead(supabase
         .from('step_notes').select('*').in('step_id', stepIds)
-        .order('created_at', { ascending: false })
+        .order('created_at', { ascending: false }))
       const grouped = {}
-      ;(notes || []).forEach(n => {
+      notes.forEach(n => {
         if (!grouped[n.step_id]) grouped[n.step_id] = []
         grouped[n.step_id].push(n)
       })
@@ -117,21 +117,21 @@ export default function TodayTab({ profile, onBadgeCount }) {
     }
 
     // Today's completed steps
-    const { data: recentSteps } = await supabase
+    const recentSteps = await dbRead(supabase
       .from('steps').select('*, projects:project_id(name)')
       .gte('updated_at', today.toISOString())
       .lt('updated_at', tomorrow.toISOString())
       .eq('status', 'done')
-      .order('updated_at', { ascending: false })
-    setUpdates(recentSteps || [])
+      .order('updated_at', { ascending: false }))
+    setUpdates(recentSteps)
 
     // Today's general updates
-    const { data: genUpdates } = await supabase
+    const genUpdates = await dbRead(supabase
       .from('general_updates').select('*')
       .gte('created_at', today.toISOString())
       .lt('created_at', tomorrow.toISOString())
-      .order('created_at', { ascending: false })
-    setGeneralUpdates(genUpdates || [])
+      .order('created_at', { ascending: false }))
+    setGeneralUpdates(genUpdates)
 
     // Notification badge
     const lastSeen = localStorage.getItem('ag_last_seen') || new Date(0).toISOString()

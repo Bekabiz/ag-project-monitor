@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Plus, Pencil, Building2, MapPin } from 'lucide-react'
-import { supabase } from '../lib/supabase'
+import { db, dbRead, supabase } from '../lib/db'
 
 export default function ProjectsTab({ profile, onSelectProject }) {
   const [projects, setProjects] = useState([])
@@ -20,10 +20,10 @@ export default function ProjectsTab({ profile, onSelectProject }) {
     try {
       setLoadError(false)
       // Single query via SQL view — replaces N+1 loop (was 2 queries per project)
-      const { data: projs } = await supabase
-        .from('project_dashboard_stats').select('*').eq('status', 'active').order('name')
+      const projs = await dbRead(supabase
+        .from('project_dashboard_stats').select('*').eq('status', 'active').order('name'))
 
-      if (!projs) { setLoading(false); return }
+      if (projs.length === 0) { setLoading(false); return }
 
       const statsMap = {}
       for (const p of projs) {

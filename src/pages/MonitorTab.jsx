@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Check, X, PlusCircle, AlertTriangle, Paperclip, ChevronDown, Send, Mic, Plus, CheckCircle2, Search, Calendar, Filter, Eye } from 'lucide-react'
-import { db, supabase } from '../lib/db'
+import { db, dbRead, supabase } from '../lib/db'
 import { getDaysInfo, getStatusColor, getStatusLabel } from '../lib/dates'
 import { useVoiceRecorder } from '../lib/voice'
 
@@ -41,23 +41,22 @@ export default function MonitorTab({ profile }) {
   async function loadData() {
     setLoading(true)
     try {
-    const { data: tasks } = await supabase
+    const tasks = await dbRead(supabase
       .from('steps')
       .select('*, projects:project_id(name)')
       .eq('created_by', profile.id)
       .neq('assigned_to', profile.id)
       .order('is_urgent', { ascending: false })
-      .order('due_date', { ascending: true, nullsFirst: false })
-    setAssignedTasks(tasks || [])
+      .order('due_date', { ascending: true, nullsFirst: false }))
+    setAssignedTasks(tasks)
 
-    // Load notes for all tasks
-    if (tasks && tasks.length > 0) {
+    if (tasks.length > 0) {
       const ids = tasks.map(t => t.id)
-      const { data: notes } = await supabase
+      const notes = await dbRead(supabase
         .from('step_notes').select('*').in('step_id', ids)
-        .order('created_at', { ascending: false })
+        .order('created_at', { ascending: false }))
       const grouped = {}
-      ;(notes || []).forEach(n => {
+      notes.forEach(n => {
         if (!grouped[n.step_id]) grouped[n.step_id] = []
         grouped[n.step_id].push(n)
       })
@@ -65,20 +64,20 @@ export default function MonitorTab({ profile }) {
     }
 
     const todayStr = new Date().toISOString().split('T')[0]
-    const { data: myPlans } = await supabase
+    const myPlans = await dbRead(supabase
       .from('manager_plans').select('*')
       .eq('user_id', profile.id).gte('plan_date', todayStr)
-      .eq('is_done', false).order('plan_date', { ascending: true })
-    setPlans(myPlans || [])
+      .eq('is_done', false).order('plan_date', { ascending: true }))
+    setPlans(myPlans)
 
-    const { data: dls } = await supabase
+    const dls = await dbRead(supabase
       .from('deadlines').select('*, projects(name)')
-      .in('status', ['overdue', 'pending']).order('due_date')
-    setDeadlines(dls || [])
+      .in('status', ['overdue', 'pending']).order('due_date'))
+    setDeadlines(dls)
 
-    const { data: projs } = await supabase
-      .from('projects').select('*').eq('status', 'active').order('name')
-    setProjects(projs || [])
+    const projs = await dbRead(supabase
+      .from('projects').select('*').eq('status', 'active').order('name'))
+    setProjects(projs)
     } catch (err) {
       console.error('Load error:', err)
       showToast('Σφάλμα φόρτωσης', true)
