@@ -1,0 +1,35 @@
+name: Apply premium UI
+
+on:
+  push:
+    branches:
+      - ui/premium-frame-system
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ui/premium-frame-system
+          fetch-depth: 0
+      - name: Apply validated patch
+        shell: bash
+        run: |
+          base64 -d premium-ui.patch.gz.b64 > /tmp/premium-ui.patch.gz
+          gunzip -c /tmp/premium-ui.patch.gz > /tmp/premium-ui.patch
+          git apply --check /tmp/premium-ui.patch
+          git apply /tmp/premium-ui.patch
+          rm -f premium-ui.patch.gz.b64 .github/workflows/apply-premium-ui.yml
+      - name: Commit final UI
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'ui: apply premium snow-white frame system'
+          git push
