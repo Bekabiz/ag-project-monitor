@@ -34,9 +34,9 @@ export default function Login() {
         </div>
 
         <div className="login-benefits" aria-label="Βασικές δυνατότητες">
-          <div className="login-benefit"><Building2 size={19} strokeWidth={1.7} aria-hidden="true" /><strong>Έλεγχος έργων</strong><span>Καθαρή εικόνα προόδου, προβλημάτων και επόμενων ενεργειών.</span></div>
-          <div className="login-benefit"><ClipboardCheck size={19} strokeWidth={1.7} aria-hidden="true" /><strong>Οργάνωση ομάδας</strong><span>Αναθέσεις, προθεσμίες και αξιολόγηση εργασιών χωρίς χαμένη πληροφορία.</span></div>
-          <div className="login-benefit"><Mic size={19} strokeWidth={1.7} aria-hidden="true" /><strong>Γρήγορη ενημέρωση</strong><span>Φωνή, κείμενο, φωτογραφίες και έγγραφα από γραφείο ή εργοτάξιο.</span></div>
+          <div className="login-benefit"><Building2 size={19} strokeWidth={1.5} aria-hidden="true" /><strong>Έλεγχος έργων</strong><span>Καθαρή εικόνα προόδου, προβλημάτων και επόμενων ενεργειών.</span></div>
+          <div className="login-benefit"><ClipboardCheck size={19} strokeWidth={1.5} aria-hidden="true" /><strong>Οργάνωση ομάδας</strong><span>Αναθέσεις, προθεσμίες και αξιολόγηση εργασιών χωρίς χαμένη πληροφορία.</span></div>
+          <div className="login-benefit"><Mic size={19} strokeWidth={1.5} aria-hidden="true" /><strong>Γρήγορη ενημέρωση</strong><span>Φωνή, κείμενο, φωτογραφίες και έγγραφα από γραφείο ή εργοτάξιο.</span></div>
         </div>
       </section>
 
@@ -62,11 +62,11 @@ export default function Login() {
             </div>
             {error && <InlineNotice tone="danger">{error}</InlineNotice>}
             <button type="submit" disabled={loading || !email.trim() || !password}>
-              {loading ? <ButtonSpinner label="Σύνδεση…" /> : <><LogIn size={17} strokeWidth={1.8} aria-hidden="true" /> Σύνδεση</>}
+              {loading ? <ButtonSpinner label="Σύνδεση…" /> : <><LogIn size={17} strokeWidth={1.5} aria-hidden="true" /> Σύνδεση</>}
             </button>
           </form>
 
-          <p className="login-security-note"><ShieldCheck size={14} strokeWidth={1.7} aria-hidden="true" /> Πρόσβαση μόνο για εξουσιοδοτημένα μέλη της ομάδας.</p>
+          <p className="login-security-note"><ShieldCheck size={14} strokeWidth={1.5} aria-hidden="true" /> Πρόσβαση μόνο για εξουσιοδοτημένα μέλη της ομάδας.</p>
         </div>
       </section>
     </main>

@@ -433,7 +433,7 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
           <p>Επιλέξτε πού θα αποθηκευτεί η νέα πληροφορία.</p>
         </div>
         <label className="input-project-search">
-          <Search size={15} strokeWidth={1.8} aria-hidden="true" />
+          <Search size={15} strokeWidth={1.5} aria-hidden="true" />
           <span className="sr-only">Αναζήτηση έργου</span>
           <input value={projectSearch} onChange={event => setProjectSearch(event.target.value)} placeholder="Αναζήτηση έργου…" />
         </label>
@@ -448,7 +448,7 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
             >
               <span className="input-project-option-icon" aria-hidden="true">{project.name.charAt(0)}</span>
               <span className="input-project-option-copy"><strong>{project.name}</strong><small>{project.location || 'Χωρίς τοποθεσία'}</small></span>
-              <ChevronRight size={16} strokeWidth={1.8} aria-hidden="true" />
+              <ChevronRight size={16} strokeWidth={1.5} aria-hidden="true" />
             </button>
           ))}
           {filteredProjects.length === 0 && <p className="input-project-no-results">Δεν βρέθηκε έργο.</p>}
@@ -458,7 +458,7 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
       <section className="input-workspace-panel">
         {!selected ? (
           <div className="input-start-state">
-            <span className="input-start-icon" aria-hidden="true"><FolderPlus size={29} strokeWidth={1.6} /></span>
+            <span className="input-start-icon" aria-hidden="true"><FolderPlus size={29} strokeWidth={1.5} /></span>
             <h2>Επιλέξτε έργο για να ξεκινήσετε</h2>
             <p>Κάθε φωνητική ενημέρωση, κείμενο, φωτογραφία ή αρχείο θα οργανωθεί μέσα στο επιλεγμένο έργο.</p>
           </div>
@@ -472,8 +472,8 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
 
               {profile?.role === 'owner' && (
                 <div className="input-visibility-control" role="group" aria-label="Ορατότητα καταχώρησης">
-                  <button type="button" className={!teamVisible ? 'is-active' : ''} onClick={() => setTeamVisible(false)} aria-pressed={!teamVisible}><LockKeyhole size={14} strokeWidth={1.8} aria-hidden="true" /><span>Μόνο εγώ</span></button>
-                  <button type="button" className={teamVisible ? 'is-active' : ''} onClick={() => setTeamVisible(true)} aria-pressed={teamVisible}><Users size={14} strokeWidth={1.8} aria-hidden="true" /><span>Η ομάδα</span></button>
+                  <button type="button" className={!teamVisible ? 'is-active' : ''} onClick={() => setTeamVisible(false)} aria-pressed={!teamVisible}><LockKeyhole size={14} strokeWidth={1.5} aria-hidden="true" /><span>Μόνο εγώ</span></button>
+                  <button type="button" className={teamVisible ? 'is-active' : ''} onClick={() => setTeamVisible(true)} aria-pressed={teamVisible}><Users size={14} strokeWidth={1.5} aria-hidden="true" /><span>Η ομάδα</span></button>
                 </div>
               )}
             </header>
@@ -481,7 +481,7 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
             <div className="input-composer-layout">
               <section className="input-primary-composer">
                 <div className="input-composer-heading">
-                  <span className="input-composer-icon" aria-hidden="true"><Sparkles size={19} strokeWidth={1.7} /></span>
+                  <span className="input-composer-icon" aria-hidden="true"><Sparkles size={19} strokeWidth={1.5} /></span>
                   <div><h3>Τι συνέβη στο έργο;</h3><p>Γράψτε φυσικά. Η εφαρμογή θα οργανώσει προβλήματα, αποφάσεις, υλικά και επόμενες ενέργειες.</p></div>
                 </div>
 
@@ -502,12 +502,12 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
                   <div>
                     {profile?.role === 'owner' && (
                       <button type="button" className={`input-record-button ${recording ? 'is-recording' : ''}`} onClick={toggleRecording} disabled={extracting}>
-                        <Mic size={17} strokeWidth={1.8} aria-hidden="true" />
+                        <Mic size={17} strokeWidth={1.5} aria-hidden="true" />
                         <span>{recording ? 'Διακοπή εγγραφής' : 'Φωνητική ενημέρωση'}</span>
                       </button>
                     )}
                     <button type="button" className="input-submit-button" onClick={handleTextSubmit} disabled={!text.trim() || sending || extracting}>
-                      {extracting ? <ButtonSpinner label="Ανάλυση…" /> : sending ? <ButtonSpinner label="Αποθήκευση…" /> : <><Send size={16} strokeWidth={1.9} aria-hidden="true" />Ανάλυση και συνέχεια</>}
+                      {extracting ? <ButtonSpinner label="Ανάλυση…" /> : sending ? <ButtonSpinner label="Αποθήκευση…" /> : <><Send size={16} strokeWidth={1.5} aria-hidden="true" />Ανάλυση και συνέχεια</>}
                     </button>
                   </div>
                 </div>
@@ -516,17 +516,17 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
               <aside className="input-attachment-panel">
                 <div className="input-attachment-heading"><h3>Γρήγορη προσθήκη</h3><p>Υλικό από το εργοτάξιο ή το γραφείο.</p></div>
                 <button type="button" className="input-attachment-action is-photo" onClick={() => setShowFileModal('photo')}>
-                  <span aria-hidden="true"><Camera size={20} strokeWidth={1.7} /></span>
+                  <span aria-hidden="true"><Camera size={20} strokeWidth={1.5} /></span>
                   <span><strong>Φωτογραφίες</strong><small>Λήψη ή επιλογή πολλών εικόνων</small></span>
-                  <ChevronRight size={16} strokeWidth={1.8} aria-hidden="true" />
+                  <ChevronRight size={16} strokeWidth={1.5} aria-hidden="true" />
                 </button>
                 <button type="button" className="input-attachment-action is-file" onClick={() => setShowFileModal('document')}>
-                  <span aria-hidden="true"><FileUp size={20} strokeWidth={1.7} /></span>
+                  <span aria-hidden="true"><FileUp size={20} strokeWidth={1.5} /></span>
                   <span><strong>Έγγραφο ή σχέδιο</strong><small>PDF, Word, Excel ή DWG</small></span>
-                  <ChevronRight size={16} strokeWidth={1.8} aria-hidden="true" />
+                  <ChevronRight size={16} strokeWidth={1.5} aria-hidden="true" />
                 </button>
                 <div className="input-visibility-note">
-                  {profile?.role === 'owner' && !teamVisible ? <LockKeyhole size={15} strokeWidth={1.8} aria-hidden="true" /> : <Users size={15} strokeWidth={1.8} aria-hidden="true" />}
+                  {profile?.role === 'owner' && !teamVisible ? <LockKeyhole size={15} strokeWidth={1.5} aria-hidden="true" /> : <Users size={15} strokeWidth={1.5} aria-hidden="true" />}
                   <span>{profile?.role === 'owner' && !teamVisible ? 'Η καταχώρηση θα είναι ιδιωτική για τον διαχειριστή.' : 'Η καταχώρηση θα είναι διαθέσιμη στην ομάδα.'}</span>
                 </div>
               </aside>
@@ -536,10 +536,10 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
           <section className="input-review-workspace">
             <header className="input-review-header">
               <div className="input-review-title">
-                <span className="input-ai-mark" aria-hidden="true"><Sparkles size={19} strokeWidth={1.8} /></span>
+                <span className="input-ai-mark" aria-hidden="true"><Sparkles size={19} strokeWidth={1.5} /></span>
                 <div><span>Έλεγχος πριν την αποθήκευση</span><h2>Επιβεβαίωση ανάλυσης</h2><p>Ελέγξτε όσα αναγνώρισε η εφαρμογή. Το αρχικό κείμενο παραμένει πάντα διαθέσιμο.</p></div>
               </div>
-              <button type="button" className="input-reanalyse-button" onClick={handleReExtract} disabled={extracting}><RotateCcw size={15} strokeWidth={1.8} aria-hidden="true" />{extracting ? 'Ανάλυση…' : 'Νέα ανάλυση'}</button>
+              <button type="button" className="input-reanalyse-button" onClick={handleReExtract} disabled={extracting}><RotateCcw size={15} strokeWidth={1.5} aria-hidden="true" />{extracting ? 'Ανάλυση…' : 'Νέα ανάλυση'}</button>
             </header>
 
             <div className="input-review-grid">
@@ -588,7 +588,7 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
             <footer className="input-review-actions">
               <button type="button" className="action-btn" onClick={() => setConfirm(null)} disabled={sending}>Πίσω για αλλαγές</button>
               <button type="button" className="action-btn" onClick={handleSkipAI} disabled={sending}>Αποθήκευση μόνο του κειμένου</button>
-              <button type="button" className="action-btn primary" onClick={handleConfirm} disabled={sending}>{sending ? <ButtonSpinner label="Αποθήκευση…" /> : <><Check size={15} strokeWidth={2} aria-hidden="true" />Επιβεβαίωση και αποθήκευση</>}</button>
+              <button type="button" className="action-btn primary" onClick={handleConfirm} disabled={sending}>{sending ? <ButtonSpinner label="Αποθήκευση…" /> : <><Check size={15} strokeWidth={1.5} aria-hidden="true" />Επιβεβαίωση και αποθήκευση</>}</button>
             </footer>
           </section>
         )}
@@ -604,7 +604,7 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
         actions={<button type="button" className="action-btn" onClick={() => setShowFileModal(null)}>Ακύρωση</button>}
       >
         <label className="input-file-dropzone">
-          <span aria-hidden="true"><Camera size={24} strokeWidth={1.6} /></span>
+          <span aria-hidden="true"><Camera size={24} strokeWidth={1.5} /></span>
           <strong>Λήψη ή επιλογή φωτογραφιών</strong>
           <small>Μπορείτε να επιλέξετε πολλές εικόνες μαζί.</small>
           <input type="file" accept="image/*" capture="environment" multiple onChange={handlePhotoUpload} />
@@ -625,7 +625,7 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
           <div><label htmlFor="document-name">Όνομα εγγράφου</label><input id="document-name" value={docName} onChange={event => setDocName(event.target.value)} placeholder="π.χ. Αρχιτεκτονικό σχέδιο ισογείου" /></div>
           <div><label htmlFor="document-version">Έκδοση</label><input id="document-version" value={docVersion} onChange={event => setDocVersion(event.target.value)} placeholder="π.χ. v3" /></div>
           <div className="is-full"><label htmlFor="document-notes">Σημειώσεις</label><textarea id="document-notes" value={docNotes} onChange={event => setDocNotes(event.target.value)} placeholder="Προαιρετική σύντομη περιγραφή…" rows={3} /></div>
-          <label className="input-file-dropzone is-full"><span aria-hidden="true"><FileUp size={24} strokeWidth={1.6} /></span><strong>Επιλογή αρχείου</strong><small>PDF, DWG, Word ή Excel</small><input type="file" accept=".pdf,.dwg,.doc,.docx,.xls,.xlsx" onChange={handleDocUpload} /></label>
+          <label className="input-file-dropzone is-full"><span aria-hidden="true"><FileUp size={24} strokeWidth={1.5} /></span><strong>Επιλογή αρχείου</strong><small>PDF, DWG, Word ή Excel</small><input type="file" accept=".pdf,.dwg,.doc,.docx,.xls,.xlsx" onChange={handleDocUpload} /></label>
         </div>
         {sending && <div className="input-upload-progress"><ButtonSpinner label="Μεταφόρτωση αρχείου…" /></div>}
       </ModalShell>

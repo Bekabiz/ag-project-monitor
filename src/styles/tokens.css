@@ -99,7 +99,7 @@ button:disabled, input:disabled, textarea:disabled, select:disabled { cursor: no
 @keyframes paper-fade { from { opacity: 0; } }
 @keyframes paper-spin { to { transform: rotate(360deg); } }
 @keyframes paper-pulse { 50% { opacity: .45; } }
-@keyframes record-pulse { 50% { box-shadow: 0 0 0 6px rgba(166, 61, 47, .14); } }
+@keyframes record-pulse { 50% { outline: 6px solid rgba(166, 61, 47, .2); outline-offset: 0; } }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

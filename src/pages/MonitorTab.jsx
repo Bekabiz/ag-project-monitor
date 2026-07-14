@@ -125,7 +125,7 @@ export default function MonitorTab({ profile, onOpenToday }) {
       await db(supabase.from('steps').update({ is_reviewed: true, review_result: 'approved' }).eq('id', task.id))
       await db(supabase.from('step_notes').insert({
         step_id: task.id, user_id: profile.id,
-        user_name: profile.full_name, text: '✓ Εγκρίθηκε'
+        user_name: profile.full_name, text: 'Εγκρίθηκε'
       }))
       await loadData()
     } catch (err) {
@@ -147,7 +147,7 @@ export default function MonitorTab({ profile, onOpenToday }) {
       }).eq('id', rejectingTask.id))
       await db(supabase.from('step_notes').insert({
         step_id: rejectingTask.id, user_id: profile.id,
-        user_name: profile.full_name, text: '↩ Απόρριψη: ' + (rejectComment.trim() || 'Χρειάζεται διόρθωση')
+        user_name: profile.full_name, text: 'Απόρριψη: ' + (rejectComment.trim() || 'Χρειάζεται διόρθωση')
       }))
       setRejectingTask(null)
       setRejectComment('')
@@ -320,7 +320,7 @@ export default function MonitorTab({ profile, onOpenToday }) {
     return (
       <div className="center-task-details">
         {task.description && <p className="center-task-description">{task.description}</p>}
-        {task.file_url && <a href={task.file_url} target="_blank" rel="noopener noreferrer" className="center-file-link"><Paperclip size={14} strokeWidth={1.7} aria-hidden="true" />{task.file_name || 'Άνοιγμα αρχείου'}</a>}
+        {task.file_url && <a href={task.file_url} target="_blank" rel="noopener noreferrer" className="center-file-link"><Paperclip size={14} strokeWidth={1.5} aria-hidden="true" />{task.file_name || 'Άνοιγμα αρχείου'}</a>}
         {notes.length > 0 && (
           <div className="center-note-list">
             {notes.slice(0, 6).map(note => <div key={note.id} className="center-note"><p><strong>{note.user_name}</strong>{note.text}</p><time>{new Date(note.created_at).toLocaleDateString('el-GR', { day: 'numeric', month: 'short' })}</time></div>)}
@@ -330,13 +330,13 @@ export default function MonitorTab({ profile, onOpenToday }) {
           <div className="center-reply-composer">
             <label className="sr-only" htmlFor={`reply-${task.id}`}>Απάντηση στην εργασία</label>
             <input id={`reply-${task.id}`} value={replyText} onChange={event => setReplyText(event.target.value)} onKeyDown={event => event.key === 'Enter' && sendReply(task.id)} placeholder="Απάντηση ή διευκρίνιση…" />
-            <button type="button" onClick={() => sendReply(task.id)} disabled={!replyText.trim()} aria-label="Αποστολή απάντησης"><Send size={15} strokeWidth={1.8} aria-hidden="true" /></button>
+            <button type="button" onClick={() => sendReply(task.id)} disabled={!replyText.trim()} aria-label="Αποστολή απάντησης"><Send size={15} strokeWidth={1.5} aria-hidden="true" /></button>
           </div>
         )}
         {mode === 'review' && (
           <div className="center-review-actions">
-            <button type="button" className="center-reject-button" onClick={() => rejectTask(task)}><X size={15} strokeWidth={2} aria-hidden="true" />Επιστροφή για διόρθωση</button>
-            <button type="button" className="center-approve-button" onClick={() => approveTask(task)}><Check size={15} strokeWidth={2} aria-hidden="true" />Έγκριση εργασίας</button>
+            <button type="button" className="center-reject-button" onClick={() => rejectTask(task)}><X size={15} strokeWidth={1.5} aria-hidden="true" />Επιστροφή για διόρθωση</button>
+            <button type="button" className="center-approve-button" onClick={() => approveTask(task)}><Check size={15} strokeWidth={1.5} aria-hidden="true" />Έγκριση εργασίας</button>
           </div>
         )}
       </div>
@@ -351,14 +351,14 @@ export default function MonitorTab({ profile, onOpenToday }) {
           <h2>Αποφάσεις και προτεραιότητες σε μία εικόνα</h2>
           <p>Ελέγξτε πρώτα ό,τι περιμένει έγκριση, μετά τις ενεργές αναθέσεις και τις προθεσμίες των έργων.</p>
         </div>
-        <button type="button" className="management-refresh" onClick={loadData}><RefreshCw size={16} strokeWidth={1.8} aria-hidden="true" />Ανανέωση δεδομένων</button>
+        <button type="button" className="management-refresh" onClick={loadData}><RefreshCw size={16} strokeWidth={1.5} aria-hidden="true" />Ανανέωση δεδομένων</button>
       </section>
 
       <section className="management-kpi-grid" aria-label="Σύνοψη διαχείρισης">
-        <article><span className="is-primary" aria-hidden="true"><ClipboardCheck size={19} strokeWidth={1.8} /></span><div><strong>{activeTasks.length}</strong><small>Ενεργές αναθέσεις</small></div></article>
-        <article className={reviewTasks.length ? 'is-attention' : ''}><span className="is-purple" aria-hidden="true"><Eye size={19} strokeWidth={1.8} /></span><div><strong>{reviewTasks.length}</strong><small>Περιμένουν αξιολόγηση</small></div></article>
-        <article className={totalUrgent ? 'is-attention' : ''}><span className="is-danger" aria-hidden="true"><AlertTriangle size={19} strokeWidth={1.8} /></span><div><strong>{totalUrgent}</strong><small>Επείγουσες εργασίες</small></div></article>
-        <article className={overdueDeadlines.length ? 'is-attention' : ''}><span className="is-warning" aria-hidden="true"><Clock3 size={19} strokeWidth={1.8} /></span><div><strong>{overdueDeadlines.length}</strong><small>Εκπρόθεσμες προθεσμίες</small></div></article>
+        <article><span className="is-primary" aria-hidden="true"><ClipboardCheck size={19} strokeWidth={1.5} /></span><div><strong>{activeTasks.length}</strong><small>Ενεργές αναθέσεις</small></div></article>
+        <article className={reviewTasks.length ? 'is-attention' : ''}><span className="is-purple" aria-hidden="true"><Eye size={19} strokeWidth={1.5} /></span><div><strong>{reviewTasks.length}</strong><small>Περιμένουν αξιολόγηση</small></div></article>
+        <article className={totalUrgent ? 'is-attention' : ''}><span className="is-danger" aria-hidden="true"><AlertTriangle size={19} strokeWidth={1.5} /></span><div><strong>{totalUrgent}</strong><small>Επείγουσες εργασίες</small></div></article>
+        <article className={overdueDeadlines.length ? 'is-attention' : ''}><span className="is-warning" aria-hidden="true"><Clock3 size={19} strokeWidth={1.5} /></span><div><strong>{overdueDeadlines.length}</strong><small>Εκπρόθεσμες προθεσμίες</small></div></article>
       </section>
 
       <nav className="management-section-nav" aria-label="Ενότητες κέντρου διαχείρισης">
@@ -366,7 +366,7 @@ export default function MonitorTab({ profile, onOpenToday }) {
           const Icon = item.icon
           return (
             <button type="button" key={item.id} className={activeSection === item.id ? 'is-active' : ''} onClick={() => setActiveSection(item.id)} aria-current={activeSection === item.id ? 'page' : undefined}>
-              <span aria-hidden="true"><Icon size={18} strokeWidth={1.8} /></span>
+              <span aria-hidden="true"><Icon size={18} strokeWidth={1.5} /></span>
               <span><strong>{item.label}</strong><small>{item.description}</small></span>
               {item.badge > 0 && <em>{item.badge}</em>}
             </button>
@@ -378,7 +378,7 @@ export default function MonitorTab({ profile, onOpenToday }) {
         <div className="management-section-stack">
           <section className="management-panel management-review-panel">
             <div className="management-panel-heading">
-              <div><span className="is-purple" aria-hidden="true"><Eye size={18} strokeWidth={1.8} /></span><div><h3>Περιμένουν τη δική σας αξιολόγηση</h3><p>Ολοκληρωμένες εργασίες που χρειάζονται έγκριση ή επιστροφή.</p></div></div>
+              <div><span className="is-purple" aria-hidden="true"><Eye size={18} strokeWidth={1.5} /></span><div><h3>Περιμένουν τη δική σας αξιολόγηση</h3><p>Ολοκληρωμένες εργασίες που χρειάζονται έγκριση ή επιστροφή.</p></div></div>
               <span className="management-count">{reviewTasks.length}</span>
             </div>
             {reviewTasks.length === 0 ? (
@@ -390,10 +390,10 @@ export default function MonitorTab({ profile, onOpenToday }) {
                   return (
                     <article key={task.id} className={`center-review-card ${isExpanded ? 'is-expanded' : ''}`}>
                       <button type="button" className="center-task-summary" onClick={() => setExpandedTask(isExpanded ? null : task.id)} aria-expanded={isExpanded}>
-                        <span className="center-task-status-icon is-done" aria-hidden="true"><Check size={16} strokeWidth={2} /></span>
+                        <span className="center-task-status-icon is-done" aria-hidden="true"><Check size={16} strokeWidth={1.5} /></span>
                         <span className="center-task-copy"><strong>{task.title}</strong><small>{task.assigned_to_name} · {task.projects?.name || 'Προσωπικό'}</small></span>
                         <span className="center-review-label">Αξιολόγηση</span>
-                        <ChevronDown size={17} strokeWidth={1.8} aria-hidden="true" className={isExpanded ? 'is-rotated' : ''} />
+                        <ChevronDown size={17} strokeWidth={1.5} aria-hidden="true" className={isExpanded ? 'is-rotated' : ''} />
                       </button>
                       {isExpanded && renderTaskDetails(task, 'review')}
                     </article>
@@ -405,15 +405,15 @@ export default function MonitorTab({ profile, onOpenToday }) {
 
           {registerTasks.length > 0 && (
             <section className="management-panel">
-              <div className="management-panel-heading"><div><span className="is-success" aria-hidden="true"><PlusCircle size={18} strokeWidth={1.8} /></span><div><h3>Καταχώρηση στη μνήμη έργου</h3><p>Εγκεκριμένες εργασίες που μπορούν να γίνουν μόνιμη ενημέρωση.</p></div></div><span className="management-count">{registerTasks.length}</span></div>
+              <div className="management-panel-heading"><div><span className="is-success" aria-hidden="true"><PlusCircle size={18} strokeWidth={1.5} /></span><div><h3>Καταχώρηση στη μνήμη έργου</h3><p>Εγκεκριμένες εργασίες που μπορούν να γίνουν μόνιμη ενημέρωση.</p></div></div><span className="management-count">{registerTasks.length}</span></div>
               <div className="center-register-list">
-                {registerTasks.map(task => <article key={task.id}><span className="center-task-status-icon is-done" aria-hidden="true"><Check size={15} strokeWidth={2} /></span><div><strong>{task.title}</strong><small>{task.projects?.name || 'Χωρίς έργο'} · {task.assigned_to_name}</small></div><div><button type="button" className="center-skip-button" onClick={() => skipRegister(task.id)}>Παράλειψη</button><button type="button" className="center-register-button" onClick={() => registerToTimeline(task)}><PlusCircle size={14} strokeWidth={1.8} aria-hidden="true" />Καταχώρηση</button></div></article>)}
+                {registerTasks.map(task => <article key={task.id}><span className="center-task-status-icon is-done" aria-hidden="true"><Check size={15} strokeWidth={1.5} /></span><div><strong>{task.title}</strong><small>{task.projects?.name || 'Χωρίς έργο'} · {task.assigned_to_name}</small></div><div><button type="button" className="center-skip-button" onClick={() => skipRegister(task.id)}>Παράλειψη</button><button type="button" className="center-register-button" onClick={() => registerToTimeline(task)}><PlusCircle size={14} strokeWidth={1.5} aria-hidden="true" />Καταχώρηση</button></div></article>)}
               </div>
             </section>
           )}
 
           <section className="management-panel">
-            <div className="management-panel-heading"><div><span className="is-primary" aria-hidden="true"><Users size={18} strokeWidth={1.8} /></span><div><h3>Φόρτος και εργασίες ομάδας</h3><p>Ενεργές αναθέσεις ανά μέλος, με επείγον και προθεσμία.</p></div></div><button type="button" className="management-heading-action" onClick={onOpenToday}><Plus size={15} strokeWidth={2} aria-hidden="true" />Νέα ανάθεση</button></div>
+            <div className="management-panel-heading"><div><span className="is-primary" aria-hidden="true"><Users size={18} strokeWidth={1.5} /></span><div><h3>Φόρτος και εργασίες ομάδας</h3><p>Ενεργές αναθέσεις ανά μέλος, με επείγον και προθεσμία.</p></div></div><button type="button" className="management-heading-action" onClick={onOpenToday}><Plus size={15} strokeWidth={1.5} aria-hidden="true" />Νέα ανάθεση</button></div>
 
             {Object.keys(tasksByPerson).length === 0 ? (
               <EmptyState icon={Users} title="Δεν έχουν ανατεθεί εργασίες" description="Δημιουργήστε την πρώτη ανάθεση από τη σελίδα Σήμερα." actionLabel={onOpenToday ? 'Μετάβαση στη δημιουργία εργασίας' : undefined} onAction={onOpenToday} compact />
@@ -423,7 +423,7 @@ export default function MonitorTab({ profile, onOpenToday }) {
                   const activePersonTasks = group.tasks.filter(task => task.status !== 'done')
                   return (
                     <section key={personName} className="management-person-card">
-                      <header><span className="management-person-avatar" aria-hidden="true">{personName.charAt(0)}</span><div><h4>{personName}</h4><p>{group.active} ενεργές · {group.done} ολοκληρωμένες</p></div>{group.urgent > 0 && <span className="management-urgent-count"><AlertTriangle size={12} strokeWidth={1.9} aria-hidden="true" />{group.urgent}</span>}</header>
+                      <header><span className="management-person-avatar" aria-hidden="true">{personName.charAt(0)}</span><div><h4>{personName}</h4><p>{group.active} ενεργές · {group.done} ολοκληρωμένες</p></div>{group.urgent > 0 && <span className="management-urgent-count"><AlertTriangle size={12} strokeWidth={1.5} aria-hidden="true" />{group.urgent}</span>}</header>
                       <div className="management-person-tasks">
                         {activePersonTasks.length === 0 ? <p className="management-no-active">Δεν υπάρχει ενεργή εργασία.</p> : activePersonTasks.map(task => {
                           const isExpanded = expandedTask === task.id
@@ -434,7 +434,7 @@ export default function MonitorTab({ profile, onOpenToday }) {
                                 <span className={`center-task-status-icon status-${task.status}`} aria-hidden="true"><span /></span>
                                 <span className="center-task-copy"><strong>{task.title}</strong><small>{task.projects?.name || 'Προσωπικό'}{task.due_date ? ` · ${daysText}` : ''}</small></span>
                                 <span className="center-status-label" style={{ color: getStatusColor(task.status) }}>{getStatusLabel(task.status)}</span>
-                                <ChevronDown size={16} strokeWidth={1.8} aria-hidden="true" className={isExpanded ? 'is-rotated' : ''} />
+                                <ChevronDown size={16} strokeWidth={1.5} aria-hidden="true" className={isExpanded ? 'is-rotated' : ''} />
                               </button>
                               {isExpanded && renderTaskDetails(task)}
                             </article>
@@ -453,10 +453,10 @@ export default function MonitorTab({ profile, onOpenToday }) {
       {activeSection === 'search' && (
         <section className="management-panel management-search-panel">
           <div className="management-search-hero">
-            <span className="management-search-icon" aria-hidden="true"><Search size={22} strokeWidth={1.7} /></span>
+            <span className="management-search-icon" aria-hidden="true"><Search size={22} strokeWidth={1.5} /></span>
             <h2>Αναζήτηση στη μνήμη των έργων</h2>
             <p>Βρείτε προβλήματα, αποφάσεις, υλικά, αιτήματα πελατών και παλιές ενημερώσεις.</p>
-            <div className="management-search-box"><Search size={18} strokeWidth={1.8} aria-hidden="true" /><input value={searchQuery} onChange={event => setSearchQuery(event.target.value)} onKeyDown={event => event.key === 'Enter' && performSearch()} placeholder="π.χ. πλακάκια μπάνιου, άδεια οικοδομής, αίτημα πελάτη…" /><button type="button" onClick={performSearch} disabled={searching || !searchQuery.trim()}>{searching ? <ButtonSpinner label="Αναζήτηση…" /> : 'Αναζήτηση'}</button></div>
+            <div className="management-search-box"><Search size={18} strokeWidth={1.5} aria-hidden="true" /><input value={searchQuery} onChange={event => setSearchQuery(event.target.value)} onKeyDown={event => event.key === 'Enter' && performSearch()} placeholder="π.χ. πλακάκια μπάνιου, άδεια οικοδομής, αίτημα πελάτη…" /><button type="button" onClick={performSearch} disabled={searching || !searchQuery.trim()}>{searching ? <ButtonSpinner label="Αναζήτηση…" /> : 'Αναζήτηση'}</button></div>
           </div>
 
           <div className="management-search-tools">
@@ -476,13 +476,13 @@ export default function MonitorTab({ profile, onOpenToday }) {
 
       {activeSection === 'planner' && (
         <section className="management-panel management-planner-panel">
-          <div className="management-panel-heading"><div><span className="is-purple" aria-hidden="true"><CalendarDays size={18} strokeWidth={1.8} /></span><div><h3>Σχεδιασμός επόμενων ενεργειών</h3><p>Προσωπικό πλάνο, υπενθυμίσεις και προτεραιότητες.</p></div></div><button type="button" className="management-heading-action" onClick={() => setShowPlanModal(true)}><Plus size={15} strokeWidth={2} aria-hidden="true" />Νέο σχέδιο</button></div>
+          <div className="management-panel-heading"><div><span className="is-purple" aria-hidden="true"><CalendarDays size={18} strokeWidth={1.5} /></span><div><h3>Σχεδιασμός επόμενων ενεργειών</h3><p>Προσωπικό πλάνο, υπενθυμίσεις και προτεραιότητες.</p></div></div><button type="button" className="management-heading-action" onClick={() => setShowPlanModal(true)}><Plus size={15} strokeWidth={1.5} aria-hidden="true" />Νέο σχέδιο</button></div>
           {plans.length === 0 ? <EmptyState icon={CalendarDays} title="Δεν υπάρχουν σχέδια ακόμη" description="Προσθέστε την πρώτη ενέργεια ή υπενθύμιση." actionLabel="Προσθήκη σχεδίου" onAction={() => setShowPlanModal(true)} compact /> : <div className="management-plan-list">{plans.map(plan => {
             const planDateObject = new Date(`${plan.plan_date}T00:00:00`)
             const today = new Date(); today.setHours(0,0,0,0)
             const difference = Math.round((planDateObject - today) / 86400000)
             const dateLabel = difference === 0 ? 'Σήμερα' : difference === 1 ? 'Αύριο' : planDateObject.toLocaleDateString('el-GR', { weekday: 'short', day: 'numeric', month: 'short' })
-            return <article key={plan.id} className={difference === 0 ? 'is-today' : ''}><span className="management-plan-date">{dateLabel}</span><p>{plan.text}</p><div><button type="button" className="management-plan-done" onClick={() => markPlanDone(plan.id)} aria-label={`Ολοκλήρωση ${plan.text}`}><Check size={15} strokeWidth={2} aria-hidden="true" /></button><button type="button" className="management-plan-delete" onClick={() => deletePlan(plan.id)} aria-label={`Διαγραφή ${plan.text}`}><X size={15} strokeWidth={2} aria-hidden="true" /></button></div></article>
+            return <article key={plan.id} className={difference === 0 ? 'is-today' : ''}><span className="management-plan-date">{dateLabel}</span><p>{plan.text}</p><div><button type="button" className="management-plan-done" onClick={() => markPlanDone(plan.id)} aria-label={`Ολοκλήρωση ${plan.text}`}><Check size={15} strokeWidth={1.5} aria-hidden="true" /></button><button type="button" className="management-plan-delete" onClick={() => deletePlan(plan.id)} aria-label={`Διαγραφή ${plan.text}`}><X size={15} strokeWidth={1.5} aria-hidden="true" /></button></div></article>
           })}</div>}
         </section>
       )}
@@ -490,7 +490,7 @@ export default function MonitorTab({ profile, onOpenToday }) {
       {activeSection === 'overview' && (
         <div className="management-overview-grid">
           <section className="management-panel">
-            <div className="management-panel-heading"><div><span className="is-warning" aria-hidden="true"><Clock3 size={18} strokeWidth={1.8} /></span><div><h3>Προθεσμίες έργων</h3><p>Εκπρόθεσμες και επερχόμενες δεσμεύσεις.</p></div></div><span className="management-count">{deadlines.length}</span></div>
+            <div className="management-panel-heading"><div><span className="is-warning" aria-hidden="true"><Clock3 size={18} strokeWidth={1.5} /></span><div><h3>Προθεσμίες έργων</h3><p>Εκπρόθεσμες και επερχόμενες δεσμεύσεις.</p></div></div><span className="management-count">{deadlines.length}</span></div>
             {deadlines.length === 0 ? <EmptyState icon={CheckCircle2} title="Καμία εκκρεμής προθεσμία" description="Όλες οι καταγεγραμμένες προθεσμίες είναι τακτοποιημένες." compact /> : <div className="management-deadline-list">{deadlines.map(deadline => {
               const overdue = deadline.status === 'overdue'
               const days = Math.ceil((new Date(deadline.due_date) - new Date()) / 86400000)
@@ -499,7 +499,7 @@ export default function MonitorTab({ profile, onOpenToday }) {
           </section>
 
           <section className="management-panel">
-            <div className="management-panel-heading"><div><span className="is-success" aria-hidden="true"><Gauge size={18} strokeWidth={1.8} /></span><div><h3>Προϋπολογισμός</h3><p>Μεταβολή από τον αρχικό προϋπολογισμό.</p></div></div></div>
+            <div className="management-panel-heading"><div><span className="is-success" aria-hidden="true"><Gauge size={18} strokeWidth={1.5} /></span><div><h3>Προϋπολογισμός</h3><p>Μεταβολή από τον αρχικό προϋπολογισμό.</p></div></div></div>
             {projects.filter(project => project.original_budget > 0).length === 0 ? <EmptyState icon={FileText} title="Δεν υπάρχουν στοιχεία κόστους" description="Οι προϋπολογισμοί έργων θα εμφανιστούν εδώ." compact /> : <div className="management-budget-list">{projects.filter(project => project.original_budget > 0).map(project => {
               const drift = ((project.current_budget - project.original_budget) / project.original_budget * 100)
               return <article key={project.id}><div><strong>{project.name}</strong><small>Αρχικός: {Number(project.original_budget).toLocaleString('el-GR')} €</small></div><span>{Number(project.current_budget).toLocaleString('el-GR')} €</span><em className={Math.abs(drift) > 10 ? 'is-danger' : drift > 5 ? 'is-warning' : 'is-success'}>{drift > 0 ? '+' : ''}{drift.toFixed(1)}%</em></article>
@@ -518,7 +518,7 @@ export default function MonitorTab({ profile, onOpenToday }) {
         actions={<><button type="button" className="action-btn" onClick={() => setShowPlanModal(false)}>Ακύρωση</button><button type="button" className="action-btn primary" onClick={savePlan} disabled={!planText.trim() || !planDate || planSaving}>{planSaving ? <ButtonSpinner label="Αποθήκευση…" /> : 'Προσθήκη στο πλάνο'}</button></>}
       >
         <div className="management-plan-form">
-          <div><label htmlFor="plan-text">Τι πρέπει να γίνει;</label><div className="management-plan-text-wrap"><textarea id="plan-text" value={planText} onChange={event => setPlanText(event.target.value)} placeholder="Περιγράψτε την επόμενη ενέργεια…" rows={4} autoFocus /><button type="button" className={voice.recording ? 'is-recording' : ''} onClick={voice.recording ? voice.stopRecording : handlePlanVoice} disabled={voice.transcribing} aria-label="Φωνητική καταχώρηση σχεδίου">{voice.transcribing ? <span className="spinner" /> : <Mic size={18} strokeWidth={1.8} aria-hidden="true" />}</button></div></div>
+          <div><label htmlFor="plan-text">Τι πρέπει να γίνει;</label><div className="management-plan-text-wrap"><textarea id="plan-text" value={planText} onChange={event => setPlanText(event.target.value)} placeholder="Περιγράψτε την επόμενη ενέργεια…" rows={4} autoFocus /><button type="button" className={voice.recording ? 'is-recording' : ''} onClick={voice.recording ? voice.stopRecording : handlePlanVoice} disabled={voice.transcribing} aria-label="Φωνητική καταχώρηση σχεδίου">{voice.transcribing ? <span className="spinner" /> : <Mic size={18} strokeWidth={1.5} aria-hidden="true" />}</button></div></div>
           <div><label htmlFor="plan-date">Ημερομηνία</label><input id="plan-date" type="date" value={planDate} onChange={event => setPlanDate(event.target.value)} /></div>
         </div>
       </ModalShell>

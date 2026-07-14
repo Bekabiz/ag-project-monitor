@@ -173,7 +173,7 @@ export default function App() {
             return (
               <button type="button" key={item.id} className={`sidebar-item ${isActive ? 'active' : ''}`} onClick={() => changeTab(item.id)} aria-current={isActive ? 'page' : undefined}>
                 <span className="sidebar-item-icon" aria-hidden="true">
-                  <Icon size={19} strokeWidth={1.8} />
+                  <Icon size={19} strokeWidth={1.5} />
                   {badge && <em>{badge}</em>}
                 </span>
                 <span><strong>{item.label}</strong><small>{item.description}</small></span>
@@ -210,7 +210,7 @@ export default function App() {
 
           <div className="workspace-actions">
             <button type="button" className="header-quick-action" onClick={() => openInputForProject(selectedProject)}>
-              <Mic size={17} strokeWidth={1.8} aria-hidden="true" /> Νέα ενημέρωση
+              <Mic size={17} strokeWidth={1.5} aria-hidden="true" /> Νέα ενημέρωση
             </button>
             <button type="button" className="header-icon-button" aria-label={todayBadge > 0 ? `${todayBadge} νέες ειδοποιήσεις` : 'Ειδοποιήσεις'} onClick={() => changeTab('today')}>
               <Bell size={18} aria-hidden="true" />
@@ -254,7 +254,7 @@ export default function App() {
             const isActive = activeTab === item.id
             return (
               <button type="button" key={item.id} className={`tab ${isActive ? 'active' : ''} ${item.id === 'input' ? 'mobile-primary-tab' : ''}`} onClick={() => changeTab(item.id)} aria-current={isActive ? 'page' : undefined}>
-                <div className="tab-icon-wrap" aria-hidden="true"><Icon size={20} strokeWidth={1.8} />{badge && <span className="nav-badge">{badge}</span>}</div>
+                <div className="tab-icon-wrap" aria-hidden="true"><Icon size={20} strokeWidth={1.5} />{badge && <span className="nav-badge">{badge}</span>}</div>
                 <span>{item.id === 'input' ? 'Ενημέρωση' : item.label.replace('Κέντρο διαχείρισης', 'Κέντρο')}</span>
               </button>
             )
