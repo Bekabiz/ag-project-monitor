@@ -21,6 +21,12 @@ export default function ProjectsTab({ profile, onSelectProject }) {
   const [modalDesc, setModalDesc] = useState('')
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
+  const [toast, setToast] = useState(null)
+
+  function showToast(message, isError = false) {
+    setToast({ message, isError })
+    window.setTimeout(() => setToast(null), 2800)
+  }
 
   useEffect(() => { loadProjects() }, [])
 
@@ -109,9 +115,12 @@ export default function ProjectsTab({ profile, onSelectProject }) {
       }
 
       setShowModal(false)
+      showToast(showModal === 'add' ? 'Το έργο δημιουργήθηκε.' : 'Οι αλλαγές αποθηκεύτηκαν.')
       await loadProjects()
     } catch (error) {
-      setSaveError(error.message || 'Δεν ήταν δυνατή η αποθήκευση του έργου.')
+      const message = error.message || 'Δεν ήταν δυνατή η αποθήκευση του έργου.'
+      setSaveError(message)
+      showToast(message, true)
     } finally {
       setSaving(false)
     }
@@ -218,7 +227,9 @@ export default function ProjectsTab({ profile, onSelectProject }) {
                         ? `${projectStats.overdueCount} εκπρόθεσμ${projectStats.overdueCount === 1 ? 'η εκκρεμότητα' : 'ες εκκρεμότητες'}`
                         : projectStats.daysSinceUpdate === null
                           ? 'Δεν υπάρχουν ακόμη ενημερώσεις'
-                          : `${projectStats.daysSinceUpdate} ημέρες χωρίς ενημέρωση`}
+                          : projectStats.daysSinceUpdate > 30
+                            ? `Τελευταία ενημέρωση ${formatDate(projectStats.lastUpdate)}`
+                            : `${projectStats.daysSinceUpdate} ημέρες χωρίς ενημέρωση`}
                     </span>
                   )}
 
@@ -261,6 +272,7 @@ export default function ProjectsTab({ profile, onSelectProject }) {
           {saveError && <InlineNotice tone="danger">{saveError}</InlineNotice>}
         </div>
       </ModalShell>
+      {toast && <div className={`toast ${toast.isError ? 'toast-error' : 'toast-success'}`} role="status">{toast.message}</div>}
     </div>
   )
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { AlertTriangle, Plus, Paperclip, ChevronDown, Send, Mic, Circle, Play, Pause, Check, CheckCircle2, ClipboardCheck, Clock3, FileText, Pencil, RefreshCw, Search, UserRound } from 'lucide-react'
+import { AlertTriangle, Plus, Paperclip, ChevronDown, Send, Mic, Circle, Play, Pause, Check, CheckCircle2, ClipboardCheck, Clock3, FileText, Pencil, RefreshCw, Search, UserRound, Zap, CalendarDays } from 'lucide-react'
 import { db, dbRead, supabase } from '../lib/db'
 import { getDaysInfo, formatDueTime, getStepCardClass } from '../lib/dates'
 import { useVoiceRecorder } from '../lib/voice'
@@ -21,6 +21,7 @@ export default function StepsView({ project, profile }) {
   const [dueTime, setDueTime] = useState('17:00')
   const [stepFile, setStepFile] = useState(null)
   const [isUrgent, setIsUrgent] = useState(false)
+  const [isAsap, setIsAsap] = useState(false)
   const [saving, setSaving] = useState(false)
   const [expandedStep, setExpandedStep] = useState(null)
   const [noteText, setNoteText] = useState('')
@@ -91,6 +92,7 @@ export default function StepsView({ project, profile }) {
     setDueTime('17:00')
     setStepFile(null)
     setIsUrgent(false)
+    setIsAsap(false)
     setEditStep(null)
     setShowAdd(true)
   }
@@ -113,6 +115,7 @@ export default function StepsView({ project, profile }) {
     }
     setStepFile(null)
     setIsUrgent(step.is_urgent || false)
+    setIsAsap(Boolean(step.is_urgent && !step.due_date))
     setEditStep(step)
     setShowAdd(true)
   }
@@ -136,7 +139,7 @@ export default function StepsView({ project, profile }) {
       }
 
       let dueDatetime = null
-      if (dueDate) dueDatetime = `${dueDate}T${dueTime || '17:00'}:00`
+      if (!isAsap && dueDate) dueDatetime = `${dueDate}T${dueTime || '17:00'}:00`
 
       if (editStep) {
         await db(supabase.from('steps').update({
@@ -146,7 +149,7 @@ export default function StepsView({ project, profile }) {
           assigned_to_name: assignedProfile?.full_name || null,
           due_date: dueDatetime,
           file_url: fileUrl, file_name: fileName,
-          updated_by: profile.id, is_urgent: isUrgent
+          updated_by: profile.id, is_urgent: isAsap || isUrgent
         }).eq('id', editStep.id))
       } else {
         const maxPos = steps.length > 0 ? Math.max(...steps.map(s => s.position || 0)) : 0
@@ -160,7 +163,7 @@ export default function StepsView({ project, profile }) {
           due_date: dueDatetime, status: 'not_started',
           position: maxPos + 1,
           file_url: fileUrl, file_name: fileName,
-          updated_by: profile.id, is_urgent: isUrgent
+          updated_by: profile.id, is_urgent: isAsap || isUrgent
         }))
       }
 
@@ -280,7 +283,7 @@ export default function StepsView({ project, profile }) {
                   <button type="button" className="project-task-toggle" onClick={() => setExpandedStep(isExpanded ? null : step.id)} aria-expanded={isExpanded}>
                     <span className={`project-task-status status-${step.status}`} aria-hidden="true"><CurrentIcon size={16} strokeWidth={2} /></span>
                     <span className="project-task-card-copy">
-                      <span className="project-task-card-title"><strong className={step.status === 'done' ? 'is-done' : ''}>{step.title}</strong>{step.is_urgent && <em>Επείγον</em>}</span>
+                      <span className="project-task-card-title"><strong className={step.status === 'done' ? 'is-done' : ''}>{step.title}</strong>{step.is_urgent && <em className={!step.due_date ? 'is-asap' : ''}>{!step.due_date ? 'ASAP' : 'Επείγον'}</em>}</span>
                       {step.description && <span className="project-task-card-description">{step.description}</span>}
                       <span className="project-task-card-meta"><span><UserRound size={12} strokeWidth={1.8} aria-hidden="true" />{step.assigned_to_name || 'Χωρίς ανάθεση'}</span>{info.text && <span className={info.className === 'step-overdue' ? 'is-overdue' : ''}><Clock3 size={12} strokeWidth={1.8} aria-hidden="true" />{info.text}{dueTime ? ` · ${dueTime}` : ''}</span>}{notes.length > 0 && <span>{notes.length} σημειώσεις</span>}</span>
                     </span>
@@ -323,7 +326,7 @@ export default function StepsView({ project, profile }) {
         open={showAdd}
         onClose={() => !saving && setShowAdd(false)}
         title={editStep ? 'Επεξεργασία εργασίας' : 'Νέα εργασία έργου'}
-        description={editStep ? 'Οι αλλαγές θα ενημερωθούν άμεσα για το υπεύθυνο μέλος.' : 'Ορίστε σαφή τίτλο, υπεύθυνο, προθεσμία και προτεραιότητα.'}
+        description={editStep ? 'Οι αλλαγές θα ενημερωθούν άμεσα για το υπεύθυνο μέλος.' : 'Ορίστε τίτλο, υπεύθυνο και επιλέξτε ASAP ή συγκεκριμένη προθεσμία.'}
         icon={ClipboardCheck}
         size="lg"
         actions={<><button type="button" className="action-btn" onClick={() => setShowAdd(false)} disabled={saving}>Ακύρωση</button><button type="button" className="action-btn primary" onClick={handleSave} disabled={!title.trim() || saving}>{saving ? <ButtonSpinner label="Αποθήκευση…" /> : editStep ? 'Αποθήκευση αλλαγών' : 'Δημιουργία εργασίας'}</button></>}
@@ -334,9 +337,9 @@ export default function StepsView({ project, profile }) {
 
           <fieldset className="project-assignee-selector is-full"><legend>Ανάθεση σε</legend><div>{profiles.map(person => <label key={person.id} className={assignedTo === person.id ? 'is-selected' : ''}><input type="radio" name="project-assignee" value={person.id} checked={assignedTo === person.id} onChange={() => setAssignedTo(person.id)} /><span className="project-assignee-avatar" aria-hidden="true">{person.full_name?.charAt(0)}</span><span>{person.full_name}</span></label>)}<label className={!assignedTo ? 'is-selected' : ''}><input type="radio" name="project-assignee" value="" checked={!assignedTo} onChange={() => setAssignedTo('')} /><span className="project-assignee-avatar is-empty" aria-hidden="true">—</span><span>Χωρίς ανάθεση</span></label></div></fieldset>
 
-          <div className="project-task-form-field"><label htmlFor="project-step-date">Ημερομηνία</label><input id="project-step-date" type="date" value={dueDate} onChange={event => setDueDate(event.target.value)} /></div>
-          <div className="project-task-form-field"><label htmlFor="project-step-time">Ώρα</label><input id="project-step-time" type="time" value={dueTime} onChange={event => setDueTime(event.target.value)} /></div>
-          <div className="project-task-form-field is-full"><label>Προτεραιότητα και αρχείο</label><div className="project-task-form-actions"><button type="button" className={`project-urgent-toggle ${isUrgent ? 'is-active' : ''}`} onClick={() => setIsUrgent(value => !value)} aria-pressed={isUrgent}><AlertTriangle size={16} strokeWidth={1.8} aria-hidden="true" />{isUrgent ? 'Έχει οριστεί ως επείγον' : 'Ορισμός ως επείγον'}</button><label className="project-task-attach"><Paperclip size={16} strokeWidth={1.8} aria-hidden="true" />{stepFile ? stepFile.name : editStep?.file_name || 'Επισύναψη αρχείου'}<input type="file" onChange={event => setStepFile(event.target.files[0])} hidden /></label></div></div>
+          <div className="project-task-form-field is-full"><label>Χρόνος εκτέλεσης</label><div className="task-timing-choice"><button type="button" className={isAsap ? 'is-active is-asap' : ''} onClick={() => { setIsAsap(true); setDueDate(''); setIsUrgent(true) }} aria-pressed={isAsap}><Zap size={17} strokeWidth={2} aria-hidden="true" /><span><strong>ASAP</strong><small>Να γίνει το συντομότερο δυνατό</small></span></button><button type="button" className={!isAsap ? 'is-active' : ''} onClick={() => setIsAsap(false)} aria-pressed={!isAsap}><CalendarDays size={17} strokeWidth={1.8} aria-hidden="true" /><span><strong>Προγραμματισμός</strong><small>Ορισμός ημερομηνίας και ώρας</small></span></button></div></div>
+          {!isAsap && <><div className="project-task-form-field"><label htmlFor="project-step-date">Ημερομηνία</label><input id="project-step-date" type="date" value={dueDate} onChange={event => setDueDate(event.target.value)} /></div><div className="project-task-form-field"><label htmlFor="project-step-time">Ώρα</label><input id="project-step-time" type="time" value={dueTime} onChange={event => setDueTime(event.target.value)} /></div></>}
+          <div className="project-task-form-field is-full"><label>Προτεραιότητα και αρχείο</label><div className="project-task-form-actions">{isAsap ? <div className="task-asap-summary"><Zap size={16} strokeWidth={2} aria-hidden="true" /><span><strong>ASAP</strong><small>Θα εμφανίζεται πρώτο στις επείγουσες εργασίες.</small></span></div> : <button type="button" className={`project-urgent-toggle ${isUrgent ? 'is-active' : ''}`} onClick={() => setIsUrgent(value => !value)} aria-pressed={isUrgent}><AlertTriangle size={16} strokeWidth={1.8} aria-hidden="true" />{isUrgent ? 'Έχει οριστεί ως επείγον' : 'Ορισμός ως επείγον'}</button>}<label className="project-task-attach"><Paperclip size={16} strokeWidth={1.8} aria-hidden="true" />{stepFile ? stepFile.name : editStep?.file_name || 'Επισύναψη αρχείου'}<input type="file" onChange={event => setStepFile(event.target.files[0])} hidden /></label></div></div>
         </div>
       </ModalShell>
 
