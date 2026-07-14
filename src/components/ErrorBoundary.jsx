@@ -1,9 +1,6 @@
 import { Component } from 'react'
+import { AlertTriangle, RefreshCw, RotateCcw } from 'lucide-react'
 
-/**
- * Error Boundary — catches any React render crash and shows a recovery UI
- * instead of a white screen. Wraps the entire app in App.jsx.
- */
 export default class ErrorBoundary extends Component {
   constructor(props) {
     super(props)
@@ -18,57 +15,36 @@ export default class ErrorBoundary extends Component {
     console.error('[ErrorBoundary]', error, errorInfo)
   }
 
-  handleReset = () => {
-    this.setState({ hasError: false, error: null })
-  }
-
-  handleReload = () => {
-    window.location.reload()
-  }
+  handleReset = () => this.setState({ hasError: false, error: null })
+  handleReload = () => window.location.reload()
 
   render() {
-    if (this.state.hasError) {
-      return (
-        <div style={{
-          display: 'flex', flexDirection: 'column', alignItems: 'center',
-          justifyContent: 'center', height: '100vh', padding: 32,
-          fontFamily: 'Inter, system-ui, sans-serif', textAlign: 'center',
-          background: 'var(--bg, #f8f9fa)'
-        }}>
-          <div style={{ fontSize: 40, marginBottom: 16 }}>⚠️</div>
-          <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--text1, #1a1a1a)', margin: '0 0 8px' }}>
-            Κάτι πήγε στραβά
-          </h2>
-          <p style={{ fontSize: 14, color: 'var(--text2, #666)', margin: '0 0 24px', maxWidth: 300 }}>
-            Η εφαρμογή αντιμετώπισε πρόβλημα. Δοκιμάστε να ξαναφορτώσετε.
-          </p>
-          <div style={{ display: 'flex', gap: 12 }}>
-            <button onClick={this.handleReset} style={{
-              padding: '10px 20px', borderRadius: 8, border: '1px solid var(--border, #e0e0e0)',
-              background: 'white', fontSize: 14, fontWeight: 500, cursor: 'pointer'
-            }}>
-              Δοκιμή ξανά
+    if (!this.state.hasError) return this.props.children
+
+    return (
+      <main className="error-boundary-screen">
+        <section className="error-boundary-card" role="alert" aria-live="assertive">
+          <div className="error-boundary-icon" aria-hidden="true">
+            <AlertTriangle size={25} strokeWidth={1.8} />
+          </div>
+          <h1>Κάτι πήγε στραβά</h1>
+          <p>Η εφαρμογή δεν μπόρεσε να ολοκληρώσει αυτή την προβολή. Τα αποθηκευμένα δεδομένα σας δεν επηρεάζονται.</p>
+          <div className="error-boundary-actions">
+            <button type="button" className="action-btn" onClick={this.handleReset}>
+              <RotateCcw size={16} strokeWidth={1.8} aria-hidden="true" /> Δοκιμή ξανά
             </button>
-            <button onClick={this.handleReload} style={{
-              padding: '10px 20px', borderRadius: 8, border: 'none',
-              background: 'var(--blue, #2563eb)', color: 'white',
-              fontSize: 14, fontWeight: 500, cursor: 'pointer'
-            }}>
-              Ανανέωση σελίδας
+            <button type="button" className="action-btn primary" onClick={this.handleReload}>
+              <RefreshCw size={16} strokeWidth={1.8} aria-hidden="true" /> Ανανέωση σελίδας
             </button>
           </div>
           {this.state.error && (
-            <details style={{ marginTop: 24, fontSize: 12, color: 'var(--text3, #999)', maxWidth: 400 }}>
-              <summary style={{ cursor: 'pointer' }}>Τεχνικές λεπτομέρειες</summary>
-              <pre style={{ textAlign: 'left', whiteSpace: 'pre-wrap', marginTop: 8 }}>
-                {this.state.error.toString()}
-              </pre>
+            <details className="error-boundary-details">
+              <summary>Τεχνικές λεπτομέρειες</summary>
+              <pre>{this.state.error.toString()}</pre>
             </details>
           )}
-        </div>
-      )
-    }
-
-    return this.props.children
+        </section>
+      </main>
+    )
   }
 }

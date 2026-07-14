@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from './lib/supabase'
-import { Home, FolderOpen, Mic, BarChart3, LogOut, ChevronDown, Menu, X, Bell } from 'lucide-react'
+import { BarChart3, Bell, ChevronDown, FolderOpen, Home, LogOut, Menu, Mic, X } from 'lucide-react'
 import Login from './pages/Login'
 import TodayTab from './pages/TodayTab'
 import InputTab from './pages/InputTab'
 import ProjectsTab from './pages/ProjectsTab'
 import MonitorTab from './pages/MonitorTab'
 import ProjectDetail from './pages/ProjectDetail'
+import { ModalShell } from './components/ui'
 
 const NAV_ITEMS = [
   { id: 'today', label: 'Σήμερα', description: 'Εργασίες και ενημερώσεις', icon: Home },
@@ -27,20 +28,49 @@ export default function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [logoutOpen, setLogoutOpen] = useState(false)
+  const profileMenuRef = useRef(null)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      if (session) loadProfile(session.user.id)
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      setSession(currentSession)
+      if (currentSession) loadProfile(currentSession.user.id)
       else setLoading(false)
     })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-      if (session) loadProfile(session.user.id)
-      else { setProfile(null); setLoading(false) }
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+      setSession(currentSession)
+      if (currentSession) loadProfile(currentSession.user.id)
+      else {
+        setProfile(null)
+        setLoading(false)
+      }
     })
+
     return () => subscription.unsubscribe()
   }, [])
+
+  useEffect(() => {
+    function closeTransientUi(event) {
+      if (event.type === 'keydown' && event.key !== 'Escape') return
+      if (event.type === 'pointerdown' && profileMenuRef.current?.contains(event.target)) return
+      setProfileOpen(false)
+      if (event.type === 'keydown') setMobileMenuOpen(false)
+    }
+
+    document.addEventListener('pointerdown', closeTransientUi)
+    document.addEventListener('keydown', closeTransientUi)
+    return () => {
+      document.removeEventListener('pointerdown', closeTransientUi)
+      document.removeEventListener('keydown', closeTransientUi)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return undefined
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = previousOverflow }
+  }, [mobileMenuOpen])
 
   async function loadProfile(userId) {
     setProfileError(false)
@@ -82,52 +112,70 @@ export default function App() {
 
   const availableNav = NAV_ITEMS.filter(item => !item.ownerOnly || profile?.role === 'owner')
   const activeItem = availableNav.find(item => item.id === activeTab) || availableNav[0]
+  const pageContext = selectedProject
+    ? {
+        label: selectedProject.name,
+        description: selectedProject.location || 'Λεπτομέρειες και ιστορικό έργου',
+        kicker: 'Έργα / Ενεργό έργο',
+      }
+    : {
+        label: activeItem?.label,
+        description: activeItem?.description,
+        kicker: 'AG Project Monitor',
+      }
 
-  if (loading) return (
-    <div className="loading-screen app-boot-screen">
-      <div className="ag-logo ag-logo-large">AG</div>
-      <div className="spinner" />
-      <p>Φόρτωση χώρου εργασίας…</p>
-    </div>
-  )
+  if (loading) {
+    return (
+      <div className="loading-screen app-boot-screen" role="status" aria-live="polite">
+        <div className="ag-logo ag-logo-large" aria-hidden="true">AG</div>
+        <div className="spinner" aria-hidden="true" />
+        <p>Φόρτωση χώρου εργασίας…</p>
+      </div>
+    )
+  }
+
   if (!session) return <Login />
 
-  if (profileError || !profile) return (
-    <div className="loading-screen app-boot-screen profile-error-screen">
-      <div className="ag-logo ag-logo-large">AG</div>
-      <h2>Δεν φορτώθηκε το προφίλ</h2>
-      <p>Η σύνδεση υπάρχει, αλλά τα στοιχεία χρήστη δεν ήταν διαθέσιμα.</p>
-      <div className="profile-error-actions">
-        <button className="action-btn primary" onClick={() => loadProfile(session.user.id)}>Δοκιμή ξανά</button>
-        <button className="action-btn" onClick={handleLogout}>Αποσύνδεση</button>
-      </div>
-    </div>
-  )
-
-  if (selectedProject) {
-    return <ProjectDetail project={selectedProject} profile={profile} onBack={() => setSelectedProject(null)} onAddUpdate={() => openInputForProject(selectedProject)} />
+  if (profileError || !profile) {
+    return (
+      <main className="loading-screen app-boot-screen profile-error-screen" role="alert">
+        <div className="ag-logo ag-logo-large" aria-hidden="true">AG</div>
+        <h1>Δεν φορτώθηκε το προφίλ</h1>
+        <p>Η σύνδεση υπάρχει, αλλά τα στοιχεία χρήστη δεν ήταν διαθέσιμα.</p>
+        <div className="profile-error-actions">
+          <button type="button" className="action-btn primary" onClick={() => loadProfile(session.user.id)}>Δοκιμή ξανά</button>
+          <button type="button" className="action-btn" onClick={handleLogout}>Αποσύνδεση</button>
+        </div>
+      </main>
+    )
   }
 
   return (
-    <div className="app app-shell">
-      <aside className={`desktop-sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
+    <div className={`app app-shell ${selectedProject ? 'is-project-view' : ''}`}>
+      <aside className={`desktop-sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`} aria-label="Κύρια πλοήγηση">
         <div className="sidebar-brand">
-          <div className="ag-logo">AG</div>
+          <div className="ag-logo" aria-hidden="true">AG</div>
           <div>
             <strong>AG Project</strong>
             <span>Χώρος διαχείρισης έργων</span>
           </div>
-          <button className="mobile-sidebar-close" onClick={() => setMobileMenuOpen(false)} aria-label="Κλείσιμο μενού"><X size={20} /></button>
+          <button type="button" className="mobile-sidebar-close" onClick={() => setMobileMenuOpen(false)} aria-label="Κλείσιμο μενού">
+            <X size={20} aria-hidden="true" />
+          </button>
         </div>
 
-        <nav className="sidebar-nav" aria-label="Κύρια πλοήγηση">
+        <nav className="sidebar-nav" aria-label="Χώρος εργασίας">
           <p className="sidebar-eyebrow">Χώρος εργασίας</p>
           {availableNav.map(item => {
             const Icon = item.icon
             const badge = item.id === 'today' && todayBadge > 0 ? (todayBadge > 9 ? '9+' : todayBadge) : null
+            const isActive = !selectedProject && activeTab === item.id
             return (
-              <button key={item.id} className={`sidebar-item ${activeTab === item.id ? 'active' : ''}`} onClick={() => changeTab(item.id)}>
-                <span className="sidebar-item-icon"><Icon size={19} strokeWidth={1.8} />{badge && <em>{badge}</em>}</span>
+              <button type="button" key={item.id} className={`sidebar-item ${isActive ? 'active' : ''}`} onClick={() => changeTab(item.id)} aria-current={isActive ? 'page' : undefined}>
+                <span className="sidebar-item-icon" aria-hidden="true">
+                  <Icon size={19} strokeWidth={1.8} />
+                  {badge && <em>{badge}</em>}
+                </span>
                 <span><strong>{item.label}</strong><small>{item.description}</small></span>
               </button>
             )
@@ -136,37 +184,48 @@ export default function App() {
 
         <div className="sidebar-footer">
           <div className="sidebar-profile">
-            <span className="profile-avatar">{profile?.full_name?.charAt(0) || 'A'}</span>
-            <span><strong>{profile?.full_name}</strong><small>{profile?.role === 'owner' ? 'Διαχειριστής' : 'Μέλος ομάδας'}</small></span>
+            <span className="profile-avatar" aria-hidden="true">{profile.full_name?.charAt(0) || 'A'}</span>
+            <span><strong>{profile.full_name}</strong><small>{profile.role === 'owner' ? 'Διαχειριστής' : 'Μέλος ομάδας'}</small></span>
           </div>
-          <button className="sidebar-logout" onClick={() => setLogoutOpen(true)}><LogOut size={17} /> Αποσύνδεση</button>
+          <button type="button" className="sidebar-logout" onClick={() => setLogoutOpen(true)}>
+            <LogOut size={17} aria-hidden="true" /> Αποσύνδεση
+          </button>
         </div>
       </aside>
 
-      {mobileMenuOpen && <button className="sidebar-backdrop" onClick={() => setMobileMenuOpen(false)} aria-label="Κλείσιμο μενού" />}
+      {mobileMenuOpen && <button type="button" className="sidebar-backdrop" onClick={() => setMobileMenuOpen(false)} aria-label="Κλείσιμο μενού" />}
 
       <section className="app-workspace">
         <header className="workspace-header">
           <div className="workspace-title-group">
-            <button className="mobile-menu-button" onClick={() => setMobileMenuOpen(true)} aria-label="Άνοιγμα μενού"><Menu size={21} /></button>
+            <button type="button" className="mobile-menu-button" onClick={() => setMobileMenuOpen(true)} aria-label="Άνοιγμα μενού">
+              <Menu size={21} aria-hidden="true" />
+            </button>
             <div>
-              <span className="workspace-kicker">AG Project Monitor</span>
-              <h1>{activeItem.label}</h1>
-              <p>{activeItem.description}</p>
+              <span className="workspace-kicker">{pageContext.kicker}</span>
+              <h1>{pageContext.label}</h1>
+              <p>{pageContext.description}</p>
             </div>
           </div>
+
           <div className="workspace-actions">
-            <button className="header-icon-button" aria-label="Ειδοποιήσεις" onClick={() => changeTab('today')}><Bell size={18} />{todayBadge > 0 && <span />}</button>
-            <div className="profile-menu-wrap">
-              <button className="header-profile-button" onClick={() => setProfileOpen(v => !v)} aria-expanded={profileOpen}>
-                <span className="profile-avatar">{profile?.full_name?.charAt(0) || 'A'}</span>
-                <span className="header-profile-copy"><strong>{profile?.full_name}</strong><small>{profile?.role === 'owner' ? 'Διαχειριστής' : 'Μέλος ομάδας'}</small></span>
-                <ChevronDown size={15} />
+            <button type="button" className="header-quick-action" onClick={() => openInputForProject(selectedProject)}>
+              <Mic size={17} strokeWidth={1.8} aria-hidden="true" /> Νέα ενημέρωση
+            </button>
+            <button type="button" className="header-icon-button" aria-label={todayBadge > 0 ? `${todayBadge} νέες ειδοποιήσεις` : 'Ειδοποιήσεις'} onClick={() => changeTab('today')}>
+              <Bell size={18} aria-hidden="true" />
+              {todayBadge > 0 && <span aria-hidden="true" />}
+            </button>
+            <div className="profile-menu-wrap" ref={profileMenuRef}>
+              <button type="button" className="header-profile-button" onClick={event => { event.stopPropagation(); setProfileOpen(value => !value) }} aria-expanded={profileOpen} aria-haspopup="menu">
+                <span className="profile-avatar" aria-hidden="true">{profile.full_name?.charAt(0) || 'A'}</span>
+                <span className="header-profile-copy"><strong>{profile.full_name}</strong><small>{profile.role === 'owner' ? 'Διαχειριστής' : 'Μέλος ομάδας'}</small></span>
+                <ChevronDown size={15} aria-hidden="true" />
               </button>
               {profileOpen && (
-                <div className="profile-dropdown">
-                  <div><strong>{profile?.full_name}</strong><small>{session?.user?.email}</small></div>
-                  <button onClick={() => { setProfileOpen(false); setLogoutOpen(true) }}><LogOut size={16} /> Αποσύνδεση</button>
+                <div className="profile-dropdown" role="menu">
+                  <div><strong>{profile.full_name}</strong><small>{session.user?.email}</small></div>
+                  <button type="button" role="menuitem" onClick={() => { setProfileOpen(false); setLogoutOpen(true) }}><LogOut size={16} aria-hidden="true" /> Αποσύνδεση</button>
                 </div>
               )}
             </div>
@@ -174,39 +233,46 @@ export default function App() {
         </header>
 
         <main className="app-main workspace-main">
-          {activeTab === 'today' && <TodayTab profile={profile} onBadgeCount={setTodayBadge} />}
-          {activeTab === 'input' && <InputTab profile={profile} initialProject={inputProject} onOpenProjects={() => changeTab('projects')} />}
-          {activeTab === 'projects' && <ProjectsTab profile={profile} onSelectProject={setSelectedProject} />}
-          {activeTab === 'summary' && <MonitorTab profile={profile} onOpenToday={() => changeTab('today')} />}
+          {selectedProject ? (
+            <ProjectDetail project={selectedProject} profile={profile} onBack={() => setSelectedProject(null)} onAddUpdate={() => openInputForProject(selectedProject)} />
+          ) : (
+            <>
+              {activeTab === 'today' && <TodayTab profile={profile} onBadgeCount={setTodayBadge} />}
+              {activeTab === 'input' && <InputTab profile={profile} initialProject={inputProject} onOpenProjects={() => changeTab('projects')} />}
+              {activeTab === 'projects' && <ProjectsTab profile={profile} onSelectProject={setSelectedProject} />}
+              {activeTab === 'summary' && <MonitorTab profile={profile} onOpenToday={() => changeTab('today')} />}
+            </>
+          )}
         </main>
       </section>
 
-      <nav className="tab-bar mobile-tab-bar" aria-label="Κύρια πλοήγηση">
-        {availableNav.map(item => {
-          const Icon = item.icon
-          const badge = item.id === 'today' && todayBadge > 0 && activeTab !== 'today' ? (todayBadge > 9 ? '9+' : todayBadge) : null
-          return (
-            <button key={item.id} className={`tab ${activeTab === item.id ? 'active' : ''} ${item.id === 'input' ? 'mobile-primary-tab' : ''}`} onClick={() => changeTab(item.id)}>
-              <div className="tab-icon-wrap"><Icon size={20} strokeWidth={1.8} />{badge && <span className="nav-badge">{badge}</span>}</div>
-              <span>{item.id === 'input' ? 'Ενημέρωση' : item.label.replace('Κέντρο διαχείρισης','Κέντρο')}</span>
-            </button>
-          )
-        })}
-      </nav>
-
-      {logoutOpen && (
-        <div className="dialog-backdrop" role="presentation" onMouseDown={() => setLogoutOpen(false)}>
-          <div className="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="logout-title" onMouseDown={e => e.stopPropagation()}>
-            <div className="confirm-dialog-icon"><LogOut size={22} /></div>
-            <h2 id="logout-title">Αποσύνδεση από το AG Project;</h2>
-            <p>Θα χρειαστεί να συνδεθείτε ξανά για να συνεχίσετε.</p>
-            <div className="confirm-dialog-actions">
-              <button className="action-btn" onClick={() => setLogoutOpen(false)}>Ακύρωση</button>
-              <button className="action-btn primary" onClick={handleLogout}>Αποσύνδεση</button>
-            </div>
-          </div>
-        </div>
+      {!selectedProject && (
+        <nav className="tab-bar mobile-tab-bar" aria-label="Κύρια πλοήγηση">
+          {availableNav.map(item => {
+            const Icon = item.icon
+            const badge = item.id === 'today' && todayBadge > 0 && activeTab !== 'today' ? (todayBadge > 9 ? '9+' : todayBadge) : null
+            const isActive = activeTab === item.id
+            return (
+              <button type="button" key={item.id} className={`tab ${isActive ? 'active' : ''} ${item.id === 'input' ? 'mobile-primary-tab' : ''}`} onClick={() => changeTab(item.id)} aria-current={isActive ? 'page' : undefined}>
+                <div className="tab-icon-wrap" aria-hidden="true"><Icon size={20} strokeWidth={1.8} />{badge && <span className="nav-badge">{badge}</span>}</div>
+                <span>{item.id === 'input' ? 'Ενημέρωση' : item.label.replace('Κέντρο διαχείρισης', 'Κέντρο')}</span>
+              </button>
+            )
+          })}
+        </nav>
       )}
+
+      <ModalShell
+        open={logoutOpen}
+        onClose={() => setLogoutOpen(false)}
+        title="Αποσύνδεση από το AG Project;"
+        description="Θα χρειαστεί να συνδεθείτε ξανά για να συνεχίσετε."
+        icon={LogOut}
+        size="sm"
+        actions={<><button type="button" className="action-btn" onClick={() => setLogoutOpen(false)}>Ακύρωση</button><button type="button" className="action-btn primary" onClick={handleLogout}>Αποσύνδεση</button></>}
+      >
+        <p className="logout-modal-copy">Η τρέχουσα εργασία σας έχει ήδη αποθηκευτεί όπου προβλέπεται.</p>
+      </ModalShell>
     </div>
   )
 }
