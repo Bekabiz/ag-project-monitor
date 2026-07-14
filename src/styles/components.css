@@ -1,0 +1,254 @@
+/* ==========================================================================
+   Components — one canonical version of each shared control.
+   No box-shadows (modal scrim only). Depth = tinted surfaces + hairlines.
+   ========================================================================== */
+
+/* --- Buttons ---
+   Primary = Forest Ink fill, cream text. One per view.
+   Secondary = paper fill + hairline + ink text. */
+.action-btn, .ui-button {
+  min-height: 44px; padding: 0 14px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--paper); color: var(--ink);
+  font-size: 14px; font-weight: 600; line-height: 1;
+  transition: background var(--transition), border-color var(--transition);
+}
+.action-btn:hover:not(:disabled), .ui-button:hover:not(:disabled) { border-color: var(--border-strong); background: var(--wash); }
+.action-btn.primary, .ui-button-primary {
+  border-color: var(--ink);
+  background: var(--ink); color: var(--paper);
+}
+.action-btn.primary:hover:not(:disabled), .ui-button-primary:hover:not(:disabled) { background: var(--ink-deep); border-color: var(--ink-deep); color: var(--paper); }
+
+/* --- Inputs: paper bg, hairline, radius 7, ink focus (no glow) --- */
+input, textarea, select {
+  padding: 12px 14px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--paper); color: var(--text-primary);
+  transition: border-color var(--transition);
+}
+input:hover:not(:disabled), textarea:hover:not(:disabled), select:hover:not(:disabled) { border-color: var(--border-strong); }
+input:focus, textarea:focus, select:focus { border-color: var(--ink); outline: none; }
+input[type="checkbox"], input[type="radio"] {
+  appearance: none; -webkit-appearance: none;
+  width: 18px; height: 18px; margin: 0; padding: 0;
+  border: 1.5px solid var(--ink); border-radius: 4px;
+  background: var(--paper);
+  display: inline-grid; place-items: center;
+  cursor: pointer;
+}
+input[type="radio"] { border-radius: var(--radius-pill); }
+input[type="checkbox"]:checked, input[type="radio"]:checked { background: var(--veil); }
+input[type="checkbox"]:checked::before {
+  content: ""; width: 10px; height: 6px;
+  border-left: 1.5px solid var(--ink); border-bottom: 1.5px solid var(--ink);
+  transform: rotate(-45deg) translateY(-1px);
+}
+input[type="radio"]:checked::before {
+  content: ""; width: 8px; height: 8px;
+  border-radius: var(--radius-pill); background: var(--ink);
+}
+input[type="date"], input[type="time"] { min-height: 44px; }
+
+/* --- Status pill: 11px/600, wash bg + functional text, no icons inside --- */
+.status-pill, .project-status-pill, .today-attention-pill, .input-status-badge, .input-category-badge {
+  min-height: 22px; padding: 4px 10px;
+  display: inline-flex; align-items: center;
+  border-radius: var(--radius-pill);
+  font-size: 11px; font-weight: 600; line-height: 1;
+  background: var(--wash); color: var(--ink);
+}
+.project-status-pill.is-open { background: var(--danger-wash); color: var(--danger); }
+.project-status-pill.is-resolved { background: var(--ok-wash); color: var(--ok); }
+.today-attention-pill { background: var(--danger-wash); color: var(--danger); }
+
+/* --- Reusable modal (Sheet species): paper, radius 14, forest scrim --- */
+.ui-modal-backdrop {
+  position: fixed; inset: 0; z-index: 10000;
+  padding: 21px;
+  display: grid; place-items: center;
+  background: var(--scrim);
+  animation: paper-fade var(--transition);
+}
+.ui-modal {
+  width: min(100%, 560px); max-height: min(88dvh, 860px);
+  display: flex; flex-direction: column; overflow: hidden;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--paper);
+  animation: paper-in var(--transition);
+}
+.ui-modal-sm { width: min(100%, 430px); }
+.ui-modal-lg { width: min(100%, 760px); }
+.ui-modal-xl { width: min(100%, 980px); }
+.ui-modal-header {
+  padding: 21px 21px 14px;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.ui-modal-heading { display: flex; align-items: flex-start; gap: 14px; min-width: 0; }
+.ui-modal-icon {
+  width: 42px; height: 42px; flex: 0 0 auto;
+  display: grid; place-items: center;
+  border-radius: var(--radius-pill);
+  background: var(--wash); color: var(--ink);
+}
+.ui-modal-heading h2 {
+  margin-top: 2px; color: var(--ink);
+  font-family: var(--font-display); font-size: 21px; font-weight: 300; line-height: 1.2;
+}
+.ui-modal-heading p { margin-top: 5px; color: var(--text-secondary); font-size: 12px; line-height: 1.4; }
+.ui-icon-button {
+  width: 44px; height: 44px; flex: 0 0 auto;
+  display: grid; place-items: center;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--paper); color: var(--text-secondary);
+  transition: background var(--transition), color var(--transition);
+}
+.ui-icon-button:hover { background: var(--wash); color: var(--ink); }
+.ui-modal-body { min-height: 0; padding: 21px; overflow: auto; }
+.ui-modal-actions {
+  padding: 14px 21px;
+  display: flex; align-items: center; justify-content: flex-end; gap: 8px;
+  border-top: 1px solid var(--border);
+  background: var(--wash);
+}
+
+/* --- Empty state: hand-drawn feel, wash circle --- */
+.ui-empty-state {
+  min-height: 250px; padding: 42px 21px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--paper); text-align: center;
+}
+.ui-empty-state.is-compact { min-height: 170px; padding: 28px 21px; }
+.ui-empty-icon {
+  width: 96px; height: 96px; margin-bottom: 14px;
+  display: grid; place-items: center;
+  border-radius: var(--radius-pill);
+  background: var(--wash); color: var(--ink);
+}
+.ui-empty-state.is-compact .ui-empty-icon { width: 64px; height: 64px; }
+.ui-empty-state h3 { color: var(--ink); font-family: var(--font-display); font-size: 21px; font-weight: 300; line-height: 1.2; }
+.ui-empty-state p { max-width: 430px; margin: 8px auto 14px; color: var(--text-secondary); font-size: 13px; line-height: 1.5; }
+
+/* --- Loading skeletons: wash tint pulse --- */
+.ui-loading-state { display: grid; gap: 21px; }
+.ui-loading-heading { display: grid; gap: 8px; }
+.ui-loading-heading span, .ui-skeleton-line {
+  display: block; border-radius: var(--radius-sm);
+  background: var(--wash);
+  animation: paper-pulse 1.4s ease-in-out infinite;
+}
+.ui-loading-heading span:first-child { width: 190px; height: 21px; }
+.ui-loading-heading span:last-child { width: 280px; height: 12px; }
+.ui-loading-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.ui-skeleton-card {
+  min-height: 150px; padding: 21px;
+  display: grid; align-content: start; gap: 14px;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--paper);
+}
+.ui-skeleton-line { width: 100%; height: 12px; }
+.ui-skeleton-line.is-short { width: 38%; height: 15px; }
+.ui-skeleton-line.is-medium { width: 68%; }
+
+/* --- Inline notices --- */
+.ui-inline-notice {
+  min-height: 44px; padding: 11px 14px;
+  display: flex; align-items: flex-start; gap: 8px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--wash); color: var(--text-primary);
+  font-size: 13px; line-height: 1.4;
+}
+.ui-inline-notice-danger { border-color: var(--danger-wash); background: var(--danger-wash); color: var(--danger); }
+.ui-inline-notice-success { border-color: var(--ok-wash); background: var(--ok-wash); color: var(--ok); }
+.ui-inline-notice-info { border-color: var(--info-wash); background: var(--info-wash); color: var(--text-primary); }
+
+/* --- Toast: bottom-center paper strip with status dot, not a colored bar --- */
+.toast {
+  position: fixed; bottom: 21px; left: 50%; z-index: 11000;
+  transform: translateX(-50%);
+  max-width: min(92vw, 460px);
+  padding: 12px 14px 12px 32px;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--paper); color: var(--text-primary);
+  font-size: 13px; font-weight: 600;
+  animation: paper-in var(--transition);
+}
+.toast::before {
+  content: ""; position: absolute; left: 14px; top: 50%;
+  width: 8px; height: 8px; margin-top: -4px;
+  border-radius: var(--radius-pill);
+  background: var(--ink);
+}
+.toast-error::before { background: var(--danger); }
+
+/* --- Spinner inside buttons --- */
+.ui-spin { animation: paper-spin 850ms linear infinite; }
+
+/* --- Segmented control: pill container in wash, active = pressed paper --- */
+.today-history-control {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--wash);
+}
+.today-history-control > button {
+  min-height: 36px; padding: 0 14px;
+  border: 1px solid transparent; border-radius: var(--radius-pill);
+  background: transparent; color: var(--text-secondary);
+  font-size: 13px; font-weight: 600;
+  transition: background var(--transition), color var(--transition);
+}
+.today-history-control > button.is-active { border-color: var(--border); background: var(--paper); color: var(--ink); }
+.today-date-picker {
+  position: relative;
+  width: 40px; height: 36px;
+  display: grid; place-items: center;
+  border-radius: var(--radius-pill);
+  color: var(--text-secondary); cursor: pointer;
+}
+.today-date-picker:hover { color: var(--ink); }
+.today-date-picker input { position: absolute; inset: 0; opacity: 0; cursor: pointer; min-height: 0; padding: 0; }
+
+/* --- ASAP / schedule timing choice --- */
+.task-timing-choice { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.task-timing-choice > button {
+  min-height: 56px; padding: 8px 14px;
+  display: flex; align-items: center; gap: 11px;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--paper); color: var(--text-secondary);
+  text-align: left;
+  transition: background var(--transition), border-color var(--transition);
+}
+.task-timing-choice > button:hover { border-color: var(--border-strong); }
+.task-timing-choice > button.is-active { border-color: var(--ink); background: var(--veil); color: var(--ink); }
+.task-timing-choice > button.is-active.is-asap { border-color: var(--danger); background: var(--danger-wash); color: var(--danger); }
+.task-timing-choice strong { display: block; font-size: 13px; }
+.task-timing-choice small { display: block; margin-top: 1px; font-size: 11px; opacity: .75; }
+.task-asap-summary {
+  min-height: 44px; padding: 8px 14px;
+  display: inline-flex; align-items: center; gap: 8px;
+  border-radius: var(--radius-sm);
+  background: var(--danger-wash); color: var(--danger);
+}
+.task-asap-summary strong { display: block; font-size: 12px; }
+.task-asap-summary small { display: block; font-size: 11px; }
+
+@media (max-width: 900px) {
+  .ui-loading-grid { grid-template-columns: 1fr; }
+  .ui-modal-backdrop { padding: 0; place-items: end center; }
+  .ui-modal { width: 100%; max-height: min(91dvh, 860px); border-radius: var(--radius) var(--radius) 0 0; }
+  .ui-modal-header { padding: 14px 14px 12px; }
+  .ui-modal-body { padding: 14px; }
+  .ui-modal-actions { padding: 12px 14px calc(12px + env(safe-area-inset-bottom)); }
+  .toast { bottom: calc(78px + env(safe-area-inset-bottom)); }
+}
+
+@media (max-width: 520px) {
+  .ui-modal-actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .ui-modal-actions > :only-child { grid-column: 1 / -1; }
+  .ui-modal-actions .primary, .ui-modal-actions .ui-button-primary { order: -1; grid-column: 1 / -1; }
+  .task-timing-choice { grid-template-columns: 1fr; }
+}
