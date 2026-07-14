@@ -26,7 +26,7 @@ function TagChip({ tag }) {
   return <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 4, background: '#f3f4f6', color: '#6b7280', fontWeight: 500 }}>{tag}</span>
 }
 
-export default function ProjectDetail({ project, profile, onBack }) {
+export default function ProjectDetail({ project, profile, onBack, onAddUpdate }) {
   const [tab, setTab] = useState('overview')
   const [entries, setEntries] = useState([])
   const [areas, setAreas] = useState([])
@@ -35,7 +35,6 @@ export default function ProjectDetail({ project, profile, onBack }) {
   const [areaFilter, setAreaFilter] = useState('all')
   const [catFilter, setCatFilter] = useState(null)
   const [lightboxUrl, setLightboxUrl] = useState(null)
-  const [showUpload, setShowUpload] = useState(false)
   const [uploadStatus, setUploadStatus] = useState(null)
   const [parsedStructure, setParsedStructure] = useState(null)
 
@@ -292,13 +291,21 @@ export default function ProjectDetail({ project, profile, onBack }) {
           <div className="detail-name">{project.name}</div>
           <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)' }}>{project.location}</div>
         </div>
-        {profile?.role === 'owner' && areas.length === 0 && (
-          <label className="setup-btn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M12 5v14m-7-7h14"/></svg>
-            Setup
-            <input type="file" accept=".pdf,.doc,.docx,.txt" onChange={handleTechDescUpload} hidden />
-          </label>
-        )}
+        <div className="detail-header-actions">
+          {onAddUpdate && (
+            <button className="detail-add-update" onClick={onAddUpdate}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M12 5v14m-7-7h14"/></svg>
+              <span>Νέα ενημέρωση</span>
+            </button>
+          )}
+          {profile?.role === 'owner' && areas.length === 0 && (
+            <label className="setup-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M12 5v14m-7-7h14"/></svg>
+              <span>Δομή έργου</span>
+              <input type="file" accept=".pdf,.doc,.docx,.txt" onChange={handleTechDescUpload} hidden />
+            </label>
+          )}
+        </div>
       </div>
 
       {/* Upload status */}
@@ -441,7 +448,13 @@ export default function ProjectDetail({ project, profile, onBack }) {
 
             {/* Recent activity */}
             <div className="pd-section">
-              <div className="pd-section-title">Recent activity</div>
+              <div className="pd-section-title">Πρόσφατη δραστηριότητα</div>
+              {entries.length === 0 && (
+                <div className="pd-empty pd-empty-actionable">
+                  <p>Δεν υπάρχουν ενημερώσεις ακόμη.</p>
+                  {onAddUpdate && <button className="pd-empty-action" onClick={onAddUpdate}>Προσθήκη ενημέρωσης</button>}
+                </div>
+              )}
               {entries.slice(0, 8).map(e => {
                 const cat = CAT_CONFIG[e.category] || CAT_CONFIG.note
                 return (
@@ -467,6 +480,12 @@ export default function ProjectDetail({ project, profile, onBack }) {
         {/* ========== MEMORY ========== */}
         {tab === 'memory' && (
           <div style={{ padding: '12px 16px' }}>
+            {entries.length === 0 && (
+              <div className="pd-empty pd-empty-actionable">
+                <p>Η μνήμη του έργου είναι ακόμη κενή.</p>
+                {onAddUpdate && <button className="pd-empty-action" onClick={onAddUpdate}>Προσθήκη πρώτης ενημέρωσης</button>}
+              </div>
+            )}
             {/* Area filter chips */}
             {filterTags.length > 0 && (
               <div className="pd-area-chips">
@@ -563,7 +582,12 @@ export default function ProjectDetail({ project, profile, onBack }) {
         {/* ========== PHOTOS ========== */}
         {tab === 'photos' && (
           <div style={{ padding: '12px 16px' }}>
-            {photos.length === 0 && <div className="pd-empty">Δεν υπάρχουν φωτογραφίες ακόμη</div>}
+            {photos.length === 0 && (
+              <div className="pd-empty pd-empty-actionable">
+                <p>Δεν υπάρχουν φωτογραφίες ακόμη.</p>
+                {onAddUpdate && <button className="pd-empty-action" onClick={onAddUpdate}>Προσθήκη φωτογραφίας</button>}
+              </div>
+            )}
             <div className="pd-photo-grid">
               {photos.map(p => (
                 <div key={p.id} className="pd-photo-card" onClick={() => setLightboxUrl(p.file_url)}>
@@ -584,6 +608,12 @@ export default function ProjectDetail({ project, profile, onBack }) {
         {/* ========== TIMELINE ========== */}
         {tab === 'timeline' && (
           <div style={{ padding: '12px 16px' }}>
+            {entries.length === 0 && (
+              <div className="pd-empty pd-empty-actionable">
+                <p>Το χρονολόγιο δεν έχει ακόμη καταχωρήσεις.</p>
+                {onAddUpdate && <button className="pd-empty-action" onClick={onAddUpdate}>Προσθήκη ενημέρωσης</button>}
+              </div>
+            )}
             {entries.map(e => {
               const cat = CAT_CONFIG[e.category] || CAT_CONFIG.note
               return (

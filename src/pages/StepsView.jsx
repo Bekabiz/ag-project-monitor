@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { AlertTriangle, Plus, Paperclip, ChevronDown, Send, Mic, Clock, Flag } from 'lucide-react'
+import { AlertTriangle, Plus, Paperclip, ChevronDown, Send, Mic, Clock, Flag, Circle, Play, Pause, Check } from 'lucide-react'
 import { db, dbRead, supabase } from '../lib/db'
 import { getDaysInfo, formatDueTime, getStepCardClass } from '../lib/dates'
 import { useVoiceRecorder } from '../lib/voice'
@@ -193,10 +193,10 @@ export default function StepsView({ project, profile }) {
   // getDaysInfo, formatDueTime, getStepCardClass imported from lib/dates
 
   const statusOptions = [
-    { value: 'not_started', label: 'Νέα', icon: '○' },
-    { value: 'in_progress', label: 'Σε εξέλιξη', icon: '◐' },
-    { value: 'waiting', label: 'Αναμονή', icon: '⏸' },
-    { value: 'done', label: 'Έγινε', icon: '✓' }
+    { value: 'not_started', label: 'Δεν ξεκίνησε', icon: Circle },
+    { value: 'in_progress', label: 'Σε εξέλιξη', icon: Play },
+    { value: 'waiting', label: 'Σε αναμονή', icon: Pause },
+    { value: 'done', label: 'Ολοκληρώθηκε', icon: Check }
   ]
 
   const doneCount = steps.filter(s => s.status === 'done').length
@@ -252,15 +252,19 @@ export default function StepsView({ project, profile }) {
             {isExpanded && (
               <div className="step-expanded" onClick={e => e.stopPropagation()}>
                 <div className="step-status-row">
-                  {statusOptions.map(opt => (
-                    <button
-                      key={opt.value}
-                      className={`step-status-btn ${step.status === opt.value ? 'step-status-active' : ''}`}
-                      onClick={() => updateStatus(step.id, opt.value)}
-                    >
-                      {opt.icon} {opt.label}
-                    </button>
-                  ))}
+                  {statusOptions.map(opt => {
+                    const StatusIcon = opt.icon
+                    return (
+                      <button
+                        key={opt.value}
+                        className={`step-status-btn step-status-${opt.value} ${step.status === opt.value ? 'step-status-active' : ''}`}
+                        onClick={() => updateStatus(step.id, opt.value)}
+                      >
+                        <StatusIcon size={13} strokeWidth={2} />
+                        <span>{opt.label}</span>
+                      </button>
+                    )
+                  })}
                 </div>
 
                 {step.file_url && (

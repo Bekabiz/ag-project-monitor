@@ -4,7 +4,7 @@ import { db, dbRead, supabase } from '../lib/db'
 import { getDaysInfo, getStatusColor, getStatusLabel } from '../lib/dates'
 import { useVoiceRecorder } from '../lib/voice'
 
-export default function MonitorTab({ profile }) {
+export default function MonitorTab({ profile, onOpenToday }) {
   const [assignedTasks, setAssignedTasks] = useState([])
   const [taskNotes, setTaskNotes] = useState({})
   const [plans, setPlans] = useState([])
@@ -169,15 +169,15 @@ export default function MonitorTab({ profile }) {
       let tags = []
       let title = task.title
       try {
-        const { data: projs } = await supabase.from('projects').select('name').eq('status', 'active')
-        const { data: areas } = await supabase.from('project_areas').select('area_name').eq('project_id', task.project_id)
+        const projs = await dbRead(supabase.from('projects').select('name').eq('status', 'active'))
+        const areas = await dbRead(supabase.from('project_areas').select('area_name').eq('project_id', task.project_id))
         const res = await fetch('/api/extract', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             text: fullText,
-            projectNames: (projs || []).map(p => p.name),
-            projectAreas: (areas || []).map(a => a.area_name)
+            projectNames: projs.map(p => p.name),
+            projectAreas: areas.map(a => a.area_name)
           })
         })
         if (res.ok) {
@@ -304,7 +304,16 @@ export default function MonitorTab({ profile }) {
           </div>
 
           {Object.keys(tasksByPerson).length === 0 && (
-            <div className="empty-state" style={{ padding: '40px 16px' }}>Δεν έχεις αναθέσει εργασίες</div>
+            <div className="empty-state monitor-task-empty">
+              <div className="icon"><Plus size={22} strokeWidth={1.8} /></div>
+              <h3>Δεν έχουν ανατεθεί εργασίες</h3>
+              <p>Δημιούργησε μια εργασία από τη σελίδα «Σήμερα» και ανάθεσέ την σε μέλος της ομάδας.</p>
+              {onOpenToday && (
+                <button className="empty-state-action" onClick={onOpenToday}>
+                  Μετάβαση στη δημιουργία εργασίας
+                </button>
+              )}
+            </div>
           )}
 
           <div className="monitor-person-groups-grid">
