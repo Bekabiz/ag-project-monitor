@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
-import { Bell, X, Plus, ClipboardCheck, MessageCircle, AlertTriangle, Paperclip, ChevronDown, Send, Mic, Sparkles, Circle, Play, Pause, Check, CheckCircle2, User, Users } from 'lucide-react'
+import { Bell, Plus, ClipboardCheck, MessageCircle, AlertTriangle, Paperclip, ChevronDown, Send, Mic, Sparkles, Circle, Play, Pause, Check, CheckCircle2, User, Users, RefreshCw, FileText, CalendarDays } from 'lucide-react'
 import { db, dbRead, supabase } from '../lib/db'
 import { getDaysInfo, formatDueTime, getOverdueCount } from '../lib/dates'
 import { extractText } from '../lib/voice'
+import { ButtonSpinner, EmptyState, LoadingState, ModalShell } from '../components/ui'
 
 export default function TodayTab({ profile, onBadgeCount }) {
   const [mySteps, setMySteps] = useState([])
@@ -440,13 +441,13 @@ export default function TodayTab({ profile, onBadgeCount }) {
   function getPersonUpdates() {
     const people = {}
     updates.forEach(u => {
-      const name = u.assigned_to_name || 'Unknown'
+      const name = u.assigned_to_name || 'Άγνωστο μέλος'
       if (!people[name]) people[name] = []
       people[name].push({ type: 'task_done', text: u.title, project: u.projects?.name,
         time: new Date(u.updated_at).toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit' }) })
     })
     generalUpdates.forEach(u => {
-      const name = u.user_name || 'Unknown'
+      const name = u.user_name || 'Άγνωστο μέλος'
       if (!people[name]) people[name] = []
       people[name].push({ type: 'general', text: u.text, file_url: u.file_url,
         time: new Date(u.created_at).toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit' }) })
@@ -461,14 +462,16 @@ export default function TodayTab({ profile, onBadgeCount }) {
     { value: 'done', label: 'Ολοκληρώθηκε', icon: Check }
   ]
 
-  if (loading) return <div className="loading-inline"><div className="spinner" /></div>
+  if (loading) return <LoadingState label="Φόρτωση σημερινής εικόνας…" cards={4} />
 
   if (loadError) return (
-    <div className="empty-state" style={{ padding: '40px 20px' }}>
-      <div style={{ fontSize: 32, marginBottom: 12 }}>⚠️</div>
-      <p style={{ marginBottom: 12 }}>Σφάλμα φόρτωσης</p>
-      <button className="action-btn primary" onClick={loadData}>Δοκιμή ξανά</button>
-    </div>
+    <EmptyState
+      icon={RefreshCw}
+      title="Δεν φορτώθηκε η σημερινή εικόνα"
+      description="Ελέγξτε τη σύνδεση και δοκιμάστε ξανά. Δεν έχει αλλάξει κανένα αποθηκευμένο δεδομένο."
+      actionLabel="Δοκιμή ξανά"
+      onAction={loadData}
+    />
   )
 
   const overdueCount = getOverdueCount(mySteps)
@@ -476,337 +479,309 @@ export default function TodayTab({ profile, onBadgeCount }) {
   const otherProfiles = profiles.filter(p => p.id !== profile.id)
   const isPersonalTask = taskProject === 'personal'
   const isStaffTask = taskProject === 'staff'
+  const totalTodayUpdates = updates.length + generalUpdates.length
+  const activeTeamMembers = Object.keys(personUpdates).length
+  const firstName = profile?.full_name?.split(' ')[0] || ''
 
   return (
-    <div className={`today-page ${profile?.role === 'owner' ? 'today-owner' : 'today-member'}`}>
-      {/* ===== GREETING HEADER ===== */}
-      <div className="today-greeting">
-        <div>
+    <div className={`today-page today-command-page ${profile?.role === 'owner' ? 'today-owner' : 'today-member'}`}>
+      <section className="today-command-header">
+        <div className="today-command-copy">
           <div className="today-date">{new Date().toLocaleDateString('el-GR', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
-          <h2 className="today-hello">Καλημέρα, {profile?.full_name?.split(' ')[0] || ''}</h2>
+          <h2 className="today-hello">Καλημέρα, {firstName}</h2>
+          <p>Η σημερινή εικόνα του γραφείου, οι προτεραιότητες και ό,τι χρειάζεται ενέργεια.</p>
         </div>
-        <div className="today-greeting-actions">
+        <div className="today-command-actions">
           {profile?.role === 'owner' && (
-            <button className="announcement-add-compact" onClick={() => setShowAnnouncementModal(true)}>
-              <Bell size={15} strokeWidth={1.8} /> <span>Ανακοίνωση</span>
+            <button type="button" className="today-secondary-action" onClick={() => setShowAnnouncementModal(true)}>
+              <Bell size={16} strokeWidth={1.8} aria-hidden="true" />
+              <span>Νέα ανακοίνωση</span>
             </button>
           )}
-          <button
-            className={`new-task-compact ${profile?.role === 'owner' ? 'owner' : 'member'}`}
-            onClick={openTaskModal}
-            aria-label="Νέα εργασία"
-            title="Νέα εργασία"
-          >
-            <Plus size={17} strokeWidth={2} />
-            {profile?.role === 'owner' && <span>Νέα εργασία</span>}
+          <button type="button" className="today-primary-action" onClick={openTaskModal}>
+            <Plus size={17} strokeWidth={2} aria-hidden="true" />
+            <span>Νέα εργασία</span>
           </button>
         </div>
-      </div>
+      </section>
 
-      {/* ===== ANNOUNCEMENTS (pinned) ===== */}
-      {announcements.length > 0 && (
-        <div className="announcements-section">
-          {announcements.map(ann => (
-            <div key={ann.id} className="announcement-card">
-              <div className="announcement-icon"><Bell size={18} strokeWidth={1.6} /></div>
-              <div style={{ flex: 1 }}>
-                <div className="announcement-text">{ann.text}</div>
-                <div className="announcement-meta">
-                  {ann.user_name} · {new Date(ann.created_at).toLocaleDateString('el-GR', { day: 'numeric', month: 'short' })}
-                </div>
+      <section className="today-kpi-grid" aria-label="Σύνοψη ημέρας">
+        <article className="today-kpi-card">
+          <span className="today-kpi-icon is-primary" aria-hidden="true"><ClipboardCheck size={19} strokeWidth={1.8} /></span>
+          <div><strong>{mySteps.length}</strong><span>Ενεργές εργασίες</span></div>
+        </article>
+        <article className={`today-kpi-card ${overdueCount > 0 ? 'is-attention' : ''}`}>
+          <span className="today-kpi-icon is-danger" aria-hidden="true"><AlertTriangle size={19} strokeWidth={1.8} /></span>
+          <div><strong>{overdueCount}</strong><span>Εκπρόθεσμες</span></div>
+        </article>
+        <article className="today-kpi-card">
+          <span className="today-kpi-icon is-info" aria-hidden="true"><MessageCircle size={19} strokeWidth={1.8} /></span>
+          <div><strong>{totalTodayUpdates}</strong><span>Ενημερώσεις σήμερα</span></div>
+        </article>
+        <article className="today-kpi-card">
+          <span className="today-kpi-icon is-success" aria-hidden="true"><Users size={19} strokeWidth={1.8} /></span>
+          <div><strong>{activeTeamMembers}</strong><span>Μέλη με δραστηριότητα</span></div>
+        </article>
+      </section>
+
+      <div className="today-dashboard-grid">
+        <div className="today-main-column">
+          {announcements.length > 0 && (
+            <section className="today-panel today-announcements-panel">
+              <div className="today-panel-heading">
+                <div><span className="today-panel-icon is-warning" aria-hidden="true"><Bell size={17} strokeWidth={1.8} /></span><div><h3>Ανακοινώσεις</h3><p>Σημαντικά μηνύματα προς την ομάδα</p></div></div>
+                <span className="today-panel-count">{announcements.length}</span>
               </div>
-              {profile?.role === 'owner' && (
-                <button className="announcement-dismiss" onClick={() => dismissAnnouncement(ann.id)}><X size={14} strokeWidth={1.6} /></button>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* ===== PLAN REMINDERS (owner only) ===== */}
-      {todayPlans.length > 0 && (
-        <div className="today-section">
-          <div className="today-section-header">
-            <Sparkles size={16} strokeWidth={1.6} color="var(--purple)" />
-            <span>Υπενθυμίσεις σήμερα</span>
-          </div>
-          {todayPlans.map(plan => (
-            <div key={plan.id} className="plan-reminder-card">
-              <span className="plan-reminder-text">{plan.text}</span>
-              <button className="plan-action-btn plan-done-btn" onClick={() => markPlanDone(plan.id)}><CheckCircle2 size={16} strokeWidth={1.6} /></button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* ===== MY TASKS ===== */}
-      <div className="today-section">
-        <div className="today-section-header">
-          <ClipboardCheck size={16} strokeWidth={1.6} />
-          <span>Οι εργασίες μου ({mySteps.length})</span>
-          {overdueCount > 0 && <span className="overdue-badge">{overdueCount} εκπρόθεσμ{overdueCount > 1 ? 'ες' : 'η'}</span>}
-        </div>
-
-        {mySteps.length === 0 && <div className="empty-state" style={{ padding: '24px 16px' }}><CheckCircle2 size={20} strokeWidth={1.6} color="var(--green)" style={{ marginRight: 6 }} /> Δεν έχεις εκκρεμείς εργασίες</div>}
-
-        {mySteps.map(step => {
-          const info = getDaysInfo(step)
-          const cls = getStatusClass(step)
-          const isExpanded = expandedTask === step.id
-          const notes = taskNotes[step.id] || []
-          const dueTime = formatDueTime(step)
-
-          return (
-            <div key={step.id} className={`step-card ${cls}`} onClick={() => setExpandedTask(isExpanded ? null : step.id)}>
-              <div className="step-card-top">
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    {step.is_urgent && <span className="urgent-badge">!</span>}
-                    <span className="step-title">{step.title}</span>
-                  </div>
-                  {step.description && <div className="step-desc-preview">{step.description}</div>}
-                  <div className="step-meta">
-                    <span>{step.projects?.name || 'Προσωπικό'}</span>
-                    {step.due_date && <><span className="step-sep">·</span><span>{info.text}</span></>}
-                    {dueTime && <><span className="step-sep">·</span><span>{dueTime}</span></>}
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  {step.file_url && <Paperclip size={12} strokeWidth={1.6} color="var(--text3)" />}
-                  {notes.length > 0 && <span className="step-note-count">{notes.length}</span>}
-                  <ChevronDown size={14} strokeWidth={1.6} color="var(--text3)" style={{ transform: isExpanded ? 'rotate(180deg)' : '', transition: '0.2s' }} />
-                </div>
-              </div>
-
-              {isExpanded && (
-                <div className="step-expanded" onClick={e => e.stopPropagation()}>
-                  <div className="step-status-row">
-                    {statusOptions.map(opt => {
-                      const StatusIcon = opt.icon
-                      return (
-                        <button key={opt.value}
-                          className={`step-status-btn step-status-${opt.value} ${step.status === opt.value ? 'step-status-active' : ''}`}
-                          onClick={() => updateTaskStatus(step, opt.value)}
-                        >
-                          <StatusIcon size={13} strokeWidth={2} />
-                          <span>{opt.label}</span>
-                        </button>
-                      )
-                    })}
-                  </div>
-                  {step.file_url && (
-                    <a href={step.file_url} target="_blank" rel="noopener" className="step-file-link">
-                      <Paperclip size={14} strokeWidth={1.6} />
-                      {step.file_name || 'Αρχείο'}
-                    </a>
-                  )}
-                  {notes.map(n => (
-                    <div key={n.id} className="step-note">
-                      <span className="step-note-author">{n.user_name}:</span> {n.text}
-                      <span className="step-note-time">{new Date(n.created_at).toLocaleDateString('el-GR', { day: 'numeric', month: 'short' })}</span>
+              <div className="today-announcement-list">
+                {announcements.map(announcement => (
+                  <article key={announcement.id} className="today-announcement-item">
+                    <div className="today-announcement-copy">
+                      <p>{announcement.text}</p>
+                      <span>{announcement.user_name} · {new Date(announcement.created_at).toLocaleDateString('el-GR', { day: 'numeric', month: 'short' })}</span>
                     </div>
-                  ))}
-                  <div className="step-add-note">
-                    <input className="step-note-input" placeholder="Σημείωση..." value={taskNoteText}
-                      onChange={e => setTaskNoteText(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTaskNote(step.id)} />
-                    <button className="step-note-send" onClick={() => addTaskNote(step.id)} disabled={!taskNoteText.trim()}>
-                      <Send size={14} strokeWidth={1.6} />
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
+                    {profile?.role === 'owner' && (
+                      <button type="button" className="today-text-action is-danger" onClick={() => dismissAnnouncement(announcement.id)}>Αρχειοθέτηση</button>
+                    )}
+                  </article>
+                ))}
+              </div>
+            </section>
+          )}
 
-      {/* ===== UPDATES BY PERSON ===== */}
-      <div className="today-section">
-        <div className="today-section-header">
-          <MessageCircle size={16} strokeWidth={1.6} />
-          <span>Ενημερώσεις σήμερα</span>
-        </div>
-        {Object.keys(personUpdates).length === 0 && <div className="updates-quiet-note">Καμία ενημέρωση ακόμη σήμερα</div>}
-        {Object.entries(personUpdates).map(([name, items]) => (
-          <div key={name} className="person-update-card" onClick={() => setExpandedPerson(expandedPerson === name ? null : name)}>
-            <div className="person-update-header">
-              <div className="person-avatar">{name.charAt(0)}</div>
-              <span className="person-name">{name}</span>
-              <span className="person-count">{items.length} ενημ.</span>
-              <ChevronDown size={14} strokeWidth={1.6} style={{ transform: expandedPerson === name ? 'rotate(180deg)' : '', transition: '0.2s' }} />
-            </div>
-            {expandedPerson === name && (
-              <div className="person-update-list">
-                {items.map((item, i) => (
-                  <div key={i} className="person-update-item">
-                    <div className="update-time">{item.time}</div>
-                    {item.type === 'task_done' ? (
-                      <div className="update-text update-done">
-                        <CheckCircle2 size={12} strokeWidth={2} color="var(--green)" />
-                        {item.text} <span className="update-project">({item.project})</span>
-                      </div>
-                    ) : <div className="update-text">{item.text}</div>}
-                    {item.file_url && <a href={item.file_url} target="_blank" rel="noopener" className="update-file"><Paperclip size={12} strokeWidth={1.6} style={{ marginRight: 3 }} /> Αρχείο</a>}
+          {todayPlans.length > 0 && (
+            <section className="today-panel today-plans-panel">
+              <div className="today-panel-heading">
+                <div><span className="today-panel-icon is-purple" aria-hidden="true"><Sparkles size={17} strokeWidth={1.8} /></span><div><h3>Υπενθυμίσεις σήμερα</h3><p>Προσωπικό πλάνο και επόμενες ενέργειες</p></div></div>
+                <span className="today-panel-count">{todayPlans.length}</span>
+              </div>
+              <div className="today-plan-list">
+                {todayPlans.map(plan => (
+                  <div key={plan.id} className="today-plan-row">
+                    <span>{plan.text}</span>
+                    <button type="button" className="today-complete-button" onClick={() => markPlanDone(plan.id)} aria-label={`Ολοκλήρωση: ${plan.text}`}>
+                      <CheckCircle2 size={17} strokeWidth={1.8} aria-hidden="true" /> Ολοκληρώθηκε
+                    </button>
                   </div>
                 ))}
               </div>
+            </section>
+          )}
+
+          <section className="today-panel today-tasks-panel">
+            <div className="today-panel-heading">
+              <div><span className="today-panel-icon is-primary" aria-hidden="true"><ClipboardCheck size={17} strokeWidth={1.8} /></span><div><h3>Οι εργασίες μου</h3><p>Ταξινομημένες με βάση επείγον και προθεσμία</p></div></div>
+              <div className="today-heading-actions">
+                {overdueCount > 0 && <span className="today-attention-pill">{overdueCount} εκπρόθεσμ{overdueCount === 1 ? 'η' : 'ες'}</span>}
+                <button type="button" className="today-icon-action" onClick={loadData} aria-label="Ανανέωση εργασιών"><RefreshCw size={16} strokeWidth={1.8} aria-hidden="true" /></button>
+              </div>
+            </div>
+
+            {mySteps.length === 0 ? (
+              <EmptyState icon={CheckCircle2} title="Δεν υπάρχουν εκκρεμείς εργασίες" description="Η λίστα σας είναι καθαρή. Μια νέα ανάθεση θα εμφανιστεί εδώ." compact />
+            ) : (
+              <div className="today-task-list">
+                {mySteps.map(step => {
+                  const info = getDaysInfo(step)
+                  const cls = getStatusClass(step)
+                  const isExpanded = expandedTask === step.id
+                  const notes = taskNotes[step.id] || []
+                  const dueTime = formatDueTime(step)
+
+                  return (
+                    <article key={step.id} className={`today-task-card ${cls} ${isExpanded ? 'is-expanded' : ''}`}>
+                      <button type="button" className="today-task-summary" onClick={() => setExpandedTask(isExpanded ? null : step.id)} aria-expanded={isExpanded}>
+                        <span className={`today-task-priority ${step.is_urgent ? 'is-urgent' : ''}`} aria-hidden="true">{step.is_urgent ? '!' : ''}</span>
+                        <span className="today-task-copy">
+                          <span className="today-task-title-row"><strong>{step.title}</strong>{step.is_urgent && <em>Επείγον</em>}</span>
+                          {step.description && <span className="today-task-description">{step.description}</span>}
+                          <span className="today-task-meta">
+                            <span>{step.projects?.name || 'Προσωπικό'}</span>
+                            {step.due_date && <span className={info.className === 'step-overdue' ? 'is-overdue' : ''}>{info.text}</span>}
+                            {dueTime && <span>{dueTime}</span>}
+                            {notes.length > 0 && <span>{notes.length} σημειώσεις</span>}
+                          </span>
+                        </span>
+                        <span className="today-task-end">
+                          {step.file_url && <Paperclip size={14} strokeWidth={1.7} aria-label="Υπάρχει συνημμένο" />}
+                          <ChevronDown size={17} strokeWidth={1.8} aria-hidden="true" className={isExpanded ? 'is-rotated' : ''} />
+                        </span>
+                      </button>
+
+                      {isExpanded && (
+                        <div className="today-task-details">
+                          <div className="today-task-detail-label">Κατάσταση εργασίας</div>
+                          <div className="today-status-options">
+                            {statusOptions.map(option => {
+                              const StatusIcon = option.icon
+                              return (
+                                <button key={option.value} type="button" className={`today-status-button status-${option.value} ${step.status === option.value ? 'is-active' : ''}`} onClick={() => updateTaskStatus(step, option.value)} aria-pressed={step.status === option.value}>
+                                  <StatusIcon size={14} strokeWidth={2} aria-hidden="true" />
+                                  <span>{option.label}</span>
+                                </button>
+                              )
+                            })}
+                          </div>
+
+                          {step.file_url && (
+                            <a href={step.file_url} target="_blank" rel="noopener noreferrer" className="today-file-link"><Paperclip size={15} strokeWidth={1.8} aria-hidden="true" />{step.file_name || 'Άνοιγμα αρχείου'}</a>
+                          )}
+
+                          {notes.length > 0 && (
+                            <div className="today-note-list">
+                              {notes.map(note => (
+                                <div key={note.id} className="today-note-row"><p><strong>{note.user_name}</strong>{note.text}</p><time>{new Date(note.created_at).toLocaleDateString('el-GR', { day: 'numeric', month: 'short' })}</time></div>
+                              ))}
+                            </div>
+                          )}
+
+                          <div className="today-note-composer">
+                            <label htmlFor={`task-note-${step.id}`} className="sr-only">Προσθήκη σημείωσης</label>
+                            <input id={`task-note-${step.id}`} placeholder="Γράψτε μια σύντομη σημείωση…" value={taskNoteText} onChange={event => setTaskNoteText(event.target.value)} onKeyDown={event => event.key === 'Enter' && addTaskNote(step.id)} />
+                            <button type="button" onClick={() => addTaskNote(step.id)} disabled={!taskNoteText.trim()} aria-label="Αποστολή σημείωσης"><Send size={16} strokeWidth={1.8} aria-hidden="true" /></button>
+                          </div>
+                        </div>
+                      )}
+                    </article>
+                  )
+                })}
+              </div>
             )}
-          </div>
-        ))}
-        {otherProfiles.filter(p => !personUpdates[p.full_name]).map(p => (
-          <div key={p.id} className="person-update-card person-no-update">
-            <div className="person-update-header">
-              <div className="person-avatar person-avatar-inactive">{p.full_name?.charAt(0)}</div>
-              <span className="person-name" style={{ opacity: 0.5 }}>{p.full_name}</span>
-              <span className="person-count" style={{ opacity: 0.4 }}>Χωρίς ενημ.</span>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* ===== GENERAL UPDATE ===== */}
-      {showAddUpdate ? (
-        <div className="today-add-update">
-          <div style={{ display: 'flex', gap: 6, alignItems: 'flex-start' }}>
-            <textarea className="today-update-textarea" placeholder="Γενική ενημέρωση..." value={updateText}
-              onChange={e => setUpdateText(e.target.value)} rows={3} autoFocus style={{ flex: 1 }} />
-            <button
-              className={`voice-btn ${isRecording && voiceTarget === 'update' ? 'voice-btn-recording' : ''}`}
-              onClick={isRecording && voiceTarget === 'update' ? stopRecording : () => startRecording('update')}
-              disabled={isTranscribing} style={{ marginTop: 2, width: 40, height: 40, minWidth: 40 }}
-            >
-              {isTranscribing && voiceTarget === 'update' ? <div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} /> :
-                <Mic size={16} strokeWidth={1.6} />}
-            </button>
-          </div>
-          <div className="today-update-actions">
-            <label className="today-file-btn">
-              <Paperclip size={14} strokeWidth={1.6} /> <input type="file" accept="image/*" onChange={e => setUpdateFile(e.target.files[0])} hidden />
-            </label>
-            <div style={{ display: 'flex', gap: 6 }}>
-              <button className="action-btn" onClick={() => { setShowAddUpdate(false); setUpdateText(''); setUpdateFile(null) }}>Ακύρωση</button>
-              <button className="action-btn primary" onClick={handleAddUpdate} disabled={!updateText.trim() || sending}>{sending ? '...' : 'Δημοσίευση'}</button>
-            </div>
-          </div>
-          {updateFile && <div className="today-file-name">{updateFile.name}</div>}
+          </section>
         </div>
-      ) : (
-        <button className="today-add-btn" onClick={() => setShowAddUpdate(true)}>
-          <Plus size={16} strokeWidth={1.6} />
-          Γενική ενημέρωση
-        </button>
-      )}
 
-      {/* ===== ANNOUNCEMENT MODAL ===== */}
-      {showAnnouncementModal && (
-        <div className="modal-overlay" onClick={() => setShowAnnouncementModal(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <p className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Bell size={18} strokeWidth={1.6} /> Νέα ανακοίνωση</p>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-              <textarea className="modal-input" placeholder="Γράψε ή μίλα..." value={annText}
-                onChange={e => setAnnText(e.target.value)} rows={3} autoFocus style={{ flex: 1, resize: 'vertical', fontFamily: 'inherit' }} />
-              <button
-                className={`voice-btn ${isRecording && voiceTarget === 'announcement' ? 'voice-btn-recording' : ''}`}
-                onClick={isRecording && voiceTarget === 'announcement' ? stopRecording : () => startRecording('announcement')}
-                disabled={isTranscribing}
-              >
-                {isTranscribing && voiceTarget === 'announcement' ? <div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} /> :
-                  <Mic size={18} strokeWidth={1.6} />}
-              </button>
-            </div>
-            <div className="modal-actions">
-              <button className="action-btn" onClick={() => setShowAnnouncementModal(false)}>Ακύρωση</button>
-              <button className="action-btn primary" onClick={saveAnnouncement} disabled={!annText.trim() || annSaving}>{annSaving ? '...' : 'Δημοσίευση'}</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ===== NEW TASK MODAL ===== */}
-      {showTaskModal && (
-        <div className="modal-overlay" onClick={() => setShowTaskModal(false)}>
-          <div className="modal-content task-modal" onClick={e => e.stopPropagation()}>
-            <p className="modal-title">Νέα εργασία</p>
-
-            {/* Title + voice */}
-            <div className="task-title-row">
-              <input className="modal-input" placeholder="Τίτλος εργασίας *" value={taskTitle}
-                onChange={e => setTaskTitle(e.target.value)} autoFocus style={{ flex: 1 }} />
-              <button className={`voice-btn ${isRecording && voiceTarget === 'task' ? 'voice-btn-recording' : ''}`}
-                onClick={isRecording && voiceTarget === 'task' ? stopRecording : () => startRecording('task')}
-                disabled={isTranscribing}>
-                {isTranscribing && voiceTarget === 'task' ? <div className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} /> :
-                  <Mic size={18} strokeWidth={1.6} />}
-              </button>
+        <aside className="today-side-column">
+          <section className="today-panel today-team-panel">
+            <div className="today-panel-heading">
+              <div><span className="today-panel-icon is-info" aria-hidden="true"><Users size={17} strokeWidth={1.8} /></span><div><h3>Κίνηση ομάδας</h3><p>Ποιος ενημέρωσε σήμερα</p></div></div>
             </div>
 
-            {/* Description */}
-            <textarea className="modal-input" placeholder="Περιγραφή (προαιρετικά)" value={taskDesc}
-              onChange={e => setTaskDesc(e.target.value)} rows={2} style={{ resize: 'vertical', fontFamily: 'inherit' }} />
-
-            {/* Project */}
-            <select className="modal-input" value={taskProject} onChange={e => { setTaskProject(e.target.value); if (e.target.value === 'personal' || e.target.value === 'staff') setTaskAssignees([]) }}>
-              <option value="">Έργο...</option>
-              <option value="personal">👤 Για εμένα</option>
-              <option value="staff">👥 Όλο το γραφείο</option>
-              {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
-
-            {/* Assign to: hidden for personal, multi-select for others */}
-            {!isPersonalTask && !isStaffTask && (
-              <div className="assignee-picker">
-                <div className="assignee-picker-label">
-                  Ανάθεση σε
-                  {profile?.role === 'owner' && (
-                    <button className="assignee-all-btn" onClick={selectAllAssignees}>
-                      {taskAssignees.length === profiles.length ? 'Κανένας' : 'Όλοι'}
+            <div className="today-team-list">
+              {Object.entries(personUpdates).map(([name, items]) => {
+                const isExpanded = expandedPerson === name
+                return (
+                  <article key={name} className={`today-person-card ${isExpanded ? 'is-expanded' : ''}`}>
+                    <button type="button" className="today-person-summary" onClick={() => setExpandedPerson(isExpanded ? null : name)} aria-expanded={isExpanded}>
+                      <span className="today-person-avatar" aria-hidden="true">{name.charAt(0)}</span>
+                      <span className="today-person-copy"><strong>{name}</strong><small>{items.length} ενημέρωσ{items.length === 1 ? 'η' : 'εις'}</small></span>
+                      <span className="today-activity-dot" aria-label="Υπάρχει δραστηριότητα" />
+                      <ChevronDown size={16} strokeWidth={1.8} aria-hidden="true" className={isExpanded ? 'is-rotated' : ''} />
                     </button>
-                  )}
+                    {isExpanded && (
+                      <div className="today-person-updates">
+                        {items.map((item, index) => (
+                          <div key={`${name}-${index}`} className="today-person-update">
+                            <time>{item.time}</time>
+                            <div>{item.type === 'task_done' && <CheckCircle2 size={13} strokeWidth={2} aria-hidden="true" />}<span>{item.text}{item.project ? ` · ${item.project}` : ''}</span></div>
+                            {item.file_url && <a href={item.file_url} target="_blank" rel="noopener noreferrer">Αρχείο</a>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </article>
+                )
+              })}
+
+              {otherProfiles.filter(person => !personUpdates[person.full_name]).map(person => (
+                <div key={person.id} className="today-person-card is-quiet">
+                  <div className="today-person-summary">
+                    <span className="today-person-avatar" aria-hidden="true">{person.full_name?.charAt(0)}</span>
+                    <span className="today-person-copy"><strong>{person.full_name}</strong><small>Χωρίς ενημέρωση σήμερα</small></span>
+                    <span className="today-quiet-dot" aria-hidden="true" />
+                  </div>
                 </div>
-                <div className="assignee-list">
-                  {profiles.map(p => (
-                    <label key={p.id} className={`assignee-chip ${taskAssignees.includes(p.id) ? 'assignee-chip-active' : ''}`}>
-                      <input type="checkbox" checked={taskAssignees.includes(p.id)} onChange={() => toggleAssignee(p.id)} hidden />
-                      <span className="assignee-chip-avatar">{p.full_name?.charAt(0)}</span>
-                      {p.full_name?.split(' ')[0]}
-                    </label>
-                  ))}
+              ))}
+
+              {profiles.length <= 1 && <p className="today-quiet-message">Δεν υπάρχουν άλλα μέλη στην ομάδα.</p>}
+            </div>
+          </section>
+
+          <section className="today-panel today-update-panel">
+            <div className="today-panel-heading">
+              <div><span className="today-panel-icon is-success" aria-hidden="true"><MessageCircle size={17} strokeWidth={1.8} /></span><div><h3>Γενική ενημέρωση</h3><p>Σύντομο νέο που αφορά το γραφείο</p></div></div>
+            </div>
+
+            {!showAddUpdate ? (
+              <button type="button" className="today-open-composer" onClick={() => setShowAddUpdate(true)}><Plus size={17} strokeWidth={1.8} aria-hidden="true" />Προσθήκη ενημέρωσης</button>
+            ) : (
+              <div className="today-update-composer">
+                <label htmlFor="general-update">Κείμενο ενημέρωσης</label>
+                <div className="today-update-input-wrap">
+                  <textarea id="general-update" placeholder="Τι πρέπει να γνωρίζει η ομάδα;" value={updateText} onChange={event => setUpdateText(event.target.value)} rows={4} autoFocus />
+                  <button type="button" className={`today-voice-button ${isRecording && voiceTarget === 'update' ? 'is-recording' : ''}`} onClick={isRecording && voiceTarget === 'update' ? stopRecording : () => startRecording('update')} disabled={isTranscribing} aria-label={isRecording ? 'Διακοπή εγγραφής' : 'Φωνητική ενημέρωση'}>
+                    {isTranscribing && voiceTarget === 'update' ? <span className="spinner" /> : <Mic size={17} strokeWidth={1.8} aria-hidden="true" />}
+                  </button>
+                </div>
+                {updateFile && <div className="today-selected-file"><Paperclip size={14} strokeWidth={1.8} aria-hidden="true" />{updateFile.name}</div>}
+                <div className="today-composer-footer">
+                  <label className="today-attach-button"><Paperclip size={15} strokeWidth={1.8} aria-hidden="true" />Επισύναψη<input type="file" accept="image/*" onChange={event => setUpdateFile(event.target.files[0])} hidden /></label>
+                  <div><button type="button" className="action-btn" onClick={() => { setShowAddUpdate(false); setUpdateText(''); setUpdateFile(null) }}>Ακύρωση</button><button type="button" className="action-btn primary" onClick={handleAddUpdate} disabled={!updateText.trim() || sending}>{sending ? <ButtonSpinner label="Δημοσίευση…" /> : 'Δημοσίευση'}</button></div>
                 </div>
               </div>
             )}
+          </section>
+        </aside>
+      </div>
 
-            {/* Date + Time */}
-            <div className="task-datetime-row">
-              <input className="modal-input" type="date" value={taskDate} onChange={e => setTaskDate(e.target.value)} style={{ flex: 1 }} />
-              <input className="modal-input" type="time" value={taskTime} onChange={e => setTaskTime(e.target.value)} style={{ width: 110 }} />
-            </div>
+      <ModalShell
+        open={showAnnouncementModal}
+        onClose={() => setShowAnnouncementModal(false)}
+        title="Νέα ανακοίνωση"
+        description="Η ανακοίνωση θα εμφανιστεί στην κορυφή της σημερινής σελίδας για όλη την ομάδα."
+        icon={Bell}
+        size="md"
+        actions={<><button type="button" className="action-btn" onClick={() => setShowAnnouncementModal(false)}>Ακύρωση</button><button type="button" className="action-btn primary" onClick={saveAnnouncement} disabled={!annText.trim() || annSaving}>{annSaving ? <ButtonSpinner label="Δημοσίευση…" /> : 'Δημοσίευση'}</button></>}
+      >
+        <div className="today-modal-field">
+          <label htmlFor="announcement-text">Μήνυμα ανακοίνωσης</label>
+          <div className="today-update-input-wrap">
+            <textarea id="announcement-text" placeholder="Γράψτε ή υπαγορεύστε το μήνυμα…" value={annText} onChange={event => setAnnText(event.target.value)} rows={5} autoFocus />
+            <button type="button" className={`today-voice-button ${isRecording && voiceTarget === 'announcement' ? 'is-recording' : ''}`} onClick={isRecording && voiceTarget === 'announcement' ? stopRecording : () => startRecording('announcement')} disabled={isTranscribing} aria-label={isRecording ? 'Διακοπή εγγραφής' : 'Υπαγόρευση ανακοίνωσης'}>
+              {isTranscribing && voiceTarget === 'announcement' ? <span className="spinner" /> : <Mic size={18} strokeWidth={1.8} aria-hidden="true" />}
+            </button>
+          </div>
+        </div>
+      </ModalShell>
 
-            {/* Urgent toggle + File */}
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button
-                className={`urgent-toggle ${taskUrgent ? 'urgent-toggle-on' : ''}`}
-                onClick={() => setTaskUrgent(!taskUrgent)}
-              >
-                <AlertTriangle size={16} strokeWidth={1.6} /> Επείγον
-              </button>
-              <label className="task-attach-btn" style={{ flex: 1 }}>
-                <Paperclip size={16} strokeWidth={1.6} />
-                {taskFile ? taskFile.name : 'Αρχείο'}
-                <input type="file" onChange={e => setTaskFile(e.target.files[0])} hidden />
-              </label>
-            </div>
-
-            <div className="modal-actions">
-              <button className="action-btn" onClick={() => setShowTaskModal(false)}>Ακύρωση</button>
-              <button className="action-btn primary" onClick={handleSaveTask} disabled={!taskTitle.trim() || taskSaving}>
-                {taskSaving ? '...' : 'Αποθήκευση'}
+      <ModalShell
+        open={showTaskModal}
+        onClose={() => setShowTaskModal(false)}
+        title="Νέα εργασία"
+        description="Ορίστε σαφή τίτλο, υπεύθυνο και προθεσμία."
+        icon={ClipboardCheck}
+        size="lg"
+        actions={<><button type="button" className="action-btn" onClick={() => setShowTaskModal(false)}>Ακύρωση</button><button type="button" className="action-btn primary" onClick={handleSaveTask} disabled={!taskTitle.trim() || taskSaving}>{taskSaving ? <ButtonSpinner label="Αποθήκευση…" /> : 'Δημιουργία εργασίας'}</button></>}
+      >
+        <div className="today-task-form">
+          <div className="today-form-field is-full">
+            <label htmlFor="task-title">Τίτλος εργασίας <span>*</span></label>
+            <div className="today-update-input-wrap">
+              <input id="task-title" placeholder="π.χ. Επιβεβαίωση σχεδίων με τον μηχανικό" value={taskTitle} onChange={event => setTaskTitle(event.target.value)} autoFocus />
+              <button type="button" className={`today-voice-button ${isRecording && voiceTarget === 'task' ? 'is-recording' : ''}`} onClick={isRecording && voiceTarget === 'task' ? stopRecording : () => startRecording('task')} disabled={isTranscribing} aria-label={isRecording ? 'Διακοπή εγγραφής' : 'Υπαγόρευση τίτλου'}>
+                {isTranscribing && voiceTarget === 'task' ? <span className="spinner" /> : <Mic size={18} strokeWidth={1.8} aria-hidden="true" />}
               </button>
             </div>
           </div>
-        </div>
-      )}
 
-      {toast && <div className={`toast ${toast.isError ? "toast-error" : "toast-success"}`}>{toast.msg}</div>}
+          <div className="today-form-field is-full"><label htmlFor="task-description">Περιγραφή</label><textarea id="task-description" placeholder="Προσθέστε τις απαραίτητες λεπτομέρειες…" value={taskDesc} onChange={event => setTaskDesc(event.target.value)} rows={3} /></div>
+
+          <div className="today-form-field is-full"><label htmlFor="task-project">Έργο ή τύπος εργασίας</label><select id="task-project" value={taskProject} onChange={event => { setTaskProject(event.target.value); if (event.target.value === 'personal' || event.target.value === 'staff') setTaskAssignees([]) }}><option value="">Επιλέξτε έργο</option><option value="personal">Για εμένα</option><option value="staff">Όλο το γραφείο</option>{projects.map(project => <option key={project.id} value={project.id}>{project.name}</option>)}</select></div>
+
+          {!isPersonalTask && !isStaffTask && (
+            <fieldset className="today-assignee-field is-full">
+              <legend>Ανάθεση σε</legend>
+              <div className="today-assignee-toolbar"><span>{taskAssignees.length ? `${taskAssignees.length} επιλεγμέν${taskAssignees.length === 1 ? 'ος' : 'οι'}` : 'Επιλέξτε τουλάχιστον ένα άτομο'}</span>{profile?.role === 'owner' && <button type="button" onClick={selectAllAssignees}>{taskAssignees.length === profiles.length ? 'Καθαρισμός' : 'Επιλογή όλων'}</button>}</div>
+              <div className="today-assignee-grid">{profiles.map(person => <label key={person.id} className={`today-assignee-option ${taskAssignees.includes(person.id) ? 'is-selected' : ''}`}><input type="checkbox" checked={taskAssignees.includes(person.id)} onChange={() => toggleAssignee(person.id)} /><span className="today-person-avatar" aria-hidden="true">{person.full_name?.charAt(0)}</span><span>{person.full_name}</span></label>)}</div>
+            </fieldset>
+          )}
+
+          <div className="today-form-field"><label htmlFor="task-date">Ημερομηνία</label><div className="today-field-with-icon"><CalendarDays size={16} strokeWidth={1.8} aria-hidden="true" /><input id="task-date" type="date" value={taskDate} onChange={event => setTaskDate(event.target.value)} /></div></div>
+          <div className="today-form-field"><label htmlFor="task-time">Ώρα</label><input id="task-time" type="time" value={taskTime} onChange={event => setTaskTime(event.target.value)} /></div>
+
+          <div className="today-form-field is-full"><label>Προτεραιότητα και αρχείο</label><div className="today-form-actions-row"><button type="button" className={`today-urgent-toggle ${taskUrgent ? 'is-active' : ''}`} onClick={() => setTaskUrgent(value => !value)} aria-pressed={taskUrgent}><AlertTriangle size={16} strokeWidth={1.8} aria-hidden="true" />{taskUrgent ? 'Έχει οριστεί ως επείγον' : 'Ορισμός ως επείγον'}</button><label className="today-attach-button is-wide"><FileText size={16} strokeWidth={1.8} aria-hidden="true" />{taskFile ? taskFile.name : 'Επισύναψη αρχείου'}<input type="file" onChange={event => setTaskFile(event.target.files[0])} hidden /></label></div></div>
+        </div>
+      </ModalShell>
+
+      {toast && <div className={`toast ${toast.isError ? 'toast-error' : 'toast-success'}`} role="status">{toast.msg}</div>}
     </div>
   )
 }
