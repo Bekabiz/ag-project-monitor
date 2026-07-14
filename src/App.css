@@ -3022,3 +3022,68 @@ body { color: var(--ag-ink); }
   .step-title { font-size: 13.5px; }
   .overdue-badge { margin-left: auto; }
 }
+
+/* Planner action must remain visible independently of the global task FAB */
+.planner-section { display: grid; gap: 16px; }
+.planner-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px 20px;
+  border: 1px solid var(--ag-border);
+  border-radius: 18px;
+  background: var(--ag-surface-alt);
+}
+.planner-toolbar h2 { margin: 0; color: var(--ag-ink); font-size: 17px; letter-spacing: -.02em; }
+.planner-toolbar p { margin: 5px 0 0; color: var(--ag-muted); font-size: 11.5px; }
+.planner-add-btn,
+.planner-empty-action {
+  min-height: 40px!important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid #2e409a;
+  border-radius: 11px;
+  background: #3449aa;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 680;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(52,73,170,.16);
+  transition: background .15s ease, transform .15s ease, box-shadow .15s ease;
+}
+.planner-add-btn { flex: 0 0 auto; padding: 0 15px; }
+.planner-empty-action { margin-top: 5px; padding: 0 14px; }
+.planner-add-btn:hover,
+.planner-empty-action:hover { background: #293c91; transform: translateY(-1px); box-shadow: 0 7px 17px rgba(52,73,170,.18); }
+.planner-empty-state {
+  min-height: 250px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.planner-empty-icon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 12px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: #eef1ff;
+  color: #3449aa;
+  border: 1px solid #dfe4ff;
+}
+.planner-empty-state h3 { margin: 0; color: var(--ag-ink); font-size: 15px; }
+.planner-empty-state p { max-width: 360px; margin: 7px 0 12px; color: var(--ag-muted); font-size: 11.5px; line-height: 1.55; }
+
+@media (max-width: 640px) {
+  .planner-toolbar { align-items: flex-start; padding: 15px; }
+  .planner-toolbar p { display: none; }
+  .planner-add-btn { width: 42px; height: 42px; padding: 0; border-radius: 12px; }
+  .planner-add-btn span { display: none; }
+  .planner-empty-state { min-height: 220px; padding: 28px 18px; }
+}
