@@ -25,16 +25,16 @@ export default class ErrorBoundary extends Component {
       <main className="error-boundary-screen">
         <section className="error-boundary-card" role="alert" aria-live="assertive">
           <div className="error-boundary-icon" aria-hidden="true">
-            <AlertTriangle size={25} strokeWidth={1.8} />
+            <AlertTriangle size={25} strokeWidth={1.5} />
           </div>
           <h1>Κάτι πήγε στραβά</h1>
           <p>Η εφαρμογή δεν μπόρεσε να ολοκληρώσει αυτή την προβολή. Τα αποθηκευμένα δεδομένα σας δεν επηρεάζονται.</p>
           <div className="error-boundary-actions">
             <button type="button" className="action-btn" onClick={this.handleReset}>
-              <RotateCcw size={16} strokeWidth={1.8} aria-hidden="true" /> Δοκιμή ξανά
+              <RotateCcw size={16} strokeWidth={1.5} aria-hidden="true" /> Δοκιμή ξανά
             </button>
             <button type="button" className="action-btn primary" onClick={this.handleReload}>
-              <RefreshCw size={16} strokeWidth={1.8} aria-hidden="true" /> Ανανέωση σελίδας
+              <RefreshCw size={16} strokeWidth={1.5} aria-hidden="true" /> Ανανέωση σελίδας
             </button>
           </div>
           {this.state.error && (

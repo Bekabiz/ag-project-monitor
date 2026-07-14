@@ -5,16 +5,16 @@ import StepsView from './StepsView'
 import { ButtonSpinner, EmptyState, InlineNotice, LoadingState, ModalShell } from '../components/ui'
 
 const CAT_CONFIG = {
-  problem: { label: 'Προβλήματα', icon: 'M12 9v2m0 4h.01M5.07 19H19a2 2 0 001.75-2.96L13.75 4a2 2 0 00-3.5 0L3.32 16.04A2 2 0 005.07 19z', color: '#dc2626', bg: '#fef2f2' },
-  decision: { label: 'Αποφάσεις', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', color: '#0d9488', bg: '#f0fdfa' },
-  material: { label: 'Υλικά', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', color: '#7c3aed', bg: '#f5f3ff' },
-  work_update: { label: 'Ενημερώσεις εργασιών', icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4', color: '#059669', bg: '#ecfdf5' },
-  client_request: { label: 'Αιτήματα πελάτη', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z', color: '#d97706', bg: '#fffbeb' },
-  note: { label: 'Σημειώσεις', icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z', color: '#6b7280', bg: '#f3f4f6' }
+  problem: { label: 'Προβλήματα', icon: 'M12 9v2m0 4h.01M5.07 19H19a2 2 0 001.75-2.96L13.75 4a2 2 0 00-3.5 0L3.32 16.04A2 2 0 005.07 19z', color: 'var(--danger)', bg: 'var(--danger-wash)' },
+  decision: { label: 'Αποφάσεις', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', color: 'var(--ink)', bg: 'var(--veil)' },
+  material: { label: 'Υλικά', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', color: 'var(--ink)', bg: 'var(--mist)' },
+  work_update: { label: 'Ενημερώσεις εργασιών', icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4', color: 'var(--ink)', bg: 'var(--wash)' },
+  client_request: { label: 'Αιτήματα πελάτη', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z', color: 'var(--warn)', bg: 'var(--warn-wash)' },
+  note: { label: 'Σημειώσεις', icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z', color: 'var(--text-secondary)', bg: 'var(--info-wash)' }
 }
 
 function CatIcon({ path, color, size = 18 }) {
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d={path}/></svg>
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><path d={path}/></svg>
 }
 
 function StatusPill({ status }) {
@@ -338,7 +338,7 @@ export default function ProjectDetail({ project, profile, onBack, onAddUpdate })
         {detailed && entry.raw_text && entry.raw_text !== entry.title && <p className="project-entry-body">{entry.raw_text}</p>}
         <div className="project-entry-meta"><span>{entry.submitter_name || 'Άγνωστο μέλος'}</span><span>{formatDate(entry.created_at)}</span></div>
         {(entry.tags || []).length > 0 && <div className="project-tag-list">{entry.tags.map(tag => <TagChip key={tag} tag={tag} />)}</div>}
-        {entry.file_url && <a href={entry.file_url} target="_blank" rel="noopener noreferrer" className="project-entry-file"><FileDown size={14} strokeWidth={1.8} aria-hidden="true" />{entry.file_name || 'Άνοιγμα αρχείου'}</a>}
+        {entry.file_url && <a href={entry.file_url} target="_blank" rel="noopener noreferrer" className="project-entry-file"><FileDown size={14} strokeWidth={1.5} aria-hidden="true" />{entry.file_name || 'Άνοιγμα αρχείου'}</a>}
       </article>
     )
   }
@@ -347,34 +347,34 @@ export default function ProjectDetail({ project, profile, onBack, onAddUpdate })
     <div className="project-workspace-page">
       <section className="project-hero-card">
         <div className="project-hero-top">
-          <button type="button" className="project-back-button" onClick={onBack}><ArrowLeft size={18} strokeWidth={1.8} aria-hidden="true" /><span>Όλα τα έργα</span></button>
+          <button type="button" className="project-back-button" onClick={onBack}><ArrowLeft size={18} strokeWidth={1.5} aria-hidden="true" /><span>Όλα τα έργα</span></button>
           <div className={`project-health-badge is-${projectHealth}`}>
             <span aria-hidden="true" />
             {projectHealth === 'attention' ? 'Χρειάζεται προσοχή' : projectHealth === 'empty' ? 'Χωρίς ενημερώσεις' : 'Σε καλή πορεία'}
           </div>
         </div>
         <div className="project-hero-main">
-          <div className="project-hero-icon" aria-hidden="true"><Building2 size={25} strokeWidth={1.6} /></div>
+          <div className="project-hero-icon" aria-hidden="true"><Building2 size={25} strokeWidth={1.5} /></div>
           <div className="project-hero-copy">
             <span>Ενεργό έργο</span>
             <h2>{project.name}</h2>
-            <p><MapPin size={14} strokeWidth={1.7} aria-hidden="true" />{project.location || 'Δεν έχει οριστεί τοποθεσία'}{project.building_type ? ` · ${project.building_type.replaceAll('_', ' ')}` : ''}</p>
+            <p><MapPin size={14} strokeWidth={1.5} aria-hidden="true" />{project.location || 'Δεν έχει οριστεί τοποθεσία'}{project.building_type ? ` · ${project.building_type.replaceAll('_', ' ')}` : ''}</p>
           </div>
           <div className="project-hero-actions">
             {profile?.role === 'owner' && areas.length === 0 && (
               <label className="project-structure-button">
-                <FolderTree size={16} strokeWidth={1.8} aria-hidden="true" />
+                <FolderTree size={16} strokeWidth={1.5} aria-hidden="true" />
                 <span>Εισαγωγή δομής</span>
                 <input type="file" accept=".pdf,.doc,.docx,.txt" onChange={handleTechDescUpload} hidden />
               </label>
             )}
-            {onAddUpdate && <button type="button" className="project-add-update-button" onClick={onAddUpdate}><Mic size={16} strokeWidth={1.8} aria-hidden="true" />Νέα ενημέρωση</button>}
+            {onAddUpdate && <button type="button" className="project-add-update-button" onClick={onAddUpdate}><Mic size={16} strokeWidth={1.5} aria-hidden="true" />Νέα ενημέρωση</button>}
           </div>
         </div>
         <div className="project-hero-meta">
-          <span><Clock3 size={14} strokeWidth={1.7} aria-hidden="true" />Τελευταία ενημέρωση: {lastEntry ? formatDate(lastEntry.created_at) : 'Δεν υπάρχει'}</span>
-          <span><ListTree size={14} strokeWidth={1.7} aria-hidden="true" />{entries.length} καταχωρήσεις</span>
-          <span><Camera size={14} strokeWidth={1.7} aria-hidden="true" />{photos.length} φωτογραφίες</span>
+          <span><Clock3 size={14} strokeWidth={1.5} aria-hidden="true" />Τελευταία ενημέρωση: {lastEntry ? formatDate(lastEntry.created_at) : 'Δεν υπάρχει'}</span>
+          <span><ListTree size={14} strokeWidth={1.5} aria-hidden="true" />{entries.length} καταχωρήσεις</span>
+          <span><Camera size={14} strokeWidth={1.5} aria-hidden="true" />{photos.length} φωτογραφίες</span>
         </div>
       </section>
 
@@ -385,7 +385,7 @@ export default function ProjectDetail({ project, profile, onBack, onAddUpdate })
           const Icon = item.icon
           return (
             <button type="button" key={item.id} className={tab === item.id ? 'is-active' : ''} onClick={() => { setTab(item.id); setCatFilter(null) }} aria-current={tab === item.id ? 'page' : undefined}>
-              <Icon size={17} strokeWidth={1.75} aria-hidden="true" />
+              <Icon size={17} strokeWidth={1.5} aria-hidden="true" />
               <span>{item.label}</span>
               {item.badge > 0 && <em>{item.badge}</em>}
             </button>
@@ -397,33 +397,33 @@ export default function ProjectDetail({ project, profile, onBack, onAddUpdate })
         <div className="project-overview-layout">
           <section className="project-overview-main">
             <div className="project-stat-grid">
-              <button type="button" className="project-stat-card is-danger" onClick={() => { setTab('memory'); setCatFilter('problem') }}><span aria-hidden="true"><AlertTriangle size={18} strokeWidth={1.8} /></span><strong>{openProblems.length}</strong><small>Ανοιχτά προβλήματα</small></button>
-              <button type="button" className="project-stat-card is-primary" onClick={() => setTab('tasks')}><span aria-hidden="true"><ClipboardCheck size={18} strokeWidth={1.8} /></span><strong>{catCounts.work_update || 0}</strong><small>Ενημερώσεις εργασιών</small></button>
-              <button type="button" className="project-stat-card is-purple" onClick={() => { setTab('memory'); setCatFilter('decision') }}><span aria-hidden="true"><CheckCircle2 size={18} strokeWidth={1.8} /></span><strong>{decisions.length}</strong><small>Αποφάσεις</small></button>
-              <button type="button" className="project-stat-card is-warning" onClick={() => setTab('report')}><span aria-hidden="true"><CalendarDays size={18} strokeWidth={1.8} /></span><strong>{overdueDeadlines.length}</strong><small>Εκπρόθεσμες προθεσμίες</small></button>
+              <button type="button" className="project-stat-card is-danger" onClick={() => { setTab('memory'); setCatFilter('problem') }}><span aria-hidden="true"><AlertTriangle size={18} strokeWidth={1.5} /></span><strong>{openProblems.length}</strong><small>Ανοιχτά προβλήματα</small></button>
+              <button type="button" className="project-stat-card is-primary" onClick={() => setTab('tasks')}><span aria-hidden="true"><ClipboardCheck size={18} strokeWidth={1.5} /></span><strong>{catCounts.work_update || 0}</strong><small>Ενημερώσεις εργασιών</small></button>
+              <button type="button" className="project-stat-card is-purple" onClick={() => { setTab('memory'); setCatFilter('decision') }}><span aria-hidden="true"><CheckCircle2 size={18} strokeWidth={1.5} /></span><strong>{decisions.length}</strong><small>Αποφάσεις</small></button>
+              <button type="button" className="project-stat-card is-warning" onClick={() => setTab('report')}><span aria-hidden="true"><CalendarDays size={18} strokeWidth={1.5} /></span><strong>{overdueDeadlines.length}</strong><small>Εκπρόθεσμες προθεσμίες</small></button>
             </div>
 
             {openProblems.length > 0 && (
               <section className="project-content-panel">
-                <div className="project-panel-heading"><div><span className="is-danger" aria-hidden="true"><AlertTriangle size={18} strokeWidth={1.8} /></span><div><h3>Ανοιχτά προβλήματα</h3><p>Θέματα που χρειάζονται απόφαση ή ενέργεια.</p></div></div><button type="button" onClick={() => { setTab('memory'); setCatFilter('problem') }}>Προβολή όλων <ChevronRight size={15} strokeWidth={1.8} aria-hidden="true" /></button></div>
+                <div className="project-panel-heading"><div><span className="is-danger" aria-hidden="true"><AlertTriangle size={18} strokeWidth={1.5} /></span><div><h3>Ανοιχτά προβλήματα</h3><p>Θέματα που χρειάζονται απόφαση ή ενέργεια.</p></div></div><button type="button" onClick={() => { setTab('memory'); setCatFilter('problem') }}>Προβολή όλων <ChevronRight size={15} strokeWidth={1.5} aria-hidden="true" /></button></div>
                 <div className="project-entry-list">{openProblems.slice(0, 5).map(entry => renderEntry(entry))}</div>
               </section>
             )}
 
             <section className="project-content-panel">
-              <div className="project-panel-heading"><div><span className="is-primary" aria-hidden="true"><Clock3 size={18} strokeWidth={1.8} /></span><div><h3>Πρόσφατη δραστηριότητα</h3><p>Οι πιο πρόσφατες πληροφορίες που καταχωρήθηκαν.</p></div></div>{entries.length > 8 && <button type="button" onClick={() => setTab('timeline')}>Πλήρες χρονολόγιο <ChevronRight size={15} strokeWidth={1.8} aria-hidden="true" /></button>}</div>
+              <div className="project-panel-heading"><div><span className="is-primary" aria-hidden="true"><Clock3 size={18} strokeWidth={1.5} /></span><div><h3>Πρόσφατη δραστηριότητα</h3><p>Οι πιο πρόσφατες πληροφορίες που καταχωρήθηκαν.</p></div></div>{entries.length > 8 && <button type="button" onClick={() => setTab('timeline')}>Πλήρες χρονολόγιο <ChevronRight size={15} strokeWidth={1.5} aria-hidden="true" /></button>}</div>
               {entries.length === 0 ? <EmptyState icon={Sparkles} title="Δεν υπάρχουν ενημερώσεις ακόμη" description="Η πρώτη καταχώρηση θα δημιουργήσει τη μνήμη και το χρονολόγιο του έργου." actionLabel={onAddUpdate ? 'Προσθήκη πρώτης ενημέρωσης' : undefined} onAction={onAddUpdate} compact /> : <div className="project-entry-list">{entries.slice(0, 8).map(entry => renderEntry(entry))}</div>}
             </section>
           </section>
 
           <aside className="project-overview-side">
             <section className="project-content-panel">
-              <div className="project-panel-heading"><div><span className="is-warning" aria-hidden="true"><CalendarDays size={18} strokeWidth={1.8} /></span><div><h3>Προθεσμίες</h3><p>Επόμενες και εκπρόθεσμες δεσμεύσεις.</p></div></div><span className="project-panel-count">{deadlines.length}</span></div>
-              {deadlines.length === 0 ? <EmptyState icon={CalendarDays} title="Δεν υπάρχουν προθεσμίες" description="Οι προθεσμίες του έργου θα εμφανιστούν εδώ." compact /> : <div className="project-deadline-list">{deadlines.slice(0, 6).map(deadline => <article key={deadline.id} className={deadline.status === 'overdue' ? 'is-overdue' : deadline.status === 'completed' ? 'is-completed' : ''}><button type="button" onClick={() => toggleDeadline(deadline)} aria-label="Αλλαγή κατάστασης προθεσμίας"><CheckCircle2 size={16} strokeWidth={1.8} aria-hidden="true" /></button><div><strong>{deadline.description}</strong><small>{formatDate(deadline.due_date)}</small></div></article>)}</div>}
+              <div className="project-panel-heading"><div><span className="is-warning" aria-hidden="true"><CalendarDays size={18} strokeWidth={1.5} /></span><div><h3>Προθεσμίες</h3><p>Επόμενες και εκπρόθεσμες δεσμεύσεις.</p></div></div><span className="project-panel-count">{deadlines.length}</span></div>
+              {deadlines.length === 0 ? <EmptyState icon={CalendarDays} title="Δεν υπάρχουν προθεσμίες" description="Οι προθεσμίες του έργου θα εμφανιστούν εδώ." compact /> : <div className="project-deadline-list">{deadlines.slice(0, 6).map(deadline => <article key={deadline.id} className={deadline.status === 'overdue' ? 'is-overdue' : deadline.status === 'completed' ? 'is-completed' : ''}><button type="button" onClick={() => toggleDeadline(deadline)} aria-label="Αλλαγή κατάστασης προθεσμίας"><CheckCircle2 size={16} strokeWidth={1.5} aria-hidden="true" /></button><div><strong>{deadline.description}</strong><small>{formatDate(deadline.due_date)}</small></div></article>)}</div>}
             </section>
 
             <section className="project-content-panel">
-              <div className="project-panel-heading"><div><span className="is-purple" aria-hidden="true"><FolderTree size={18} strokeWidth={1.8} /></span><div><h3>Δομή έργου</h3><p>Χώροι, συστήματα και εξωτερικές περιοχές.</p></div></div><span className="project-panel-count">{areas.length}</span></div>
+              <div className="project-panel-heading"><div><span className="is-purple" aria-hidden="true"><FolderTree size={18} strokeWidth={1.5} /></span><div><h3>Δομή έργου</h3><p>Χώροι, συστήματα και εξωτερικές περιοχές.</p></div></div><span className="project-panel-count">{areas.length}</span></div>
               {areas.length === 0 ? <EmptyState icon={FolderTree} title="Δεν έχει εισαχθεί δομή" description={profile?.role === 'owner' ? 'Χρησιμοποιήστε την τεχνική περιγραφή για να δημιουργηθούν χώροι και συστήματα.' : 'Ο διαχειριστής δεν έχει εισαγάγει ακόμη τη δομή του έργου.'} compact /> : <div className="project-area-preview">{areas.slice(0, 10).map(area => <span key={area.id}>{area.area_name}</span>)}</div>}
             </section>
           </aside>
@@ -434,7 +434,7 @@ export default function ProjectDetail({ project, profile, onBack, onAddUpdate })
         <section className="project-memory-layout">
           <header className="project-memory-header">
             <div><h2>Μνήμη έργου</h2><p>Όλες οι αποφάσεις, τα προβλήματα, τα υλικά και οι ενημερώσεις οργανωμένα ανά κατηγορία και χώρο.</p></div>
-            {onAddUpdate && <button type="button" onClick={onAddUpdate}><Plus size={16} strokeWidth={2} aria-hidden="true" />Νέα καταχώρηση</button>}
+            {onAddUpdate && <button type="button" onClick={onAddUpdate}><Plus size={16} strokeWidth={1.5} aria-hidden="true" />Νέα καταχώρηση</button>}
           </header>
 
           {entries.length === 0 ? <EmptyState icon={ListTree} title="Η μνήμη του έργου είναι κενή" description="Προσθέστε την πρώτη ενημέρωση για να ξεκινήσει η οργάνωση της γνώσης του έργου." actionLabel={onAddUpdate ? 'Προσθήκη ενημέρωσης' : undefined} onAction={onAddUpdate} /> : (
@@ -447,13 +447,13 @@ export default function ProjectDetail({ project, profile, onBack, onAddUpdate })
                     const count = areaFilter === 'all' ? catCounts[key] : entries.filter(entry => entry.category === key && (entry.tags || []).includes(areaFilter)).length
                     const openCount = key === 'problem' ? entries.filter(entry => entry.category === 'problem' && entry.entry_status === 'open' && (areaFilter === 'all' || (entry.tags || []).includes(areaFilter))).length : 0
                     if (count === 0) return null
-                    return <button type="button" key={key} className="project-category-card" onClick={() => setCatFilter(key)}><span style={{ '--category-bg': config.bg }} aria-hidden="true"><CatIcon path={config.icon} color={config.color} size={19} /></span><div><strong>{config.label}</strong><small>{openCount > 0 ? `${openCount} ανοιχτά` : `${count} καταχωρήσεις`}</small></div><em>{count}</em><ChevronRight size={16} strokeWidth={1.8} aria-hidden="true" /></button>
+                    return <button type="button" key={key} className="project-category-card" onClick={() => setCatFilter(key)}><span style={{ '--category-bg': config.bg }} aria-hidden="true"><CatIcon path={config.icon} color={config.color} size={19} /></span><div><strong>{config.label}</strong><small>{openCount > 0 ? `${openCount} ανοιχτά` : `${count} καταχωρήσεις`}</small></div><em>{count}</em><ChevronRight size={16} strokeWidth={1.5} aria-hidden="true" /></button>
                   })}
-                  {photos.length > 0 && <button type="button" className="project-category-card" onClick={() => setTab('photos')}><span className="is-photo" aria-hidden="true"><Camera size={19} strokeWidth={1.8} /></span><div><strong>Φωτογραφίες</strong><small>{photos.length} αρχεία εικόνας</small></div><em>{photos.length}</em><ChevronRight size={16} strokeWidth={1.8} aria-hidden="true" /></button>}
+                  {photos.length > 0 && <button type="button" className="project-category-card" onClick={() => setTab('photos')}><span className="is-photo" aria-hidden="true"><Camera size={19} strokeWidth={1.5} /></span><div><strong>Φωτογραφίες</strong><small>{photos.length} αρχεία εικόνας</small></div><em>{photos.length}</em><ChevronRight size={16} strokeWidth={1.5} aria-hidden="true" /></button>}
                 </div>
               ) : (
                 <div className="project-category-detail">
-                  <button type="button" className="project-category-back" onClick={() => setCatFilter(null)}><ArrowLeft size={15} strokeWidth={1.8} aria-hidden="true" />Πίσω στις κατηγορίες</button>
+                  <button type="button" className="project-category-back" onClick={() => setCatFilter(null)}><ArrowLeft size={15} strokeWidth={1.5} aria-hidden="true" />Πίσω στις κατηγορίες</button>
                   <div className="project-category-detail-heading"><span style={{ '--category-bg': CAT_CONFIG[catFilter].bg }} aria-hidden="true"><CatIcon path={CAT_CONFIG[catFilter].icon} color={CAT_CONFIG[catFilter].color} size={19} /></span><div><h3>{CAT_CONFIG[catFilter].label}</h3><p>{filteredEntries.filter(entry => entry.category === catFilter).length} καταχωρήσεις</p></div></div>
                   <div className="project-entry-grid">{filteredEntries.filter(entry => entry.category === catFilter).map(entry => renderEntry(entry, { detailed: true }))}</div>
                 </div>
@@ -467,21 +467,21 @@ export default function ProjectDetail({ project, profile, onBack, onAddUpdate })
 
       {tab === 'photos' && (
         <section className="project-gallery-panel">
-          <header className="project-memory-header"><div><h2>Φωτογραφίες έργου</h2><p>Οπτικό ιστορικό από εργοτάξιο, έγγραφα και επιμέρους χώρους.</p></div>{onAddUpdate && <button type="button" onClick={onAddUpdate}><Plus size={16} strokeWidth={2} aria-hidden="true" />Προσθήκη φωτογραφίας</button>}</header>
+          <header className="project-memory-header"><div><h2>Φωτογραφίες έργου</h2><p>Οπτικό ιστορικό από εργοτάξιο, έγγραφα και επιμέρους χώρους.</p></div>{onAddUpdate && <button type="button" onClick={onAddUpdate}><Plus size={16} strokeWidth={1.5} aria-hidden="true" />Προσθήκη φωτογραφίας</button>}</header>
           {photos.length === 0 ? <EmptyState icon={Image} title="Δεν υπάρχουν φωτογραφίες" description="Οι φωτογραφίες του έργου θα εμφανιστούν εδώ μαζί με ημερομηνία και ετικέτες." actionLabel={onAddUpdate ? 'Προσθήκη φωτογραφίας' : undefined} onAction={onAddUpdate} /> : <div className="project-photo-grid">{photos.map(photo => <button type="button" key={photo.id} className="project-photo-card" onClick={() => setLightboxUrl(photo.file_url)}><img src={photo.file_url} alt={photo.ai_summary || `Φωτογραφία έργου ${project.name}`} loading="lazy" /><span><strong>{photo.ai_summary?.slice(0, 70) || 'Φωτογραφία έργου'}</strong><small>{formatDate(photo.created_at)}</small></span>{(photo.tags || []).length > 0 && <em>{photo.tags.slice(0, 2).join(' · ')}</em>}</button>)}</div>}
         </section>
       )}
 
       {tab === 'timeline' && (
         <section className="project-timeline-panel">
-          <header className="project-memory-header"><div><h2>Χρονολόγιο έργου</h2><p>Η πλήρης σειρά των καταχωρήσεων από την πιο πρόσφατη προς την παλαιότερη.</p></div>{onAddUpdate && <button type="button" onClick={onAddUpdate}><Plus size={16} strokeWidth={2} aria-hidden="true" />Νέα ενημέρωση</button>}</header>
+          <header className="project-memory-header"><div><h2>Χρονολόγιο έργου</h2><p>Η πλήρης σειρά των καταχωρήσεων από την πιο πρόσφατη προς την παλαιότερη.</p></div>{onAddUpdate && <button type="button" onClick={onAddUpdate}><Plus size={16} strokeWidth={1.5} aria-hidden="true" />Νέα ενημέρωση</button>}</header>
           {entries.length === 0 ? <EmptyState icon={Clock3} title="Το χρονολόγιο είναι κενό" description="Η πρώτη ενημέρωση θα δημιουργήσει το ιστορικό του έργου." actionLabel={onAddUpdate ? 'Προσθήκη ενημέρωσης' : undefined} onAction={onAddUpdate} /> : <div className="project-timeline-list">{entries.map(entry => { const category = CAT_CONFIG[entry.category] || CAT_CONFIG.note; return <article key={entry.id}><span className="project-timeline-marker" style={{ '--marker-color': category.color }} aria-hidden="true" /><div><time>{formatDate(entry.created_at)} · {entry.submitter_name || 'Άγνωστο μέλος'}</time><h3>{entryTitle(entry)}</h3><p>{category.label}</p>{(entry.tags || []).length > 0 && <div className="project-tag-list">{entry.tags.slice(0, 4).map(tag => <TagChip key={tag} tag={tag} />)}</div>}</div></article>})}</div>}
         </section>
       )}
 
       {tab === 'report' && (
         <section className="project-report-workspace">
-          <header className="project-memory-header"><div><h2>Αναφορά έργου</h2><p>Συνοπτική εικόνα κατάστασης για εκτύπωση ή παρουσίαση.</p></div><button type="button" onClick={() => window.print()}><FileDown size={16} strokeWidth={1.8} aria-hidden="true" />Εκτύπωση / PDF</button></header>
+          <header className="project-memory-header"><div><h2>Αναφορά έργου</h2><p>Συνοπτική εικόνα κατάστασης για εκτύπωση ή παρουσίαση.</p></div><button type="button" onClick={() => window.print()}><FileDown size={16} strokeWidth={1.5} aria-hidden="true" />Εκτύπωση / PDF</button></header>
           <article className="project-report-sheet">
             <header><div><span>AG Project Monitor</span><h2>{project.name}</h2><p>{project.location || 'Χωρίς τοποθεσία'}</p></div><time>Δημιουργήθηκε {new Date().toLocaleDateString('el-GR')}</time></header>
             <section><h3>Σύνοψη</h3><div className="project-report-metrics"><div><strong>{entries.length}</strong><span>Σύνολο καταχωρήσεων</span></div><div><strong>{openProblems.length}/{problems.length}</strong><span>Ανοιχτά / συνολικά προβλήματα</span></div><div><strong>{decisions.length}</strong><span>Αποφάσεις</span></div><div><strong>{photos.length}</strong><span>Φωτογραφίες</span></div><div><strong>{overdueDeadlines.length}/{deadlines.length}</strong><span>Εκπρόθεσμες / προθεσμίες</span></div></div></section>

@@ -234,17 +234,17 @@ export default function StepsView({ project, profile }) {
     <section className="project-tasks-workspace">
       <header className="project-tasks-header">
         <div className="project-tasks-title">
-          <span aria-hidden="true"><ClipboardCheck size={20} strokeWidth={1.7} /></span>
+          <span aria-hidden="true"><ClipboardCheck size={20} strokeWidth={1.5} /></span>
           <div><h2>Εργασίες έργου</h2><p>Αναθέσεις, πρόοδος, σημειώσεις και προθεσμίες για το συγκεκριμένο έργο.</p></div>
         </div>
-        <button type="button" className="project-task-add" onClick={openAdd}><Plus size={16} strokeWidth={2} aria-hidden="true" />Νέα εργασία</button>
+        <button type="button" className="project-task-add" onClick={openAdd}><Plus size={16} strokeWidth={1.5} aria-hidden="true" />Νέα εργασία</button>
       </header>
 
       <div className="project-task-summary-grid">
-        <article><span className="is-primary" aria-hidden="true"><ClipboardCheck size={18} strokeWidth={1.8} /></span><div><strong>{activeCount}</strong><small>Ενεργές</small></div></article>
-        <article><span className="is-success" aria-hidden="true"><CheckCircle2 size={18} strokeWidth={1.8} /></span><div><strong>{doneCount}</strong><small>Ολοκληρωμένες</small></div></article>
-        <article className={urgentCount ? 'is-attention' : ''}><span className="is-danger" aria-hidden="true"><AlertTriangle size={18} strokeWidth={1.8} /></span><div><strong>{urgentCount}</strong><small>Επείγουσες</small></div></article>
-        <article className={overdueCount ? 'is-attention' : ''}><span className="is-warning" aria-hidden="true"><Clock3 size={18} strokeWidth={1.8} /></span><div><strong>{overdueCount}</strong><small>Εκπρόθεσμες</small></div></article>
+        <article><span className="is-primary" aria-hidden="true"><ClipboardCheck size={18} strokeWidth={1.5} /></span><div><strong>{activeCount}</strong><small>Ενεργές</small></div></article>
+        <article><span className="is-success" aria-hidden="true"><CheckCircle2 size={18} strokeWidth={1.5} /></span><div><strong>{doneCount}</strong><small>Ολοκληρωμένες</small></div></article>
+        <article className={urgentCount ? 'is-attention' : ''}><span className="is-danger" aria-hidden="true"><AlertTriangle size={18} strokeWidth={1.5} /></span><div><strong>{urgentCount}</strong><small>Επείγουσες</small></div></article>
+        <article className={overdueCount ? 'is-attention' : ''}><span className="is-warning" aria-hidden="true"><Clock3 size={18} strokeWidth={1.5} /></span><div><strong>{overdueCount}</strong><small>Εκπρόθεσμες</small></div></article>
       </div>
 
       <section className="project-progress-panel" aria-label={`Πρόοδος εργασιών ${progress}%`}>
@@ -260,7 +260,7 @@ export default function StepsView({ project, profile }) {
           <button type="button" className={filter === 'urgent' ? 'is-active' : ''} onClick={() => setFilter('urgent')}>Επείγουσες <span>{urgentCount}</span></button>
           <button type="button" className={filter === 'done' ? 'is-active' : ''} onClick={() => setFilter('done')}>Ολοκληρωμένες <span>{doneCount}</span></button>
         </div>
-        <label className="project-task-search"><Search size={15} strokeWidth={1.8} aria-hidden="true" /><span className="sr-only">Αναζήτηση εργασιών</span><input value={search} onChange={event => setSearch(event.target.value)} placeholder="Αναζήτηση εργασίας…" /></label>
+        <label className="project-task-search"><Search size={15} strokeWidth={1.5} aria-hidden="true" /><span className="sr-only">Αναζήτηση εργασιών</span><input value={search} onChange={event => setSearch(event.target.value)} placeholder="Αναζήτηση εργασίας…" /></label>
       </div>
 
       {totalCount === 0 ? (
@@ -281,17 +281,17 @@ export default function StepsView({ project, profile }) {
               <article key={step.id} className={`project-task-card ${getStepCardClass(step)} ${isExpanded ? 'is-expanded' : ''}`}>
                 <div className="project-task-card-summary">
                   <button type="button" className="project-task-toggle" onClick={() => setExpandedStep(isExpanded ? null : step.id)} aria-expanded={isExpanded}>
-                    <span className={`project-task-status status-${step.status}`} aria-hidden="true"><CurrentIcon size={16} strokeWidth={2} /></span>
+                    <span className={`project-task-status status-${step.status}`} aria-hidden="true"><CurrentIcon size={16} strokeWidth={1.5} /></span>
                     <span className="project-task-card-copy">
                       <span className="project-task-card-title"><strong className={step.status === 'done' ? 'is-done' : ''}>{step.title}</strong>{step.is_urgent && <em className={!step.due_date ? 'is-asap' : ''}>{!step.due_date ? 'ASAP' : 'Επείγον'}</em>}</span>
                       {step.description && <span className="project-task-card-description">{step.description}</span>}
-                      <span className="project-task-card-meta"><span><UserRound size={12} strokeWidth={1.8} aria-hidden="true" />{step.assigned_to_name || 'Χωρίς ανάθεση'}</span>{info.text && <span className={info.className === 'step-overdue' ? 'is-overdue' : ''}><Clock3 size={12} strokeWidth={1.8} aria-hidden="true" />{info.text}{dueTime ? ` · ${dueTime}` : ''}</span>}{notes.length > 0 && <span>{notes.length} σημειώσεις</span>}</span>
+                      <span className="project-task-card-meta"><span><UserRound size={12} strokeWidth={1.5} aria-hidden="true" />{step.assigned_to_name || 'Χωρίς ανάθεση'}</span>{info.text && <span className={info.className === 'step-overdue' ? 'is-overdue' : ''}><Clock3 size={12} strokeWidth={1.5} aria-hidden="true" />{info.text}{dueTime ? ` · ${dueTime}` : ''}</span>}{notes.length > 0 && <span>{notes.length} σημειώσεις</span>}</span>
                     </span>
                   </button>
                   <span className="project-task-card-tools">
-                    {step.file_url && <Paperclip size={14} strokeWidth={1.7} aria-label="Υπάρχει συνημμένο" />}
-                    <button type="button" className="project-task-edit" onClick={event => openEdit(event, step)} aria-label={`Επεξεργασία εργασίας ${step.title}`}><Pencil size={15} strokeWidth={1.8} aria-hidden="true" /></button>
-                    <button type="button" className="project-task-expand-button" onClick={() => setExpandedStep(isExpanded ? null : step.id)} aria-label={isExpanded ? 'Σύμπτυξη εργασίας' : 'Άνοιγμα εργασίας'} aria-expanded={isExpanded}><ChevronDown size={17} strokeWidth={1.8} aria-hidden="true" className={isExpanded ? 'is-rotated' : ''} /></button>
+                    {step.file_url && <Paperclip size={14} strokeWidth={1.5} aria-label="Υπάρχει συνημμένο" />}
+                    <button type="button" className="project-task-edit" onClick={event => openEdit(event, step)} aria-label={`Επεξεργασία εργασίας ${step.title}`}><Pencil size={15} strokeWidth={1.5} aria-hidden="true" /></button>
+                    <button type="button" className="project-task-expand-button" onClick={() => setExpandedStep(isExpanded ? null : step.id)} aria-label={isExpanded ? 'Σύμπτυξη εργασίας' : 'Άνοιγμα εργασίας'} aria-expanded={isExpanded}><ChevronDown size={17} strokeWidth={1.5} aria-hidden="true" className={isExpanded ? 'is-rotated' : ''} /></button>
                   </span>
                 </div>
 
@@ -301,18 +301,18 @@ export default function StepsView({ project, profile }) {
                     <div className="project-task-status-options">
                       {statusOptions.map(option => {
                         const StatusIcon = option.icon
-                        return <button type="button" key={option.value} className={`status-${option.value} ${step.status === option.value ? 'is-active' : ''}`} onClick={() => updateStatus(step.id, option.value)} aria-pressed={step.status === option.value}><StatusIcon size={14} strokeWidth={2} aria-hidden="true" />{option.label}</button>
+                        return <button type="button" key={option.value} className={`status-${option.value} ${step.status === option.value ? 'is-active' : ''}`} onClick={() => updateStatus(step.id, option.value)} aria-pressed={step.status === option.value}><StatusIcon size={14} strokeWidth={1.5} aria-hidden="true" />{option.label}</button>
                       })}
                     </div>
 
-                    {step.file_url && <a href={step.file_url} target="_blank" rel="noopener noreferrer" className="project-task-file"><FileText size={15} strokeWidth={1.8} aria-hidden="true" />{step.file_name || 'Άνοιγμα αρχείου'}</a>}
+                    {step.file_url && <a href={step.file_url} target="_blank" rel="noopener noreferrer" className="project-task-file"><FileText size={15} strokeWidth={1.5} aria-hidden="true" />{step.file_name || 'Άνοιγμα αρχείου'}</a>}
 
                     {notes.length > 0 && <div className="project-task-note-list">{notes.map(note => <div key={note.id}><p><strong>{note.user_name}</strong>{note.text}</p><time>{new Date(note.created_at).toLocaleDateString('el-GR', { day: 'numeric', month: 'short' })}</time></div>)}</div>}
 
                     <div className="project-task-note-composer">
                       <label className="sr-only" htmlFor={`project-task-note-${step.id}`}>Προσθήκη σημείωσης</label>
                       <input id={`project-task-note-${step.id}`} placeholder="Προσθήκη σημείωσης ή ενημέρωσης…" value={noteText} onChange={event => setNoteText(event.target.value)} onKeyDown={event => event.key === 'Enter' && addNote(step.id)} />
-                      <button type="button" onClick={() => addNote(step.id)} disabled={!noteText.trim()} aria-label="Αποστολή σημείωσης"><Send size={15} strokeWidth={1.8} aria-hidden="true" /></button>
+                      <button type="button" onClick={() => addNote(step.id)} disabled={!noteText.trim()} aria-label="Αποστολή σημείωσης"><Send size={15} strokeWidth={1.5} aria-hidden="true" /></button>
                     </div>
                   </div>
                 )}
@@ -332,14 +332,14 @@ export default function StepsView({ project, profile }) {
         actions={<><button type="button" className="action-btn" onClick={() => setShowAdd(false)} disabled={saving}>Ακύρωση</button><button type="button" className="action-btn primary" onClick={handleSave} disabled={!title.trim() || saving}>{saving ? <ButtonSpinner label="Αποθήκευση…" /> : editStep ? 'Αποθήκευση αλλαγών' : 'Δημιουργία εργασίας'}</button></>}
       >
         <div className="project-task-form">
-          <div className="project-task-form-field is-full"><label htmlFor="project-step-title">Τίτλος εργασίας <span>*</span></label><div className="project-task-title-input"><input id="project-step-title" value={title} onChange={event => setTitle(event.target.value)} placeholder="π.χ. Επιβεβαίωση ηλεκτρολογικού σχεδίου" autoFocus /><button type="button" className={voice.recording ? 'is-recording' : ''} onClick={voice.recording ? voice.stopRecording : handleTitleVoice} disabled={voice.transcribing} aria-label="Υπαγόρευση τίτλου">{voice.transcribing ? <span className="spinner" /> : <Mic size={18} strokeWidth={1.8} aria-hidden="true" />}</button></div></div>
+          <div className="project-task-form-field is-full"><label htmlFor="project-step-title">Τίτλος εργασίας <span>*</span></label><div className="project-task-title-input"><input id="project-step-title" value={title} onChange={event => setTitle(event.target.value)} placeholder="π.χ. Επιβεβαίωση ηλεκτρολογικού σχεδίου" autoFocus /><button type="button" className={voice.recording ? 'is-recording' : ''} onClick={voice.recording ? voice.stopRecording : handleTitleVoice} disabled={voice.transcribing} aria-label="Υπαγόρευση τίτλου">{voice.transcribing ? <span className="spinner" /> : <Mic size={18} strokeWidth={1.5} aria-hidden="true" />}</button></div></div>
           <div className="project-task-form-field is-full"><label htmlFor="project-step-description">Περιγραφή</label><textarea id="project-step-description" value={description} onChange={event => setDescription(event.target.value)} placeholder="Προσθέστε λεπτομέρειες, παραδοτέο ή κριτήριο ολοκλήρωσης…" rows={4} /></div>
 
           <fieldset className="project-assignee-selector is-full"><legend>Ανάθεση σε</legend><div>{profiles.map(person => <label key={person.id} className={assignedTo === person.id ? 'is-selected' : ''}><input type="radio" name="project-assignee" value={person.id} checked={assignedTo === person.id} onChange={() => setAssignedTo(person.id)} /><span className="project-assignee-avatar" aria-hidden="true">{person.full_name?.charAt(0)}</span><span>{person.full_name}</span></label>)}<label className={!assignedTo ? 'is-selected' : ''}><input type="radio" name="project-assignee" value="" checked={!assignedTo} onChange={() => setAssignedTo('')} /><span className="project-assignee-avatar is-empty" aria-hidden="true">—</span><span>Χωρίς ανάθεση</span></label></div></fieldset>
 
-          <div className="project-task-form-field is-full"><label>Χρόνος εκτέλεσης</label><div className="task-timing-choice"><button type="button" className={isAsap ? 'is-active is-asap' : ''} onClick={() => { setIsAsap(true); setDueDate(''); setIsUrgent(true) }} aria-pressed={isAsap}><Zap size={17} strokeWidth={2} aria-hidden="true" /><span><strong>ASAP</strong><small>Να γίνει το συντομότερο δυνατό</small></span></button><button type="button" className={!isAsap ? 'is-active' : ''} onClick={() => setIsAsap(false)} aria-pressed={!isAsap}><CalendarDays size={17} strokeWidth={1.8} aria-hidden="true" /><span><strong>Προγραμματισμός</strong><small>Ορισμός ημερομηνίας και ώρας</small></span></button></div></div>
+          <div className="project-task-form-field is-full"><label>Χρόνος εκτέλεσης</label><div className="task-timing-choice"><button type="button" className={isAsap ? 'is-active is-asap' : ''} onClick={() => { setIsAsap(true); setDueDate(''); setIsUrgent(true) }} aria-pressed={isAsap}><Zap size={17} strokeWidth={1.5} aria-hidden="true" /><span><strong>ASAP</strong><small>Να γίνει το συντομότερο δυνατό</small></span></button><button type="button" className={!isAsap ? 'is-active' : ''} onClick={() => setIsAsap(false)} aria-pressed={!isAsap}><CalendarDays size={17} strokeWidth={1.5} aria-hidden="true" /><span><strong>Προγραμματισμός</strong><small>Ορισμός ημερομηνίας και ώρας</small></span></button></div></div>
           {!isAsap && <><div className="project-task-form-field"><label htmlFor="project-step-date">Ημερομηνία</label><input id="project-step-date" type="date" value={dueDate} onChange={event => setDueDate(event.target.value)} /></div><div className="project-task-form-field"><label htmlFor="project-step-time">Ώρα</label><input id="project-step-time" type="time" value={dueTime} onChange={event => setDueTime(event.target.value)} /></div></>}
-          <div className="project-task-form-field is-full"><label>Προτεραιότητα και αρχείο</label><div className="project-task-form-actions">{isAsap ? <div className="task-asap-summary"><Zap size={16} strokeWidth={2} aria-hidden="true" /><span><strong>ASAP</strong><small>Θα εμφανίζεται πρώτο στις επείγουσες εργασίες.</small></span></div> : <button type="button" className={`project-urgent-toggle ${isUrgent ? 'is-active' : ''}`} onClick={() => setIsUrgent(value => !value)} aria-pressed={isUrgent}><AlertTriangle size={16} strokeWidth={1.8} aria-hidden="true" />{isUrgent ? 'Έχει οριστεί ως επείγον' : 'Ορισμός ως επείγον'}</button>}<label className="project-task-attach"><Paperclip size={16} strokeWidth={1.8} aria-hidden="true" />{stepFile ? stepFile.name : editStep?.file_name || 'Επισύναψη αρχείου'}<input type="file" onChange={event => setStepFile(event.target.files[0])} hidden /></label></div></div>
+          <div className="project-task-form-field is-full"><label>Προτεραιότητα και αρχείο</label><div className="project-task-form-actions">{isAsap ? <div className="task-asap-summary"><Zap size={16} strokeWidth={1.5} aria-hidden="true" /><span><strong>ASAP</strong><small>Θα εμφανίζεται πρώτο στις επείγουσες εργασίες.</small></span></div> : <button type="button" className={`project-urgent-toggle ${isUrgent ? 'is-active' : ''}`} onClick={() => setIsUrgent(value => !value)} aria-pressed={isUrgent}><AlertTriangle size={16} strokeWidth={1.5} aria-hidden="true" />{isUrgent ? 'Έχει οριστεί ως επείγον' : 'Ορισμός ως επείγον'}</button>}<label className="project-task-attach"><Paperclip size={16} strokeWidth={1.5} aria-hidden="true" />{stepFile ? stepFile.name : editStep?.file_name || 'Επισύναψη αρχείου'}<input type="file" onChange={event => setStepFile(event.target.files[0])} hidden /></label></div></div>
         </div>
       </ModalShell>
 

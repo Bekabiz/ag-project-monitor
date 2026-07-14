@@ -536,16 +536,16 @@ export default function TodayTab({ profile, onBadgeCount }) {
           <div className="today-history-control" aria-label="Επιλογή ημέρας">
             <button type="button" className={selectedDate === yesterdayDateValue ? 'is-active' : ''} onClick={() => setSelectedDate(yesterdayDateValue)}>Χθες</button>
             <button type="button" className={selectedDate === todayDateValue ? 'is-active' : ''} onClick={() => setSelectedDate(todayDateValue)}>Σήμερα</button>
-            <label className="today-date-picker" aria-label="Επιλογή ημερομηνίας"><CalendarDays size={15} strokeWidth={1.8} aria-hidden="true" /><input type="date" value={selectedDate} max={todayDateValue} onChange={event => setSelectedDate(event.target.value)} /></label>
+            <label className="today-date-picker" aria-label="Επιλογή ημερομηνίας"><CalendarDays size={15} strokeWidth={1.5} aria-hidden="true" /><input type="date" value={selectedDate} max={todayDateValue} onChange={event => setSelectedDate(event.target.value)} /></label>
           </div>
           {profile?.role === 'owner' && (
             <button type="button" className="today-secondary-action" onClick={() => setShowAnnouncementModal(true)}>
-              <Bell size={16} strokeWidth={1.8} aria-hidden="true" />
+              <Bell size={16} strokeWidth={1.5} aria-hidden="true" />
               <span>Νέα ανακοίνωση</span>
             </button>
           )}
           <button type="button" className="today-primary-action" onClick={openTaskModal}>
-            <Plus size={17} strokeWidth={2} aria-hidden="true" />
+            <Plus size={17} strokeWidth={1.5} aria-hidden="true" />
             <span>Νέα εργασία</span>
           </button>
         </div>
@@ -553,19 +553,19 @@ export default function TodayTab({ profile, onBadgeCount }) {
 
       <section className="today-kpi-grid" aria-label="Σύνοψη ημέρας">
         <article className="today-kpi-card">
-          <span className="today-kpi-icon is-primary" aria-hidden="true"><ClipboardCheck size={19} strokeWidth={1.8} /></span>
+          <span className="today-kpi-icon is-primary" aria-hidden="true"><ClipboardCheck size={19} strokeWidth={1.5} /></span>
           <div><strong>{mySteps.length}</strong><span>Ενεργές εργασίες</span></div>
         </article>
         <article className={`today-kpi-card ${overdueCount > 0 ? 'is-attention' : ''}`}>
-          <span className="today-kpi-icon is-danger" aria-hidden="true"><AlertTriangle size={19} strokeWidth={1.8} /></span>
+          <span className="today-kpi-icon is-danger" aria-hidden="true"><AlertTriangle size={19} strokeWidth={1.5} /></span>
           <div><strong>{overdueCount}</strong><span>Εκπρόθεσμες</span></div>
         </article>
         <article className="today-kpi-card">
-          <span className="today-kpi-icon is-info" aria-hidden="true"><MessageCircle size={19} strokeWidth={1.8} /></span>
+          <span className="today-kpi-icon is-info" aria-hidden="true"><MessageCircle size={19} strokeWidth={1.5} /></span>
           <div><strong>{totalTodayUpdates}</strong><span>{selectedDate === todayDateValue ? 'Ενημερώσεις σήμερα' : 'Ενημερώσεις ημέρας'}</span></div>
         </article>
         <article className="today-kpi-card">
-          <span className="today-kpi-icon is-success" aria-hidden="true"><Users size={19} strokeWidth={1.8} /></span>
+          <span className="today-kpi-icon is-success" aria-hidden="true"><Users size={19} strokeWidth={1.5} /></span>
           <div><strong>{activeTeamMembers}</strong><span>Μέλη με δραστηριότητα</span></div>
         </article>
       </section>
@@ -575,7 +575,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
           {announcements.length > 0 && (
             <section className="today-panel today-announcements-panel">
               <div className="today-panel-heading">
-                <div><span className="today-panel-icon is-warning" aria-hidden="true"><Bell size={17} strokeWidth={1.8} /></span><div><h3>Ανακοινώσεις</h3><p>Σημαντικά μηνύματα προς την ομάδα</p></div></div>
+                <div><span className="today-panel-icon is-warning" aria-hidden="true"><Bell size={17} strokeWidth={1.5} /></span><div><h3>Ανακοινώσεις</h3><p>Σημαντικά μηνύματα προς την ομάδα</p></div></div>
                 <span className="today-panel-count">{announcements.length}</span>
               </div>
               <div className="today-announcement-list">
@@ -597,7 +597,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
           {todayPlans.length > 0 && (
             <section className="today-panel today-plans-panel">
               <div className="today-panel-heading">
-                <div><span className="today-panel-icon is-purple" aria-hidden="true"><Sparkles size={17} strokeWidth={1.8} /></span><div><h3>Υπενθυμίσεις σήμερα</h3><p>Προσωπικό πλάνο και επόμενες ενέργειες</p></div></div>
+                <div><span className="today-panel-icon is-purple" aria-hidden="true"><Sparkles size={17} strokeWidth={1.5} /></span><div><h3>Υπενθυμίσεις σήμερα</h3><p>Προσωπικό πλάνο και επόμενες ενέργειες</p></div></div>
                 <span className="today-panel-count">{todayPlans.length}</span>
               </div>
               <div className="today-plan-list">
@@ -605,7 +605,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
                   <div key={plan.id} className="today-plan-row">
                     <span>{plan.text}</span>
                     <button type="button" className="today-complete-button" onClick={() => markPlanDone(plan.id)} aria-label={`Ολοκλήρωση: ${plan.text}`}>
-                      <CheckCircle2 size={17} strokeWidth={1.8} aria-hidden="true" /> Ολοκληρώθηκε
+                      <CheckCircle2 size={17} strokeWidth={1.5} aria-hidden="true" /> Ολοκληρώθηκε
                     </button>
                   </div>
                 ))}
@@ -615,10 +615,10 @@ export default function TodayTab({ profile, onBadgeCount }) {
 
           <section className="today-panel today-tasks-panel">
             <div className="today-panel-heading">
-              <div><span className="today-panel-icon is-primary" aria-hidden="true"><ClipboardCheck size={17} strokeWidth={1.8} /></span><div><h3>Οι εργασίες μου</h3><p>Ταξινομημένες με βάση επείγον και προθεσμία</p></div></div>
+              <div><span className="today-panel-icon is-primary" aria-hidden="true"><ClipboardCheck size={17} strokeWidth={1.5} /></span><div><h3>Οι εργασίες μου</h3><p>Ταξινομημένες με βάση επείγον και προθεσμία</p></div></div>
               <div className="today-heading-actions">
                 {overdueCount > 0 && <span className="today-attention-pill">{overdueCount} εκπρόθεσμ{overdueCount === 1 ? 'η' : 'ες'}</span>}
-                <button type="button" className="today-icon-action" onClick={loadData} aria-label="Ανανέωση εργασιών"><RefreshCw size={16} strokeWidth={1.8} aria-hidden="true" /></button>
+                <button type="button" className="today-icon-action" onClick={loadData} aria-label="Ανανέωση εργασιών"><RefreshCw size={16} strokeWidth={1.5} aria-hidden="true" /></button>
               </div>
             </div>
 
@@ -648,8 +648,8 @@ export default function TodayTab({ profile, onBadgeCount }) {
                           </span>
                         </span>
                         <span className="today-task-end">
-                          {step.file_url && <Paperclip size={14} strokeWidth={1.7} aria-label="Υπάρχει συνημμένο" />}
-                          <ChevronDown size={17} strokeWidth={1.8} aria-hidden="true" className={isExpanded ? 'is-rotated' : ''} />
+                          {step.file_url && <Paperclip size={14} strokeWidth={1.5} aria-label="Υπάρχει συνημμένο" />}
+                          <ChevronDown size={17} strokeWidth={1.5} aria-hidden="true" className={isExpanded ? 'is-rotated' : ''} />
                         </span>
                       </button>
 
@@ -661,7 +661,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
                               const StatusIcon = option.icon
                               return (
                                 <button key={option.value} type="button" className={`today-status-button status-${option.value} ${step.status === option.value ? 'is-active' : ''}`} onClick={() => updateTaskStatus(step, option.value)} aria-pressed={step.status === option.value}>
-                                  <StatusIcon size={14} strokeWidth={2} aria-hidden="true" />
+                                  <StatusIcon size={14} strokeWidth={1.5} aria-hidden="true" />
                                   <span>{option.label}</span>
                                 </button>
                               )
@@ -669,7 +669,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
                           </div>
 
                           {step.file_url && (
-                            <a href={step.file_url} target="_blank" rel="noopener noreferrer" className="today-file-link"><Paperclip size={15} strokeWidth={1.8} aria-hidden="true" />{step.file_name || 'Άνοιγμα αρχείου'}</a>
+                            <a href={step.file_url} target="_blank" rel="noopener noreferrer" className="today-file-link"><Paperclip size={15} strokeWidth={1.5} aria-hidden="true" />{step.file_name || 'Άνοιγμα αρχείου'}</a>
                           )}
 
                           {notes.length > 0 && (
@@ -683,7 +683,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
                           <div className="today-note-composer">
                             <label htmlFor={`task-note-${step.id}`} className="sr-only">Προσθήκη σημείωσης</label>
                             <input id={`task-note-${step.id}`} placeholder="Γράψτε μια σύντομη σημείωση…" value={taskNoteText} onChange={event => setTaskNoteText(event.target.value)} onKeyDown={event => event.key === 'Enter' && addTaskNote(step.id)} />
-                            <button type="button" onClick={() => addTaskNote(step.id)} disabled={!taskNoteText.trim()} aria-label="Αποστολή σημείωσης"><Send size={16} strokeWidth={1.8} aria-hidden="true" /></button>
+                            <button type="button" onClick={() => addTaskNote(step.id)} disabled={!taskNoteText.trim()} aria-label="Αποστολή σημείωσης"><Send size={16} strokeWidth={1.5} aria-hidden="true" /></button>
                           </div>
                         </div>
                       )}
@@ -698,7 +698,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
         <aside className="today-side-column">
           <section className="today-panel today-team-panel">
             <div className="today-panel-heading">
-              <div><span className="today-panel-icon is-info" aria-hidden="true"><Users size={17} strokeWidth={1.8} /></span><div><h3>Κίνηση ομάδας</h3><p>Ποιος ενημέρωσε σήμερα</p></div></div>
+              <div><span className="today-panel-icon is-info" aria-hidden="true"><Users size={17} strokeWidth={1.5} /></span><div><h3>Κίνηση ομάδας</h3><p>Ποιος ενημέρωσε σήμερα</p></div></div>
             </div>
 
             <div className="today-team-list">
@@ -710,14 +710,14 @@ export default function TodayTab({ profile, onBadgeCount }) {
                       <span className="today-person-avatar" aria-hidden="true">{name.charAt(0)}</span>
                       <span className="today-person-copy"><strong>{name}</strong><small>{items.length} ενημέρωσ{items.length === 1 ? 'η' : 'εις'}</small></span>
                       <span className="today-activity-dot" aria-label="Υπάρχει δραστηριότητα" />
-                      <ChevronDown size={16} strokeWidth={1.8} aria-hidden="true" className={isExpanded ? 'is-rotated' : ''} />
+                      <ChevronDown size={16} strokeWidth={1.5} aria-hidden="true" className={isExpanded ? 'is-rotated' : ''} />
                     </button>
                     {isExpanded && (
                       <div className="today-person-updates">
                         {items.map((item, index) => (
                           <div key={`${name}-${index}`} className="today-person-update">
                             <time>{item.time}</time>
-                            <div>{item.type === 'task_done' && <CheckCircle2 size={13} strokeWidth={2} aria-hidden="true" />}<span>{item.text}{item.project ? ` · ${item.project}` : ''}</span></div>
+                            <div>{item.type === 'task_done' && <CheckCircle2 size={13} strokeWidth={1.5} aria-hidden="true" />}<span>{item.text}{item.project ? ` · ${item.project}` : ''}</span></div>
                             {item.file_url && <a href={item.file_url} target="_blank" rel="noopener noreferrer">Αρχείο</a>}
                           </div>
                         ))}
@@ -743,23 +743,23 @@ export default function TodayTab({ profile, onBadgeCount }) {
 
           <section className="today-panel today-update-panel">
             <div className="today-panel-heading">
-              <div><span className="today-panel-icon is-success" aria-hidden="true"><MessageCircle size={17} strokeWidth={1.8} /></span><div><h3>Ενημέρωση γραφείου ή έργου</h3><p>Η πληροφορία αποθηκεύεται εκεί που ανήκει</p></div></div>
+              <div><span className="today-panel-icon is-success" aria-hidden="true"><MessageCircle size={17} strokeWidth={1.5} /></span><div><h3>Ενημέρωση γραφείου ή έργου</h3><p>Η πληροφορία αποθηκεύεται εκεί που ανήκει</p></div></div>
             </div>
 
             {!showAddUpdate ? (
-              <button type="button" className="today-open-composer" onClick={() => setShowAddUpdate(true)}><Plus size={17} strokeWidth={1.8} aria-hidden="true" />Προσθήκη ενημέρωσης</button>
+              <button type="button" className="today-open-composer" onClick={() => setShowAddUpdate(true)}><Plus size={17} strokeWidth={1.5} aria-hidden="true" />Προσθήκη ενημέρωσης</button>
             ) : (
               <div className="today-update-composer">
                 <label htmlFor="update-project">Πού αφορά</label><select id="update-project" className="today-update-project" value={updateProject} onChange={event => setUpdateProject(event.target.value)}><option value="">Γενική ενημέρωση γραφείου</option>{projects.map(project => <option key={project.id} value={project.id}>{project.name}</option>)}</select><label htmlFor="general-update">Κείμενο ενημέρωσης</label>
                 <div className="today-update-input-wrap">
                   <textarea id="general-update" placeholder="Τι πρέπει να γνωρίζει η ομάδα;" value={updateText} onChange={event => setUpdateText(event.target.value)} rows={4} autoFocus />
                   <button type="button" className={`today-voice-button ${isRecording && voiceTarget === 'update' ? 'is-recording' : ''}`} onClick={isRecording && voiceTarget === 'update' ? stopRecording : () => startRecording('update')} disabled={isTranscribing} aria-label={isRecording ? 'Διακοπή εγγραφής' : 'Φωνητική ενημέρωση'}>
-                    {isTranscribing && voiceTarget === 'update' ? <span className="spinner" /> : <Mic size={17} strokeWidth={1.8} aria-hidden="true" />}
+                    {isTranscribing && voiceTarget === 'update' ? <span className="spinner" /> : <Mic size={17} strokeWidth={1.5} aria-hidden="true" />}
                   </button>
                 </div>
-                {updateFile && <div className="today-selected-file"><Paperclip size={14} strokeWidth={1.8} aria-hidden="true" />{updateFile.name}</div>}
+                {updateFile && <div className="today-selected-file"><Paperclip size={14} strokeWidth={1.5} aria-hidden="true" />{updateFile.name}</div>}
                 <div className="today-composer-footer">
-                  <label className="today-attach-button"><Paperclip size={15} strokeWidth={1.8} aria-hidden="true" />Επισύναψη<input type="file" accept="image/*" onChange={event => setUpdateFile(event.target.files[0])} hidden /></label>
+                  <label className="today-attach-button"><Paperclip size={15} strokeWidth={1.5} aria-hidden="true" />Επισύναψη<input type="file" accept="image/*" onChange={event => setUpdateFile(event.target.files[0])} hidden /></label>
                   <div><button type="button" className="action-btn" onClick={() => { setShowAddUpdate(false); setUpdateText(''); setUpdateFile(null); setUpdateProject('') }}>Ακύρωση</button><button type="button" className="action-btn primary" onClick={handleAddUpdate} disabled={!updateText.trim() || sending}>{sending ? <ButtonSpinner label="Δημοσίευση…" /> : 'Δημοσίευση'}</button></div>
                 </div>
               </div>
@@ -782,7 +782,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
           <div className="today-update-input-wrap">
             <textarea id="announcement-text" placeholder="Γράψτε ή υπαγορεύστε το μήνυμα…" value={annText} onChange={event => setAnnText(event.target.value)} rows={5} autoFocus />
             <button type="button" className={`today-voice-button ${isRecording && voiceTarget === 'announcement' ? 'is-recording' : ''}`} onClick={isRecording && voiceTarget === 'announcement' ? stopRecording : () => startRecording('announcement')} disabled={isTranscribing} aria-label={isRecording ? 'Διακοπή εγγραφής' : 'Υπαγόρευση ανακοίνωσης'}>
-              {isTranscribing && voiceTarget === 'announcement' ? <span className="spinner" /> : <Mic size={18} strokeWidth={1.8} aria-hidden="true" />}
+              {isTranscribing && voiceTarget === 'announcement' ? <span className="spinner" /> : <Mic size={18} strokeWidth={1.5} aria-hidden="true" />}
             </button>
           </div>
         </div>
@@ -803,7 +803,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
             <div className="today-update-input-wrap">
               <input id="task-title" placeholder="π.χ. Επιβεβαίωση σχεδίων με τον μηχανικό" value={taskTitle} onChange={event => setTaskTitle(event.target.value)} autoFocus />
               <button type="button" className={`today-voice-button ${isRecording && voiceTarget === 'task' ? 'is-recording' : ''}`} onClick={isRecording && voiceTarget === 'task' ? stopRecording : () => startRecording('task')} disabled={isTranscribing} aria-label={isRecording ? 'Διακοπή εγγραφής' : 'Υπαγόρευση τίτλου'}>
-                {isTranscribing && voiceTarget === 'task' ? <span className="spinner" /> : <Mic size={18} strokeWidth={1.8} aria-hidden="true" />}
+                {isTranscribing && voiceTarget === 'task' ? <span className="spinner" /> : <Mic size={18} strokeWidth={1.5} aria-hidden="true" />}
               </button>
             </div>
           </div>
@@ -820,11 +820,11 @@ export default function TodayTab({ profile, onBadgeCount }) {
             </fieldset>
           )}
 
-          <div className="today-form-field is-full"><label>Χρόνος εκτέλεσης</label><div className="task-timing-choice"><button type="button" className={taskAsap ? 'is-active is-asap' : ''} onClick={() => { setTaskAsap(true); setTaskDate(''); setTaskUrgent(true) }} aria-pressed={taskAsap}><Zap size={17} strokeWidth={2} aria-hidden="true" /><span><strong>ASAP</strong><small>Να γίνει το συντομότερο δυνατό</small></span></button><button type="button" className={!taskAsap ? 'is-active' : ''} onClick={() => setTaskAsap(false)} aria-pressed={!taskAsap}><CalendarDays size={17} strokeWidth={1.8} aria-hidden="true" /><span><strong>Προγραμματισμός</strong><small>Ορισμός ημερομηνίας και ώρας</small></span></button></div></div>
+          <div className="today-form-field is-full"><label>Χρόνος εκτέλεσης</label><div className="task-timing-choice"><button type="button" className={taskAsap ? 'is-active is-asap' : ''} onClick={() => { setTaskAsap(true); setTaskDate(''); setTaskUrgent(true) }} aria-pressed={taskAsap}><Zap size={17} strokeWidth={1.5} aria-hidden="true" /><span><strong>ASAP</strong><small>Να γίνει το συντομότερο δυνατό</small></span></button><button type="button" className={!taskAsap ? 'is-active' : ''} onClick={() => setTaskAsap(false)} aria-pressed={!taskAsap}><CalendarDays size={17} strokeWidth={1.5} aria-hidden="true" /><span><strong>Προγραμματισμός</strong><small>Ορισμός ημερομηνίας και ώρας</small></span></button></div></div>
 
-          {!taskAsap && <><div className="today-form-field"><label htmlFor="task-date">Ημερομηνία</label><div className="today-field-with-icon"><CalendarDays size={16} strokeWidth={1.8} aria-hidden="true" /><input id="task-date" type="date" value={taskDate} onChange={event => setTaskDate(event.target.value)} /></div></div><div className="today-form-field"><label htmlFor="task-time">Ώρα</label><input id="task-time" type="time" value={taskTime} onChange={event => setTaskTime(event.target.value)} /></div></>}
+          {!taskAsap && <><div className="today-form-field"><label htmlFor="task-date">Ημερομηνία</label><div className="today-field-with-icon"><CalendarDays size={16} strokeWidth={1.5} aria-hidden="true" /><input id="task-date" type="date" value={taskDate} onChange={event => setTaskDate(event.target.value)} /></div></div><div className="today-form-field"><label htmlFor="task-time">Ώρα</label><input id="task-time" type="time" value={taskTime} onChange={event => setTaskTime(event.target.value)} /></div></>}
 
-          <div className="today-form-field is-full"><label>Προτεραιότητα και αρχείο</label><div className="today-form-actions-row">{taskAsap ? <div className="task-asap-summary"><Zap size={16} strokeWidth={2} aria-hidden="true" /><span><strong>ASAP</strong><small>Θα εμφανίζεται πρώτο στις επείγουσες εργασίες.</small></span></div> : <button type="button" className={`today-urgent-toggle ${taskUrgent ? 'is-active' : ''}`} onClick={() => setTaskUrgent(value => !value)} aria-pressed={taskUrgent}><AlertTriangle size={16} strokeWidth={1.8} aria-hidden="true" />{taskUrgent ? 'Έχει οριστεί ως επείγον' : 'Ορισμός ως επείγον'}</button>}<label className="today-attach-button is-wide"><FileText size={16} strokeWidth={1.8} aria-hidden="true" />{taskFile ? taskFile.name : 'Επισύναψη αρχείου'}<input type="file" onChange={event => setTaskFile(event.target.files[0])} hidden /></label></div></div>
+          <div className="today-form-field is-full"><label>Προτεραιότητα και αρχείο</label><div className="today-form-actions-row">{taskAsap ? <div className="task-asap-summary"><Zap size={16} strokeWidth={1.5} aria-hidden="true" /><span><strong>ASAP</strong><small>Θα εμφανίζεται πρώτο στις επείγουσες εργασίες.</small></span></div> : <button type="button" className={`today-urgent-toggle ${taskUrgent ? 'is-active' : ''}`} onClick={() => setTaskUrgent(value => !value)} aria-pressed={taskUrgent}><AlertTriangle size={16} strokeWidth={1.5} aria-hidden="true" />{taskUrgent ? 'Έχει οριστεί ως επείγον' : 'Ορισμός ως επείγον'}</button>}<label className="today-attach-button is-wide"><FileText size={16} strokeWidth={1.5} aria-hidden="true" />{taskFile ? taskFile.name : 'Επισύναψη αρχείου'}<input type="file" onChange={event => setTaskFile(event.target.files[0])} hidden /></label></div></div>
         </div>
       </ModalShell>
 

@@ -71,14 +71,14 @@ export function ModalShell({ open, onClose, title, description, icon: Icon, chil
       >
         <header className="ui-modal-header">
           <div className="ui-modal-heading">
-            {Icon && <span className="ui-modal-icon" aria-hidden="true"><Icon size={20} strokeWidth={1.8} /></span>}
+            {Icon && <span className="ui-modal-icon" aria-hidden="true"><Icon size={20} strokeWidth={1.5} /></span>}
             <div>
               <h2 id={titleId}>{title}</h2>
               {description && <p id={descriptionId}>{description}</p>}
             </div>
           </div>
           <button type="button" className="ui-icon-button" onClick={onClose} aria-label="Κλείσιμο">
-            <X size={19} strokeWidth={1.8} aria-hidden="true" />
+            <X size={19} strokeWidth={1.5} aria-hidden="true" />
           </button>
         </header>
         <div className="ui-modal-body">{children}</div>
@@ -91,7 +91,7 @@ export function ModalShell({ open, onClose, title, description, icon: Icon, chil
 export function EmptyState({ icon: Icon, title, description, actionLabel, onAction, compact = false, tone = 'neutral' }) {
   return (
     <div className={`ui-empty-state ui-empty-state-${tone} ${compact ? 'is-compact' : ''}`}>
-      {Icon && <span className="ui-empty-icon" aria-hidden="true"><Icon size={26} strokeWidth={1.65} /></span>}
+      {Icon && <span className="ui-empty-icon" aria-hidden="true"><Icon size={26} strokeWidth={1.5} /></span>}
       <h3>{title}</h3>
       {description && <p>{description}</p>}
       {actionLabel && onAction && <button type="button" className="ui-button ui-button-primary" onClick={onAction}>{actionLabel}</button>}
@@ -121,12 +121,12 @@ export function InlineNotice({ children, tone = 'info' }) {
   const Icon = tone === 'success' ? CheckCircle2 : AlertCircle
   return (
     <div className={`ui-inline-notice ui-inline-notice-${tone}`} role={tone === 'danger' ? 'alert' : 'status'}>
-      <Icon size={17} strokeWidth={1.8} aria-hidden="true" />
+      <Icon size={17} strokeWidth={1.5} aria-hidden="true" />
       <span>{children}</span>
     </div>
   )
 }
 
 export function ButtonSpinner({ label = 'Επεξεργασία…' }) {
-  return <><LoaderCircle className="ui-spin" size={17} strokeWidth={1.8} aria-hidden="true" /><span>{label}</span></>
+  return <><LoaderCircle className="ui-spin" size={17} strokeWidth={1.5} aria-hidden="true" /><span>{label}</span></>
 }

@@ -183,13 +183,13 @@ export default function ProjectsTab({ profile, onSelectProject }) {
 
       <section className="projects-toolbar" aria-label="Εργαλεία έργων">
         <label className="projects-search">
-          <Search size={17} strokeWidth={1.8} aria-hidden="true" />
+          <Search size={17} strokeWidth={1.5} aria-hidden="true" />
           <span className="sr-only">Αναζήτηση έργων</span>
           <input value={search} onChange={event => setSearch(event.target.value)} placeholder="Αναζήτηση με όνομα, τοποθεσία ή περιγραφή…" />
         </label>
         <div className="projects-toolbar-actions">
-          <button type="button" className="projects-refresh-button" onClick={loadProjects} aria-label="Ανανέωση έργων"><RefreshCw size={17} strokeWidth={1.8} aria-hidden="true" /></button>
-          {profile?.role === 'owner' && <button type="button" className="projects-add-button" onClick={openAddModal}><Plus size={17} strokeWidth={2} aria-hidden="true" />Νέο έργο</button>}
+          <button type="button" className="projects-refresh-button" onClick={loadProjects} aria-label="Ανανέωση έργων"><RefreshCw size={17} strokeWidth={1.5} aria-hidden="true" /></button>
+          {profile?.role === 'owner' && <button type="button" className="projects-add-button" onClick={openAddModal}><Plus size={17} strokeWidth={1.5} aria-hidden="true" />Νέο έργο</button>}
         </div>
       </section>
 
@@ -206,23 +206,23 @@ export default function ProjectsTab({ profile, onSelectProject }) {
               <article key={project.id} className={`project-professional-card is-${health}`}>
                 <div className="project-card-accent" aria-hidden="true" />
                 <div className="project-card-header">
-                  <div className="project-card-icon" aria-hidden="true"><Building2 size={20} strokeWidth={1.7} /></div>
+                  <div className="project-card-icon" aria-hidden="true"><Building2 size={20} strokeWidth={1.5} /></div>
                   <div className="project-health-label"><span className={`project-health-dot is-${health}`} /><span>{healthCopy.label}</span></div>
                   {profile?.role === 'owner' && (
                     <button type="button" className="project-card-edit" onClick={event => openEditModal(event, project)} aria-label={`Επεξεργασία έργου ${project.name}`}>
-                      <Pencil size={16} strokeWidth={1.7} aria-hidden="true" />
+                      <Pencil size={16} strokeWidth={1.5} aria-hidden="true" />
                     </button>
                   )}
                 </div>
 
                 <button type="button" className="project-card-main" onClick={() => onSelectProject(project)}>
                   <span className="project-card-title">{project.name}</span>
-                  <span className="project-card-location"><MapPin size={14} strokeWidth={1.7} aria-hidden="true" />{project.location || 'Δεν έχει οριστεί τοποθεσία'}</span>
+                  <span className="project-card-location"><MapPin size={14} strokeWidth={1.5} aria-hidden="true" />{project.location || 'Δεν έχει οριστεί τοποθεσία'}</span>
                   {project.description && <span className="project-card-description">{project.description}</span>}
 
                   {(projectStats.overdueCount > 0 || health === 'yellow') && (
                     <span className={`project-card-alert is-${health}`}>
-                      {health === 'red' ? <AlertTriangle size={14} strokeWidth={1.8} aria-hidden="true" /> : <Clock3 size={14} strokeWidth={1.8} aria-hidden="true" />}
+                      {health === 'red' ? <AlertTriangle size={14} strokeWidth={1.5} aria-hidden="true" /> : <Clock3 size={14} strokeWidth={1.5} aria-hidden="true" />}
                       {health === 'red'
                         ? `${projectStats.overdueCount} εκπρόθεσμ${projectStats.overdueCount === 1 ? 'η εκκρεμότητα' : 'ες εκκρεμότητες'}`
                         : projectStats.daysSinceUpdate === null
@@ -234,13 +234,13 @@ export default function ProjectsTab({ profile, onSelectProject }) {
                   )}
 
                   <span className="project-card-metrics">
-                    <span><FileText size={14} strokeWidth={1.7} aria-hidden="true" /><strong>{projectStats.totalEntries || 0}</strong><small>Καταχωρήσεις</small></span>
-                    <span><Clock3 size={14} strokeWidth={1.7} aria-hidden="true" /><strong>{formatDate(projectStats.lastUpdate)}</strong><small>Τελευταία ενημέρωση</small></span>
+                    <span><FileText size={14} strokeWidth={1.5} aria-hidden="true" /><strong>{projectStats.totalEntries || 0}</strong><small>Καταχωρήσεις</small></span>
+                    <span><Clock3 size={14} strokeWidth={1.5} aria-hidden="true" /><strong>{formatDate(projectStats.lastUpdate)}</strong><small>Τελευταία ενημέρωση</small></span>
                   </span>
 
                   <span className="project-card-footer">
                     <span>{healthCopy.description}</span>
-                    <span>Άνοιγμα έργου <ArrowRight size={15} strokeWidth={1.8} aria-hidden="true" /></span>
+                    <span>Άνοιγμα έργου <ArrowRight size={15} strokeWidth={1.5} aria-hidden="true" /></span>
                   </span>
                 </button>
               </article>
