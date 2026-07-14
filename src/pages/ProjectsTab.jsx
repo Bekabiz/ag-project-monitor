@@ -24,8 +24,6 @@ export default function ProjectsTab({ profile, onSelectProject }) {
       const projs = await dbRead(supabase
         .from('project_dashboard_stats').select('*').eq('status', 'active').order('name'))
 
-      if (projs.length === 0) { setLoading(false); return }
-
       const statsMap = {}
       for (const p of projs) {
         const daysSinceUpdate = p.last_entry_at
@@ -124,33 +122,34 @@ export default function ProjectsTab({ profile, onSelectProject }) {
     )
   }
 
-  if (projects.length === 0) {
-    return (
-      <div className="empty-state">
-        <div className="icon">
-          <Building2 size={32} strokeWidth={1.5} />
-        </div>
-        <p>Δεν υπάρχουν έργα</p>
-      </div>
-    )
-  }
-
   return (
     <div>
       <div className="projects-grid">
-      {/* Add Project button - owner only */}
-      {profile?.role === 'owner' && (
-        <div
-          className="project-card"
-          onClick={openAddModal}
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer', border: '2px dashed var(--border)', background: 'transparent' }}
-        >
-          <Plus size={20} strokeWidth={1.6} color="var(--blue)" />
-          <span style={{ color: 'var(--blue)', fontWeight: 600, fontSize: 14 }}>Προσθήκη Έργου</span>
+      {projects.length === 0 ? (
+        <div className="empty-state project-empty-state">
+          <div className="icon">
+            <Building2 size={30} strokeWidth={1.5} />
+          </div>
+          <h2>Δεν υπάρχουν έργα ακόμη</h2>
+          <p>{profile?.role === 'owner' ? 'Δημιούργησε το πρώτο έργο για να ξεκινήσει η ομάδα.' : 'Ο διαχειριστής δεν έχει δημιουργήσει ακόμη έργο.'}</p>
+          {profile?.role === 'owner' && (
+            <button className="empty-state-action" onClick={openAddModal}>
+              <Plus size={16} strokeWidth={2} />
+              Δημιουργία πρώτου έργου
+            </button>
+          )}
         </div>
-      )}
+      ) : (
+        <>
+          {/* Add Project button - owner only */}
+          {profile?.role === 'owner' && (
+            <button type="button" className="project-card project-add-card" onClick={openAddModal}>
+              <Plus size={20} strokeWidth={1.8} />
+              <span>Προσθήκη έργου</span>
+            </button>
+          )}
 
-      {projects.map(p => {
+          {projects.map(p => {
         const s = stats[p.id] || {}
         return (
           <div key={p.id} className="project-card" onClick={() => onSelectProject(p)}>
@@ -189,7 +188,9 @@ export default function ProjectsTab({ profile, onSelectProject }) {
             </div>
           </div>
         )
-      })}
+          })}
+        </>
+      )}
       </div>
 
       {/* Add/Edit Project Modal */}

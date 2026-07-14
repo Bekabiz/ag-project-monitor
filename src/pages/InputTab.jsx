@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
-import { Eye, EyeOff, Mic, Camera, FileUp, Check, RotateCcw } from 'lucide-react'
-import { db, supabase } from '../lib/db'
+import { Eye, EyeOff, Mic, Camera, FileUp, Check, RotateCcw, FolderPlus } from 'lucide-react'
+import { db, dbRead, supabase } from '../lib/db'
 
-export default function InputTab({ profile }) {
+export default function InputTab({ profile, initialProject, onOpenProjects }) {
   const [projects, setProjects] = useState([])
+  const [projectsLoading, setProjectsLoading] = useState(true)
+  const [projectsError, setProjectsError] = useState(false)
   const [selected, setSelected] = useState(null)
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
@@ -20,11 +22,25 @@ export default function InputTab({ profile }) {
   // AI Confirmation state
   const [confirm, setConfirm] = useState(null) // { rawText, extracted }
 
-  useEffect(() => { loadProjects() }, [])
+  useEffect(() => { loadProjects() }, [initialProject?.id])
 
   async function loadProjects() {
-    const { data } = await supabase.from('projects').select('*').eq('status', 'active').order('name')
-    setProjects(data || [])
+    setProjectsLoading(true)
+    setProjectsError(false)
+    try {
+      const data = await dbRead(supabase.from('projects').select('*').eq('status', 'active').order('name'))
+      setProjects(data)
+      if (initialProject?.id) {
+        setSelected(data.find(p => p.id === initialProject.id) || null)
+      } else {
+        setSelected(prev => data.find(p => p.id === prev?.id) || null)
+      }
+    } catch (err) {
+      console.error('Project load error:', err)
+      setProjectsError(true)
+    } finally {
+      setProjectsLoading(false)
+    }
   }
 
   function showToast(msg, isError) {
@@ -43,8 +59,8 @@ export default function InputTab({ profile }) {
       // Load project areas for the selected project
       let projectAreas = []
       if (selected) {
-        const { data: areas } = await supabase.from('project_areas').select('area_name').eq('project_id', selected.id)
-        projectAreas = (areas || []).map(a => a.area_name)
+        const areas = await dbRead(supabase.from('project_areas').select('area_name').eq('project_id', selected.id))
+        projectAreas = areas.map(a => a.area_name)
       }
       const res = await fetch('/api/extract', {
         method: 'POST',
@@ -259,8 +275,8 @@ export default function InputTab({ profile }) {
       const projectNames = projects.map(p => p.name)
       let projectAreas = []
       if (selected) {
-        const { data: areas } = await supabase.from('project_areas').select('area_name').eq('project_id', selected.id)
-        projectAreas = (areas || []).map(a => a.area_name)
+        const areas = await dbRead(supabase.from('project_areas').select('area_name').eq('project_id', selected.id))
+        projectAreas = areas.map(a => a.area_name)
       }
       const extRes = await fetch('/api/extract', {
         method: 'POST',
@@ -367,6 +383,28 @@ export default function InputTab({ profile }) {
   }
 
   // ============ RENDER ============
+  if (projectsLoading) return <div className="loading-inline"><div className="spinner" /></div>
+
+  if (projectsError) return (
+    <div className="empty-state input-empty-state">
+      <div className="icon"><FolderPlus size={26} strokeWidth={1.6} /></div>
+      <h2>Δεν φορτώθηκαν τα έργα</h2>
+      <p>Δοκίμασε ξανά πριν καταχωρήσεις ενημέρωση.</p>
+      <button className="empty-state-action" onClick={loadProjects}>Δοκιμή ξανά</button>
+    </div>
+  )
+
+  if (projects.length === 0) return (
+    <div className="empty-state input-empty-state">
+      <div className="icon"><FolderPlus size={26} strokeWidth={1.6} /></div>
+      <h2>Χρειάζεται πρώτα ένα έργο</h2>
+      <p>{profile?.role === 'owner' ? 'Δημιούργησε το πρώτο έργο και μετά πρόσθεσε ενημερώσεις, φωτογραφίες και αρχεία.' : 'Δεν υπάρχει ακόμη ενεργό έργο για καταχώρηση ενημέρωσης.'}</p>
+      {profile?.role === 'owner' && onOpenProjects && (
+        <button className="empty-state-action" onClick={onOpenProjects}>Μετάβαση στα έργα</button>
+      )}
+    </div>
+  )
+
   return (
     <div>
       <p className="section-title">Επιλέξτε έργο</p>
