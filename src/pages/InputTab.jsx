@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
-import { Eye, EyeOff, Mic, Camera, FileUp, Check, RotateCcw, FolderPlus } from 'lucide-react'
+import { Mic, Camera, FileUp, Check, RotateCcw, FolderPlus, Search, Sparkles, LockKeyhole, Users, Send, RefreshCw, FileText, ChevronRight } from 'lucide-react'
 import { db, dbRead, supabase } from '../lib/db'
+import { ButtonSpinner, EmptyState, LoadingState, ModalShell } from '../components/ui'
 
 export default function InputTab({ profile, initialProject, onOpenProjects }) {
   const [projects, setProjects] = useState([])
   const [projectsLoading, setProjectsLoading] = useState(true)
   const [projectsError, setProjectsError] = useState(false)
   const [selected, setSelected] = useState(null)
+  const [projectSearch, setProjectSearch] = useState('')
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
   const [extracting, setExtracting] = useState(false)
@@ -50,40 +52,33 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
 
   // TEXT SUBMIT - AI extraction for owner only, raw save for team
   async function handleTextSubmit() {
-    if (!selected || !text.trim()) return
-    
-    // All users go through AI extraction for structured data
+    if (!selected || !text.trim() || extracting) return
+
     setExtracting(true)
     try {
-      const projectNames = projects.map(p => p.name)
-      // Load project areas for the selected project
-      let projectAreas = []
-      if (selected) {
-        const areas = await dbRead(supabase.from('project_areas').select('area_name').eq('project_id', selected.id))
-        projectAreas = areas.map(a => a.area_name)
-      }
-      const res = await fetch('/api/extract', {
+      const projectNames = projects.map(project => project.name)
+      const areas = await dbRead(supabase.from('project_areas').select('area_name').eq('project_id', selected.id))
+      const projectAreas = areas.map(area => area.area_name)
+      const response = await fetch('/api/extract', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: text.trim(), projectNames, projectAreas })
       })
 
-      if (!res.ok) {
-        // If AI fails, save raw text without extraction
-        console.error('AI extraction failed, saving raw')
+      if (!response.ok) {
+        console.error('AI extraction failed, saving raw text')
         await saveEntry(text.trim(), null)
         return
       }
 
-      const { extracted } = await res.json()
-      // Show confirmation screen
+      const { extracted } = await response.json()
       setConfirm({ rawText: text.trim(), extracted, entryType: 'text' })
-    } catch (err) {
-      console.error('Extract error:', err)
-      // Fallback: save without AI
+    } catch (error) {
+      console.error('Extract error:', error)
       await saveEntry(text.trim(), null)
+    } finally {
+      setExtracting(false)
     }
-    setExtracting(false)
   }
 
   // Save entry (with or without AI extraction) - now with structured fields
@@ -118,7 +113,7 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
               budget_change: extracted.budget_change,
               action_items: extracted.action_items
             } : null,
-            is_team_visible: teamVisible,
+            is_team_visible: profile?.role === 'owner' ? teamVisible : true,
             submitter_name: profile.full_name
           }))
         }
@@ -139,7 +134,7 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
             budget_change: extracted.budget_change,
             action_items: extracted.action_items
           } : null,
-          is_team_visible: teamVisible,
+          is_team_visible: profile?.role === 'owner' ? teamVisible : true,
           submitter_name: profile.full_name
         }))
       }
@@ -223,8 +218,9 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
       const chunks = []
       rec.ondataavailable = e => chunks.push(e.data)
       rec.onstop = async () => {
-        stream.getTracks().forEach(t => t.stop())
-        const blob = new Blob(chunks, { type: 'audio/webm' })
+        stream.getTracks().forEach(track => track.stop())
+        const blob = new Blob(chunks, { type: mimeType })
+        setMediaRec(null)
         await transcribeAndExtract(blob)
       }
       rec.start()
@@ -240,7 +236,8 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
     setExtracting(true)
     try {
       // Step 1: Upload audio to Supabase storage (same as photos - this works)
-      const fileName = `voice_${Date.now()}.webm`
+      const extension = blob.type.includes('mp4') ? 'm4a' : 'webm'
+      const fileName = `voice_${Date.now()}.${extension}`
       const path = `${selected.id}/${fileName}`
       const { error: upErr } = await supabase.storage.from('files').upload(path, blob)
       if (upErr) throw upErr
@@ -316,7 +313,7 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
         if (upErr) throw upErr
         const { data: urlData } = supabase.storage.from('files').getPublicUrl(path)
 
-        await supabase.from('entries').insert({
+        await db(supabase.from('entries').insert({
           project_id: selected.id,
           user_id: profile.id,
           entry_type: 'photo',
@@ -324,7 +321,7 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
           file_name: fileName,
           file_size: compressed.size,
           is_team_visible: profile?.role === 'owner' ? teamVisible : true
-        })
+        }))
       }
       showToast(`${files.length} φωτογραφία${files.length > 1 ? 'ες' : ''} αποθηκεύτηκ${files.length > 1 ? 'αν' : 'ε'}`)
     } catch (err) {
@@ -346,7 +343,7 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
       if (upErr) throw upErr
       const { data: urlData } = supabase.storage.from('files').getPublicUrl(path)
 
-      await supabase.from('entries').insert({
+      await db(supabase.from('entries').insert({
         project_id: selected.id,
         user_id: profile.id,
         entry_type: 'document',
@@ -356,7 +353,7 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
         doc_version: docVersion || null,
         doc_notes: docNotes || null,
         is_team_visible: profile?.role === 'owner' ? teamVisible : true
-      })
+      }))
       setDocName(''); setDocVersion(''); setDocNotes('')
       showToast('Αρχείο αποθηκεύτηκε')
     } catch (err) {
@@ -383,309 +380,257 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
   }
 
   // ============ RENDER ============
-  if (projectsLoading) return <div className="loading-inline"><div className="spinner" /></div>
+  if (projectsLoading) return <LoadingState label="Φόρτωση έργων και εργαλείων καταχώρησης…" cards={4} />
 
   if (projectsError) return (
-    <div className="empty-state input-empty-state">
-      <div className="icon"><FolderPlus size={26} strokeWidth={1.6} /></div>
-      <h2>Δεν φορτώθηκαν τα έργα</h2>
-      <p>Δοκίμασε ξανά πριν καταχωρήσεις ενημέρωση.</p>
-      <button className="empty-state-action" onClick={loadProjects}>Δοκιμή ξανά</button>
-    </div>
+    <EmptyState
+      icon={RefreshCw}
+      title="Δεν φορτώθηκαν τα έργα"
+      description="Χρειάζεται ενεργό έργο πριν καταχωρηθεί νέα πληροφορία. Δοκιμάστε ξανά."
+      actionLabel="Δοκιμή ξανά"
+      onAction={loadProjects}
+    />
   )
 
   if (projects.length === 0) return (
-    <div className="empty-state input-empty-state">
-      <div className="icon"><FolderPlus size={26} strokeWidth={1.6} /></div>
-      <h2>Χρειάζεται πρώτα ένα έργο</h2>
-      <p>{profile?.role === 'owner' ? 'Δημιούργησε το πρώτο έργο και μετά πρόσθεσε ενημερώσεις, φωτογραφίες και αρχεία.' : 'Δεν υπάρχει ακόμη ενεργό έργο για καταχώρηση ενημέρωσης.'}</p>
-      {profile?.role === 'owner' && onOpenProjects && (
-        <button className="empty-state-action" onClick={onOpenProjects}>Μετάβαση στα έργα</button>
-      )}
-    </div>
+    <EmptyState
+      icon={FolderPlus}
+      title="Χρειάζεται πρώτα ένα έργο"
+      description={profile?.role === 'owner' ? 'Δημιουργήστε το πρώτο έργο και μετά προσθέστε ενημερώσεις, φωτογραφίες και αρχεία.' : 'Δεν υπάρχει ακόμη ενεργό έργο για καταχώρηση ενημέρωσης.'}
+      actionLabel={profile?.role === 'owner' && onOpenProjects ? 'Μετάβαση στα έργα' : undefined}
+      onAction={profile?.role === 'owner' ? onOpenProjects : undefined}
+    />
   )
 
+  const normalizedSearch = projectSearch.trim().toLocaleLowerCase('el-GR')
+  const filteredProjects = normalizedSearch
+    ? projects.filter(project => [project.name, project.location, project.description]
+        .filter(Boolean)
+        .some(value => value.toLocaleLowerCase('el-GR').includes(normalizedSearch)))
+    : projects
+  const extracted = confirm?.extracted || {}
+  const categoryLabels = {
+    work_update: 'Ενημέρωση εργασιών',
+    problem: 'Πρόβλημα',
+    decision: 'Απόφαση',
+    material: 'Υλικό',
+    client_request: 'Αίτημα πελάτη',
+    note: 'Σημείωση',
+  }
+  const statusLabels = {
+    open: 'Ανοιχτό',
+    pending: 'Σε αναμονή',
+    resolved: 'Επιλύθηκε',
+    completed: 'Ολοκληρώθηκε',
+    in_progress: 'Σε εξέλιξη',
+  }
+
   return (
-    <div>
-      <p className="section-title">Επιλέξτε έργο</p>
-      {projects.map(p => (
-        <div
-          key={p.id}
-          className={`project-select ${selected?.id === p.id ? 'selected' : ''}`}
-          onClick={() => setSelected(p)}
-        >
-          <div>
-            <div className="project-select-name">{p.name}</div>
-            <div className="project-select-loc">{p.location}{p.description ? <><span style={{ margin: '0 5px', color: 'var(--text3)' }}>|</span>{p.description}</> : ''}</div>
-          </div>
-          {selected?.id === p.id && (
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--text)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3.5 8 6.5 11 12.5 5"/></svg>
-          )}
+    <div className="input-command-page">
+      <aside className="input-project-rail" aria-label="Επιλογή έργου">
+        <div className="input-project-rail-heading">
+          <div><span>Ενεργά έργα</span><strong>{projects.length}</strong></div>
+          <p>Επιλέξτε πού θα αποθηκευτεί η νέα πληροφορία.</p>
         </div>
-      ))}
-
-      {selected && !confirm && (
-        <div className="input-area">
-          {/* Visibility toggle - owner only */}
-          {profile?.role === 'owner' && (
-            <div className="visibility-toggle">
-              <span className="visibility-label">Ποιος βλέπει:</span>
-              <button
-                className={`vis-btn ${!teamVisible ? 'active' : ''}`}
-                onClick={() => setTeamVisible(false)}
-              >
-                <Eye size={14} strokeWidth={1.6} /> Μόνο εγώ
-              </button>
-              <button
-                className={`vis-btn ${teamVisible ? 'active' : ''}`}
-                onClick={() => setTeamVisible(true)}
-              >
-                <EyeOff size={14} strokeWidth={1.6} /> Η ομάδα
-              </button>
-            </div>
-          )}
-
-          <textarea
-            className="text-input-box"
-            placeholder="Γράψτε ενημέρωση... π.χ. Μίλησα με Νίκο, χάλυβας Πέμπτη, +2000€"
-            value={text}
-            onChange={e => setText(e.target.value)}
-          />
-          <div className="input-actions">
-            {profile?.role === 'owner' && (
-              <button
-                className={`action-btn ${recording ? 'recording' : ''}`}
-                onClick={toggleRecording}
-              >
-                {recording ? '■ Stop' : <Mic size={18} strokeWidth={1.6} />}
-              </button>
-            )}
+        <label className="input-project-search">
+          <Search size={15} strokeWidth={1.8} aria-hidden="true" />
+          <span className="sr-only">Αναζήτηση έργου</span>
+          <input value={projectSearch} onChange={event => setProjectSearch(event.target.value)} placeholder="Αναζήτηση έργου…" />
+        </label>
+        <div className="input-project-list">
+          {filteredProjects.map(project => (
             <button
-              className="action-btn primary"
-              onClick={handleTextSubmit}
-              disabled={!text.trim() || sending || extracting}
+              type="button"
+              key={project.id}
+              className={`input-project-option ${selected?.id === project.id ? 'is-selected' : ''}`}
+              onClick={() => { setSelected(project); setConfirm(null) }}
+              aria-pressed={selected?.id === project.id}
             >
-              {extracting ? (
-                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />
-                  AI...
-                </span>
-              ) : sending ? '...' : 'Αποστολή'}
+              <span className="input-project-option-icon" aria-hidden="true">{project.name.charAt(0)}</span>
+              <span className="input-project-option-copy"><strong>{project.name}</strong><small>{project.location || 'Χωρίς τοποθεσία'}</small></span>
+              <ChevronRight size={16} strokeWidth={1.8} aria-hidden="true" />
             </button>
-          </div>
-          <div className="upload-row">
-            <div className="upload-btn" onClick={() => setShowFileModal('photo')}>
-              <Camera size={20} strokeWidth={1.6} />
-              Φωτογραφία
-            </div>
-            <div className="upload-btn" onClick={() => setShowFileModal('document')}>
-              <FileUp size={20} strokeWidth={1.6} />
-              Αρχείο
-            </div>
-          </div>
+          ))}
+          {filteredProjects.length === 0 && <p className="input-project-no-results">Δεν βρέθηκε έργο.</p>}
         </div>
-      )}
+      </aside>
 
-      {/* ===== AI CONFIRMATION SCREEN ===== */}
-      {confirm && (
-        <div className="confirm-screen">
-          <div className="confirm-header">
-            <span className="confirm-badge">AI</span>
-            <span className="confirm-title">Επιβεβαίωση δεδομένων</span>
-            <button
-              className="action-btn"
-              onClick={handleReExtract}
-              disabled={extracting}
-              style={{ marginLeft: 'auto', fontSize: 12, padding: '4px 10px', display: 'flex', alignItems: 'center', gap: 4 }}
-              title="Επανάληψη ανάλυσης AI"
-            >
-              {extracting ? <span className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} /> : (
-                <RotateCcw size={14} strokeWidth={1.6} />
-              )}
-              AI
-            </button>
+      <section className="input-workspace-panel">
+        {!selected ? (
+          <div className="input-start-state">
+            <span className="input-start-icon" aria-hidden="true"><FolderPlus size={29} strokeWidth={1.6} /></span>
+            <h2>Επιλέξτε έργο για να ξεκινήσετε</h2>
+            <p>Κάθε φωνητική ενημέρωση, κείμενο, φωτογραφία ή αρχείο θα οργανωθεί μέσα στο επιλεγμένο έργο.</p>
           </div>
-
-          <div className="confirm-original">
-            <div className="confirm-label">Αρχικό κείμενο</div>
-            <textarea
-              className="confirm-edit-textarea"
-              value={confirm.rawText}
-              onChange={e => setConfirm(prev => ({ ...prev, rawText: e.target.value }))}
-              rows={3}
-            />
-          </div>
-
-          <div className="confirm-grid">
-            {confirm.extracted.project_name && (
-              <div className="confirm-field">
-                <div className="confirm-label">Έργο</div>
-                <select
-                  className="confirm-edit-input"
-                  value={confirm.extracted.project_name}
-                  onChange={e => updateExtracted('project_name', e.target.value)}
-                >
-                  {projects.map(p => (
-                    <option key={p.id} value={p.name}>{p.name}</option>
-                  ))}
-                </select>
+        ) : !confirm ? (
+          <>
+            <header className="input-workspace-header">
+              <div className="input-selected-project">
+                <span className="input-selected-project-icon" aria-hidden="true">{selected.name.charAt(0)}</span>
+                <div><span>Νέα καταχώρηση στο έργο</span><h2>{selected.name}</h2><p>{selected.location || 'Δεν έχει οριστεί τοποθεσία'}{selected.description ? ` · ${selected.description}` : ''}</p></div>
               </div>
-            )}
 
-            {/* Structured entries from AI */}
-            {confirm.extracted.entries?.length > 0 && (
-              <div className="confirm-field">
-                <div className="confirm-label">AI found {confirm.extracted.entries.length} {confirm.extracted.entries.length === 1 ? 'entry' : 'entries'}</div>
-                {confirm.extracted.entries.map((entry, i) => (
-                  <div key={i} className="confirm-entry-card">
-                    <div className="confirm-entry-header">
-                      <span className={`confirm-cat-pill confirm-cat-${entry.category}`}>
-                        {entry.category === 'work_update' ? 'Work update' : 
-                         entry.category === 'problem' ? 'Problem' :
-                         entry.category === 'decision' ? 'Decision' :
-                         entry.category === 'material' ? 'Material' :
-                         entry.category === 'client_request' ? 'Client' :
-                         'Note'}
-                      </span>
-                      {entry.entry_status && (
-                        <span className="confirm-status-pill">{entry.entry_status}</span>
-                      )}
-                    </div>
-                    <div className="confirm-entry-title">{entry.title}</div>
-                    <div className="confirm-entry-text">{entry.text}</div>
-                    {entry.tags?.length > 0 && (
-                      <div className="confirm-entry-tags">
-                        {entry.tags.map(t => <span key={t} className="confirm-tag">{t}</span>)}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {confirm.extracted.people?.length > 0 && (
-              <div className="confirm-field">
-                <div className="confirm-label">Άτομα</div>
-                <input
-                  className="confirm-edit-input"
-                  value={confirm.extracted.people.join(', ')}
-                  onChange={e => updateExtracted('people', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
-                />
-              </div>
-            )}
-
-            {confirm.extracted.deadline_description && (
-              <div className="confirm-field">
-                <div className="confirm-label">Προθεσμία</div>
-                <div style={{ display: 'flex', gap: 6 }}>
-                  <input
-                    className="confirm-edit-input"
-                    value={confirm.extracted.deadline_description}
-                    onChange={e => updateExtracted('deadline_description', e.target.value)}
-                    style={{ flex: 1 }}
-                  />
-                  {confirm.extracted.deadline_date && (
-                    <input
-                      className="confirm-edit-input"
-                      type="date"
-                      value={confirm.extracted.deadline_date}
-                      onChange={e => updateExtracted('deadline_date', e.target.value)}
-                      style={{ width: 140 }}
-                    />
-                  )}
+              {profile?.role === 'owner' && (
+                <div className="input-visibility-control" role="group" aria-label="Ορατότητα καταχώρησης">
+                  <button type="button" className={!teamVisible ? 'is-active' : ''} onClick={() => setTeamVisible(false)} aria-pressed={!teamVisible}><LockKeyhole size={14} strokeWidth={1.8} aria-hidden="true" /><span>Μόνο εγώ</span></button>
+                  <button type="button" className={teamVisible ? 'is-active' : ''} onClick={() => setTeamVisible(true)} aria-pressed={teamVisible}><Users size={14} strokeWidth={1.8} aria-hidden="true" /><span>Η ομάδα</span></button>
                 </div>
-              </div>
-            )}
+              )}
+            </header>
 
-            {confirm.extracted.budget_change !== 0 && confirm.extracted.budget_change != null && (
-              <div className="confirm-field">
-                <div className="confirm-label">Αλλαγή προϋπολογισμού (€)</div>
-                <input
-                  className="confirm-edit-input"
-                  type="number"
-                  value={confirm.extracted.budget_change}
-                  onChange={e => updateExtracted('budget_change', Number(e.target.value))}
-                />
-              </div>
-            )}
+            <div className="input-composer-layout">
+              <section className="input-primary-composer">
+                <div className="input-composer-heading">
+                  <span className="input-composer-icon" aria-hidden="true"><Sparkles size={19} strokeWidth={1.7} /></span>
+                  <div><h3>Τι συνέβη στο έργο;</h3><p>Γράψτε φυσικά. Η εφαρμογή θα οργανώσει προβλήματα, αποφάσεις, υλικά και επόμενες ενέργειες.</p></div>
+                </div>
 
-            {confirm.extracted.action_items?.length > 0 && (
-              <div className="confirm-field">
-                <div className="confirm-label">Ενέργειες</div>
+                <label htmlFor="project-update-text" className="sr-only">Κείμενο ενημέρωσης</label>
                 <textarea
-                  className="confirm-edit-textarea"
-                  value={confirm.extracted.action_items.join('\n')}
-                  onChange={e => updateExtracted('action_items', e.target.value.split('\n').filter(Boolean))}
-                  rows={Math.min(confirm.extracted.action_items.length + 1, 4)}
+                  id="project-update-text"
+                  className="input-professional-textarea"
+                  placeholder="π.χ. Μίλησα με τον Νίκο. Ο χάλυβας θα φτάσει την Πέμπτη και υπάρχει επιπλέον κόστος 2.000 €."
+                  value={text}
+                  onChange={event => setText(event.target.value)}
+                  onKeyDown={event => {
+                    if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') handleTextSubmit()
+                  }}
                 />
-              </div>
-            )}
 
-            {confirm.extracted.summary && (
-              <div className="confirm-field">
-                <div className="confirm-label">AI Σύνοψη</div>
-                <input
-                  className="confirm-edit-input"
-                  value={confirm.extracted.summary}
-                  onChange={e => updateExtracted('summary', e.target.value)}
-                  style={{ fontStyle: 'italic', color: 'var(--text2)' }}
-                />
-              </div>
-            )}
-          </div>
+                <div className="input-composer-actions">
+                  <div className="input-composer-hint">Ctrl/⌘ + Enter για αποστολή</div>
+                  <div>
+                    {profile?.role === 'owner' && (
+                      <button type="button" className={`input-record-button ${recording ? 'is-recording' : ''}`} onClick={toggleRecording} disabled={extracting}>
+                        <Mic size={17} strokeWidth={1.8} aria-hidden="true" />
+                        <span>{recording ? 'Διακοπή εγγραφής' : 'Φωνητική ενημέρωση'}</span>
+                      </button>
+                    )}
+                    <button type="button" className="input-submit-button" onClick={handleTextSubmit} disabled={!text.trim() || sending || extracting}>
+                      {extracting ? <ButtonSpinner label="Ανάλυση…" /> : sending ? <ButtonSpinner label="Αποθήκευση…" /> : <><Send size={16} strokeWidth={1.9} aria-hidden="true" />Ανάλυση και συνέχεια</>}
+                    </button>
+                  </div>
+                </div>
+              </section>
 
-          <div className="confirm-actions">
-            <button className="action-btn" onClick={() => setConfirm(null)} disabled={sending}>
-              Ακύρωση
-            </button>
-            <button className="action-btn" onClick={handleSkipAI} disabled={sending} style={{ fontSize: 13 }}>
-              Χωρίς AI
-            </button>
-            <button className="action-btn primary" onClick={handleConfirm} disabled={sending}>
-              {sending ? '...' : <><Check size={14} strokeWidth={2} style={{ marginRight: 3 }} /> Σωστό</>}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Photo Upload Modal */}
-      {showFileModal === 'photo' && (
-        <div className="modal-overlay" onClick={() => setShowFileModal(null)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <p className="modal-title">Φωτογραφία</p>
-            <input
-              type="file" accept="image/*" capture="environment" multiple
-              onChange={handlePhotoUpload}
-              style={{ color: 'var(--text)' }}
-            />
-            <div className="modal-actions">
-              <button className="action-btn" onClick={() => setShowFileModal(null)}>Ακύρωση</button>
+              <aside className="input-attachment-panel">
+                <div className="input-attachment-heading"><h3>Γρήγορη προσθήκη</h3><p>Υλικό από το εργοτάξιο ή το γραφείο.</p></div>
+                <button type="button" className="input-attachment-action is-photo" onClick={() => setShowFileModal('photo')}>
+                  <span aria-hidden="true"><Camera size={20} strokeWidth={1.7} /></span>
+                  <span><strong>Φωτογραφίες</strong><small>Λήψη ή επιλογή πολλών εικόνων</small></span>
+                  <ChevronRight size={16} strokeWidth={1.8} aria-hidden="true" />
+                </button>
+                <button type="button" className="input-attachment-action is-file" onClick={() => setShowFileModal('document')}>
+                  <span aria-hidden="true"><FileUp size={20} strokeWidth={1.7} /></span>
+                  <span><strong>Έγγραφο ή σχέδιο</strong><small>PDF, Word, Excel ή DWG</small></span>
+                  <ChevronRight size={16} strokeWidth={1.8} aria-hidden="true" />
+                </button>
+                <div className="input-visibility-note">
+                  {profile?.role === 'owner' && !teamVisible ? <LockKeyhole size={15} strokeWidth={1.8} aria-hidden="true" /> : <Users size={15} strokeWidth={1.8} aria-hidden="true" />}
+                  <span>{profile?.role === 'owner' && !teamVisible ? 'Η καταχώρηση θα είναι ιδιωτική για τον διαχειριστή.' : 'Η καταχώρηση θα είναι διαθέσιμη στην ομάδα.'}</span>
+                </div>
+              </aside>
             </div>
-          </div>
-        </div>
-      )}
+          </>
+        ) : (
+          <section className="input-review-workspace">
+            <header className="input-review-header">
+              <div className="input-review-title">
+                <span className="input-ai-mark" aria-hidden="true"><Sparkles size={19} strokeWidth={1.8} /></span>
+                <div><span>Έλεγχος πριν την αποθήκευση</span><h2>Επιβεβαίωση ανάλυσης</h2><p>Ελέγξτε όσα αναγνώρισε η εφαρμογή. Το αρχικό κείμενο παραμένει πάντα διαθέσιμο.</p></div>
+              </div>
+              <button type="button" className="input-reanalyse-button" onClick={handleReExtract} disabled={extracting}><RotateCcw size={15} strokeWidth={1.8} aria-hidden="true" />{extracting ? 'Ανάλυση…' : 'Νέα ανάλυση'}</button>
+            </header>
 
-      {/* Document Upload Modal */}
-      {showFileModal === 'document' && (
-        <div className="modal-overlay" onClick={() => setShowFileModal(null)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <p className="modal-title">Ανέβασμα αρχείου</p>
-            <input className="modal-input" placeholder="Όνομα εγγράφου" value={docName} onChange={e => setDocName(e.target.value)} />
-            <input className="modal-input" placeholder="Έκδοση (π.χ. v3)" value={docVersion} onChange={e => setDocVersion(e.target.value)} />
-            <input className="modal-input" placeholder="Σημειώσεις (προαιρετικά)" value={docNotes} onChange={e => setDocNotes(e.target.value)} />
-            <input
-              type="file" accept=".pdf,.dwg,.doc,.docx,.xls,.xlsx"
-              onChange={handleDocUpload}
-              style={{ color: 'var(--text)', marginTop: '10px' }}
-            />
-            <div className="modal-actions">
-              <button className="action-btn" onClick={() => setShowFileModal(null)}>Ακύρωση</button>
+            <div className="input-review-grid">
+              <div className="input-review-main">
+                <section className="input-review-card">
+                  <div className="input-review-card-heading"><div><h3>Αρχική πληροφορία</h3><p>Μπορείτε να διορθώσετε το κείμενο πριν την αποθήκευση.</p></div><span>{confirm.entryType === 'voice' ? 'Φωνή' : 'Κείμενο'}</span></div>
+                  <textarea value={confirm.rawText} onChange={event => setConfirm(previous => ({ ...previous, rawText: event.target.value }))} rows={5} />
+                </section>
+
+                {extracted.entries?.length > 0 ? (
+                  <section className="input-review-card">
+                    <div className="input-review-card-heading"><div><h3>Οργανωμένες καταχωρήσεις</h3><p>{extracted.entries.length} διαφορετικ{extracted.entries.length === 1 ? 'ή πληροφορία' : 'ές πληροφορίες'} θα αποθηκευτ{extracted.entries.length === 1 ? 'εί' : 'ούν'}.</p></div><span>{extracted.entries.length}</span></div>
+                    <div className="input-extracted-list">
+                      {extracted.entries.map((entry, index) => (
+                        <article key={`${entry.title || 'entry'}-${index}`} className={`input-extracted-card category-${entry.category || 'note'}`}>
+                          <div className="input-extracted-card-top"><span className="input-category-badge">{categoryLabels[entry.category] || 'Σημείωση'}</span>{entry.entry_status && <span className="input-status-badge">{statusLabels[entry.entry_status] || entry.entry_status}</span>}</div>
+                          <h4>{entry.title || `Καταχώρηση ${index + 1}`}</h4>
+                          <p>{entry.text || confirm.rawText}</p>
+                          {entry.tags?.length > 0 && <div className="input-tag-list">{entry.tags.map(tag => <span key={tag}>{tag}</span>)}</div>}
+                        </article>
+                      ))}
+                    </div>
+                  </section>
+                ) : (
+                  <section className="input-review-card">
+                    <EmptyState icon={FileText} title="Δεν δημιουργήθηκαν ξεχωριστές κατηγορίες" description="Μπορείτε να αποθηκεύσετε το αρχικό κείμενο ως μία γενική καταχώρηση." compact />
+                  </section>
+                )}
+              </div>
+
+              <aside className="input-review-details">
+                <section className="input-review-card">
+                  <div className="input-review-card-heading"><div><h3>Στοιχεία καταχώρησης</h3><p>Διορθώστε ό,τι χρειάζεται.</p></div></div>
+                  <div className="input-review-fields">
+                    <div className="input-review-field"><label htmlFor="review-project">Έργο</label><select id="review-project" value={extracted.project_name || selected.name} onChange={event => updateExtracted('project_name', event.target.value)}>{projects.map(project => <option key={project.id} value={project.name}>{project.name}</option>)}</select></div>
+                    {extracted.people?.length > 0 && <div className="input-review-field"><label htmlFor="review-people">Άτομα</label><input id="review-people" value={extracted.people.join(', ')} onChange={event => updateExtracted('people', event.target.value.split(',').map(value => value.trim()).filter(Boolean))} /></div>}
+                    {extracted.deadline_description && <div className="input-review-field"><label htmlFor="review-deadline">Προθεσμία</label><input id="review-deadline" value={extracted.deadline_description} onChange={event => updateExtracted('deadline_description', event.target.value)} />{extracted.deadline_date && <input type="date" value={extracted.deadline_date} onChange={event => updateExtracted('deadline_date', event.target.value)} />}</div>}
+                    {extracted.budget_change !== 0 && extracted.budget_change != null && <div className="input-review-field"><label htmlFor="review-budget">Μεταβολή προϋπολογισμού (€)</label><input id="review-budget" type="number" value={extracted.budget_change} onChange={event => updateExtracted('budget_change', Number(event.target.value))} /></div>}
+                    {extracted.action_items?.length > 0 && <div className="input-review-field"><label htmlFor="review-actions">Επόμενες ενέργειες</label><textarea id="review-actions" value={extracted.action_items.join('\n')} onChange={event => updateExtracted('action_items', event.target.value.split('\n').filter(Boolean))} rows={4} /></div>}
+                    {extracted.summary && <div className="input-review-field"><label htmlFor="review-summary">Σύντομη σύνοψη</label><textarea id="review-summary" value={extracted.summary} onChange={event => updateExtracted('summary', event.target.value)} rows={3} /></div>}
+                  </div>
+                </section>
+              </aside>
             </div>
-          </div>
-        </div>
-      )}
 
-      {toast && <div className={`toast ${toast.isError ? "toast-error" : "toast-success"}`}>{toast.msg}</div>}
+            <footer className="input-review-actions">
+              <button type="button" className="action-btn" onClick={() => setConfirm(null)} disabled={sending}>Πίσω για αλλαγές</button>
+              <button type="button" className="action-btn" onClick={handleSkipAI} disabled={sending}>Αποθήκευση μόνο του κειμένου</button>
+              <button type="button" className="action-btn primary" onClick={handleConfirm} disabled={sending}>{sending ? <ButtonSpinner label="Αποθήκευση…" /> : <><Check size={15} strokeWidth={2} aria-hidden="true" />Επιβεβαίωση και αποθήκευση</>}</button>
+            </footer>
+          </section>
+        )}
+      </section>
+
+      <ModalShell
+        open={showFileModal === 'photo'}
+        onClose={() => setShowFileModal(null)}
+        title="Προσθήκη φωτογραφιών"
+        description={`Οι φωτογραφίες θα αποθηκευτούν στο έργο «${selected?.name || ''}».`}
+        icon={Camera}
+        size="sm"
+        actions={<button type="button" className="action-btn" onClick={() => setShowFileModal(null)}>Ακύρωση</button>}
+      >
+        <label className="input-file-dropzone">
+          <span aria-hidden="true"><Camera size={24} strokeWidth={1.6} /></span>
+          <strong>Λήψη ή επιλογή φωτογραφιών</strong>
+          <small>Μπορείτε να επιλέξετε πολλές εικόνες μαζί.</small>
+          <input type="file" accept="image/*" capture="environment" multiple onChange={handlePhotoUpload} />
+        </label>
+        {sending && <div className="input-upload-progress"><ButtonSpinner label="Μεταφόρτωση φωτογραφιών…" /></div>}
+      </ModalShell>
+
+      <ModalShell
+        open={showFileModal === 'document'}
+        onClose={() => setShowFileModal(null)}
+        title="Προσθήκη εγγράφου ή σχεδίου"
+        description={`Το αρχείο θα συνδεθεί με το έργο «${selected?.name || ''}».`}
+        icon={FileUp}
+        size="md"
+        actions={<button type="button" className="action-btn" onClick={() => setShowFileModal(null)}>Ακύρωση</button>}
+      >
+        <div className="input-document-form">
+          <div><label htmlFor="document-name">Όνομα εγγράφου</label><input id="document-name" value={docName} onChange={event => setDocName(event.target.value)} placeholder="π.χ. Αρχιτεκτονικό σχέδιο ισογείου" /></div>
+          <div><label htmlFor="document-version">Έκδοση</label><input id="document-version" value={docVersion} onChange={event => setDocVersion(event.target.value)} placeholder="π.χ. v3" /></div>
+          <div className="is-full"><label htmlFor="document-notes">Σημειώσεις</label><textarea id="document-notes" value={docNotes} onChange={event => setDocNotes(event.target.value)} placeholder="Προαιρετική σύντομη περιγραφή…" rows={3} /></div>
+          <label className="input-file-dropzone is-full"><span aria-hidden="true"><FileUp size={24} strokeWidth={1.6} /></span><strong>Επιλογή αρχείου</strong><small>PDF, DWG, Word ή Excel</small><input type="file" accept=".pdf,.dwg,.doc,.docx,.xls,.xlsx" onChange={handleDocUpload} /></label>
+        </div>
+        {sending && <div className="input-upload-progress"><ButtonSpinner label="Μεταφόρτωση αρχείου…" /></div>}
+      </ModalShell>
+
+      {toast && <div className={`toast ${toast.isError ? 'toast-error' : 'toast-success'}`} role="status">{toast.msg}</div>}
     </div>
   )
 }
