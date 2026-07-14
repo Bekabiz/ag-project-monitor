@@ -1,0 +1,111 @@
+/* ==========================================================================
+   AG Project Monitor — «Χαρτί Μηχανικού» (Engineer's Paper)
+   Design tokens. The ONLY place colors, radii and spacing are defined.
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+
+  /* Ink & text */
+  --ink:            #0f3e17;  /* Forest Ink — primary actions, headings, links, icon strokes */
+  --ink-deep:       #0c2f10;  /* Forest Shadow — sidebar bg, decorative accents only */
+  --text-primary:   #1d2b20;
+  --text-secondary: #4b5a4e;
+  --text-muted:     #7a8a7d;
+
+  /* Surfaces — layered depth WITHOUT shadows */
+  --paper:          #fffefc;  /* page background, cards on tinted panels */
+  --wash:           #e1f4df;  /* level-1 tinted panels */
+  --veil:           #cfe7d3;  /* level-2 accent surfaces, selected states */
+  --mist:           #b1dbb8;  /* level-3 heavier panels */
+  --slate:          #b6ced5;  /* the ONE cool panel: photos, files, AI cards */
+
+  /* Functional (muted, clay-toned) */
+  --danger:         #a63d2f;
+  --danger-wash:    #f6e7e4;
+  --warn:           #9a6b1f;
+  --warn-wash:      #f7efdd;
+  --ok:             #0f3e17;
+  --ok-wash:        #e1f4df;
+  --info-wash:      #e8eef5;
+
+  /* Lines */
+  --border:         #e6e4de;
+  --border-strong:  #d5d2c9;
+
+  /* Shape & rhythm */
+  --radius-sm: 7px;
+  --radius:    14px;
+  --radius-pill: 999px;
+  --space-unit: 7px;   /* scale: 7/14/21/28/42/56 */
+
+  /* Type */
+  --font-display: 'Cormorant Garamond', 'Noto Serif', Georgia, serif; /* weight 300 ONLY */
+  --font-body:    'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* Layout constants */
+  --sidebar-width: 248px;
+  --header-height: 76px;
+  --scrim: rgba(12, 47, 16, .4);
+  --transition: 160ms ease-out;
+
+  /* Legacy aliases still referenced by shared JS helpers (lib/dates.js) */
+  --green: var(--ok);
+  --blue: var(--ink);
+  --yellow: var(--warn);
+  --text3: var(--text-muted);
+}
+
+/* Base reset */
+*, *::before, *::after { box-sizing: border-box; }
+html { background: var(--paper); scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  min-width: 320px;
+  background: var(--paper);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+h1, h2, h3, h4, h5, h6, p, figure { margin: 0; }
+button, input, textarea, select { font-family: var(--font-body); font-size: 14px; color: var(--text-primary); }
+button { cursor: pointer; }
+img, svg, video { max-width: 100%; display: block; }
+strong { font-weight: 600; }
+a { color: var(--ink); }
+
+/* Numbers are always tabular */
+strong, time, .tabular { font-variant-numeric: tabular-nums; }
+
+button, a, input, textarea, select { -webkit-tap-highlight-color: transparent; }
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible,
+select:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+button:disabled, input:disabled, textarea:disabled, select:disabled { cursor: not-allowed; opacity: .55; }
+::selection { background: var(--veil); color: var(--ink-deep); }
+::placeholder { color: var(--text-muted); }
+
+.sr-only {
+  position: absolute !important; width: 1px !important; height: 1px !important;
+  padding: 0 !important; margin: -1px !important; overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important;
+}
+
+/* Motion discipline: opacity + translateY(4px), 160ms, ease-out. Nothing else moves. */
+@keyframes paper-in { from { opacity: 0; transform: translateY(4px); } }
+@keyframes paper-fade { from { opacity: 0; } }
+@keyframes paper-spin { to { transform: rotate(360deg); } }
+@keyframes paper-pulse { 50% { opacity: .45; } }
+@keyframes record-pulse { 50% { box-shadow: 0 0 0 6px rgba(166, 61, 47, .14); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
