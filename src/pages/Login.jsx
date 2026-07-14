@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Building2, ClipboardCheck, LogIn, Mic, ShieldCheck } from 'lucide-react'
-import { supabase } from '../lib/supabase'
+import { supabase } from '../lib/db'
 import { ButtonSpinner, InlineNotice } from '../components/ui'
 
 export default function Login() {

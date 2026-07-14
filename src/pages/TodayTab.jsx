@@ -1,5 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
-import { Bell, Plus, ClipboardCheck, MessageCircle, AlertTriangle, Paperclip, ChevronDown, Send, Mic, Sparkles, Circle, Play, Pause, Check, CheckCircle2, User, Users, RefreshCw, FileText, CalendarDays } from 'lucide-react'
+
+function localDateValue(date = new Date()) {
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+  return local.toISOString().split('T')[0]
+}
+import { Bell, Plus, ClipboardCheck, MessageCircle, AlertTriangle, Paperclip, ChevronDown, Send, Mic, Sparkles, Circle, Play, Pause, Check, CheckCircle2, User, Users, RefreshCw, FileText, CalendarDays, Zap } from 'lucide-react'
 import { db, dbRead, supabase } from '../lib/db'
 import { getDaysInfo, formatDueTime, getOverdueCount } from '../lib/dates'
 import { extractText } from '../lib/voice'
@@ -15,7 +20,9 @@ export default function TodayTab({ profile, onBadgeCount }) {
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
+  const [selectedDate, setSelectedDate] = useState(() => localDateValue())
   const [showAddUpdate, setShowAddUpdate] = useState(false)
+  const [updateProject, setUpdateProject] = useState('')
   const [updateText, setUpdateText] = useState('')
   const [updateFile, setUpdateFile] = useState(null)
   const [sending, setSending] = useState(false)
@@ -36,6 +43,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
   const [taskTime, setTaskTime] = useState('17:00')
   const [taskFile, setTaskFile] = useState(null)
   const [taskUrgent, setTaskUrgent] = useState(false)
+  const [taskAsap, setTaskAsap] = useState(false)
   const [taskSaving, setTaskSaving] = useState(false)
 
   // Announcement modal
@@ -51,7 +59,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
   const mediaRecorderRef = useRef(null)
   const audioChunksRef = useRef([])
 
-  useEffect(() => { loadData() }, [])
+  useEffect(() => { loadData() }, [selectedDate])
 
   function showToast(msg, isError) {
     setToast({ msg, isError })
@@ -62,8 +70,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
     setLoading(true)
     try {
       setLoadError(false)
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+    const today = new Date(`${selectedDate}T00:00:00`)
     const tomorrow = new Date(today)
     tomorrow.setDate(tomorrow.getDate() + 1)
 
@@ -83,7 +90,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
 
     // Today's plan reminders (owner only)
     if (profile?.role === 'owner') {
-      const todayStr = new Date().toISOString().split('T')[0]
+      const todayStr = selectedDate
       const plans = await dbRead(supabase
         .from('manager_plans')
         .select('*')
@@ -126,13 +133,25 @@ export default function TodayTab({ profile, onBadgeCount }) {
       .order('updated_at', { ascending: false }))
     setUpdates(recentSteps)
 
-    // Today's general updates
-    const genUpdates = await dbRead(supabase
-      .from('general_updates').select('*')
-      .gte('created_at', today.toISOString())
-      .lt('created_at', tomorrow.toISOString())
-      .order('created_at', { ascending: false }))
-    setGeneralUpdates(genUpdates)
+    // Office updates and project-memory updates for the selected day
+    const [officeUpdates, projectUpdates] = await Promise.all([
+      dbRead(supabase.from('general_updates').select('*')
+        .gte('created_at', today.toISOString()).lt('created_at', tomorrow.toISOString())
+        .order('created_at', { ascending: false })),
+      dbRead(supabase.from('entries').select('*, projects:project_id(name)')
+        .eq('category', 'work_update')
+        .gte('created_at', today.toISOString()).lt('created_at', tomorrow.toISOString())
+        .order('created_at', { ascending: false }))
+    ])
+    const normalizedProjectUpdates = projectUpdates.map(entry => ({
+      ...entry,
+      text: entry.raw_text || entry.ai_summary || entry.title || '',
+      user_name: entry.submitter_name,
+      project_name: entry.projects?.name || null,
+      source: 'project'
+    }))
+    setGeneralUpdates([...officeUpdates, ...normalizedProjectUpdates]
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)))
 
     // Notification badge
     const lastSeen = localStorage.getItem('ag_last_seen') || new Date(0).toISOString()
@@ -274,7 +293,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
   function openTaskModal() {
     setTaskTitle(''); setTaskDesc(''); setTaskProject('')
     setTaskAssignees([]); setTaskDate(''); setTaskTime('17:00')
-    setTaskFile(null); setTaskUrgent(false)
+    setTaskFile(null); setTaskUrgent(false); setTaskAsap(false)
     setShowTaskModal(true)
   }
 
@@ -305,7 +324,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
       }
 
       let dueDate = null
-      if (taskDate) dueDate = `${taskDate}T${taskTime || '17:00'}:00`
+      if (!taskAsap && taskDate) dueDate = `${taskDate}T${taskTime || '17:00'}:00`
 
       const isPersonal = taskProject === 'personal'
       const isStaff = taskProject === 'staff'
@@ -350,7 +369,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
           file_url: fileUrl,
           file_name: fileName,
           updated_by: profile.id,
-          is_urgent: taskUrgent,
+          is_urgent: taskAsap || taskUrgent,
           group_id: groupId
         }))
       }
@@ -403,11 +422,29 @@ export default function TodayTab({ profile, onBadgeCount }) {
         const { data: urlData } = supabase.storage.from('files').getPublicUrl(path)
         fileUrl = urlData.publicUrl
       }
-      await db(supabase.from('general_updates').insert({
-        user_id: profile.id, user_name: profile.full_name,
-        text: updateText.trim(), file_url: fileUrl
-      }))
-      setUpdateText(''); setUpdateFile(null); setShowAddUpdate(false)
+      if (updateProject) {
+        await db(supabase.from('entries').insert({
+          project_id: updateProject,
+          user_id: profile.id,
+          entry_type: updateFile ? 'photo' : 'text',
+          raw_text: updateText.trim(),
+          ai_summary: updateText.trim().substring(0, 200),
+          title: updateText.trim().substring(0, 80),
+          category: 'work_update',
+          tags: null,
+          entry_status: null,
+          submitter_name: profile.full_name,
+          file_url: fileUrl,
+          file_name: updateFile?.name || null,
+          is_team_visible: true
+        }))
+      } else {
+        await db(supabase.from('general_updates').insert({
+          user_id: profile.id, user_name: profile.full_name,
+          text: updateText.trim(), file_url: fileUrl
+        }))
+      }
+      setUpdateText(''); setUpdateFile(null); setUpdateProject(''); setShowAddUpdate(false)
       await loadData()
     } catch (err) {
       showToast('Σφάλμα αποθήκευσης', true)
@@ -449,7 +486,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
     generalUpdates.forEach(u => {
       const name = u.user_name || 'Άγνωστο μέλος'
       if (!people[name]) people[name] = []
-      people[name].push({ type: 'general', text: u.text, file_url: u.file_url,
+      people[name].push({ type: 'general', text: u.text, file_url: u.file_url, project: u.project_name,
         time: new Date(u.created_at).toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit' }) })
     })
     return people
@@ -482,16 +519,25 @@ export default function TodayTab({ profile, onBadgeCount }) {
   const totalTodayUpdates = updates.length + generalUpdates.length
   const activeTeamMembers = Object.keys(personUpdates).length
   const firstName = profile?.full_name?.split(' ')[0] || ''
+  const todayDateValue = localDateValue()
+  const yesterdayDate = new Date(); yesterdayDate.setDate(yesterdayDate.getDate() - 1)
+  const yesterdayDateValue = localDateValue(yesterdayDate)
+  const selectedDayLabel = new Date(`${selectedDate}T12:00:00`).toLocaleDateString('el-GR', { weekday: 'long', day: 'numeric', month: 'long' })
 
   return (
     <div className={`today-page today-command-page ${profile?.role === 'owner' ? 'today-owner' : 'today-member'}`}>
       <section className="today-command-header">
         <div className="today-command-copy">
-          <div className="today-date">{new Date().toLocaleDateString('el-GR', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
+          <div className="today-date">{selectedDayLabel}</div>
           <h2 className="today-hello">Καλημέρα, {firstName}</h2>
           <p>Η σημερινή εικόνα του γραφείου, οι προτεραιότητες και ό,τι χρειάζεται ενέργεια.</p>
         </div>
         <div className="today-command-actions">
+          <div className="today-history-control" aria-label="Επιλογή ημέρας">
+            <button type="button" className={selectedDate === yesterdayDateValue ? 'is-active' : ''} onClick={() => setSelectedDate(yesterdayDateValue)}>Χθες</button>
+            <button type="button" className={selectedDate === todayDateValue ? 'is-active' : ''} onClick={() => setSelectedDate(todayDateValue)}>Σήμερα</button>
+            <label className="today-date-picker" aria-label="Επιλογή ημερομηνίας"><CalendarDays size={15} strokeWidth={1.8} aria-hidden="true" /><input type="date" value={selectedDate} max={todayDateValue} onChange={event => setSelectedDate(event.target.value)} /></label>
+          </div>
           {profile?.role === 'owner' && (
             <button type="button" className="today-secondary-action" onClick={() => setShowAnnouncementModal(true)}>
               <Bell size={16} strokeWidth={1.8} aria-hidden="true" />
@@ -516,7 +562,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
         </article>
         <article className="today-kpi-card">
           <span className="today-kpi-icon is-info" aria-hidden="true"><MessageCircle size={19} strokeWidth={1.8} /></span>
-          <div><strong>{totalTodayUpdates}</strong><span>Ενημερώσεις σήμερα</span></div>
+          <div><strong>{totalTodayUpdates}</strong><span>{selectedDate === todayDateValue ? 'Ενημερώσεις σήμερα' : 'Ενημερώσεις ημέρας'}</span></div>
         </article>
         <article className="today-kpi-card">
           <span className="today-kpi-icon is-success" aria-hidden="true"><Users size={19} strokeWidth={1.8} /></span>
@@ -592,7 +638,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
                       <button type="button" className="today-task-summary" onClick={() => setExpandedTask(isExpanded ? null : step.id)} aria-expanded={isExpanded}>
                         <span className={`today-task-priority ${step.is_urgent ? 'is-urgent' : ''}`} aria-hidden="true">{step.is_urgent ? '!' : ''}</span>
                         <span className="today-task-copy">
-                          <span className="today-task-title-row"><strong>{step.title}</strong>{step.is_urgent && <em>Επείγον</em>}</span>
+                          <span className="today-task-title-row"><strong>{step.title}</strong>{step.is_urgent && <em className={!step.due_date ? 'is-asap' : ''}>{!step.due_date ? 'ASAP' : 'Επείγον'}</em>}</span>
                           {step.description && <span className="today-task-description">{step.description}</span>}
                           <span className="today-task-meta">
                             <span>{step.projects?.name || 'Προσωπικό'}</span>
@@ -685,7 +731,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
                 <div key={person.id} className="today-person-card is-quiet">
                   <div className="today-person-summary">
                     <span className="today-person-avatar" aria-hidden="true">{person.full_name?.charAt(0)}</span>
-                    <span className="today-person-copy"><strong>{person.full_name}</strong><small>Χωρίς ενημέρωση σήμερα</small></span>
+                    <span className="today-person-copy"><strong>{person.full_name}</strong><small>{selectedDate === todayDateValue ? 'Χωρίς ενημέρωση σήμερα' : 'Χωρίς ενημέρωση αυτή την ημέρα'}</small></span>
                     <span className="today-quiet-dot" aria-hidden="true" />
                   </div>
                 </div>
@@ -697,14 +743,14 @@ export default function TodayTab({ profile, onBadgeCount }) {
 
           <section className="today-panel today-update-panel">
             <div className="today-panel-heading">
-              <div><span className="today-panel-icon is-success" aria-hidden="true"><MessageCircle size={17} strokeWidth={1.8} /></span><div><h3>Γενική ενημέρωση</h3><p>Σύντομο νέο που αφορά το γραφείο</p></div></div>
+              <div><span className="today-panel-icon is-success" aria-hidden="true"><MessageCircle size={17} strokeWidth={1.8} /></span><div><h3>Ενημέρωση γραφείου ή έργου</h3><p>Η πληροφορία αποθηκεύεται εκεί που ανήκει</p></div></div>
             </div>
 
             {!showAddUpdate ? (
               <button type="button" className="today-open-composer" onClick={() => setShowAddUpdate(true)}><Plus size={17} strokeWidth={1.8} aria-hidden="true" />Προσθήκη ενημέρωσης</button>
             ) : (
               <div className="today-update-composer">
-                <label htmlFor="general-update">Κείμενο ενημέρωσης</label>
+                <label htmlFor="update-project">Πού αφορά</label><select id="update-project" className="today-update-project" value={updateProject} onChange={event => setUpdateProject(event.target.value)}><option value="">Γενική ενημέρωση γραφείου</option>{projects.map(project => <option key={project.id} value={project.id}>{project.name}</option>)}</select><label htmlFor="general-update">Κείμενο ενημέρωσης</label>
                 <div className="today-update-input-wrap">
                   <textarea id="general-update" placeholder="Τι πρέπει να γνωρίζει η ομάδα;" value={updateText} onChange={event => setUpdateText(event.target.value)} rows={4} autoFocus />
                   <button type="button" className={`today-voice-button ${isRecording && voiceTarget === 'update' ? 'is-recording' : ''}`} onClick={isRecording && voiceTarget === 'update' ? stopRecording : () => startRecording('update')} disabled={isTranscribing} aria-label={isRecording ? 'Διακοπή εγγραφής' : 'Φωνητική ενημέρωση'}>
@@ -714,7 +760,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
                 {updateFile && <div className="today-selected-file"><Paperclip size={14} strokeWidth={1.8} aria-hidden="true" />{updateFile.name}</div>}
                 <div className="today-composer-footer">
                   <label className="today-attach-button"><Paperclip size={15} strokeWidth={1.8} aria-hidden="true" />Επισύναψη<input type="file" accept="image/*" onChange={event => setUpdateFile(event.target.files[0])} hidden /></label>
-                  <div><button type="button" className="action-btn" onClick={() => { setShowAddUpdate(false); setUpdateText(''); setUpdateFile(null) }}>Ακύρωση</button><button type="button" className="action-btn primary" onClick={handleAddUpdate} disabled={!updateText.trim() || sending}>{sending ? <ButtonSpinner label="Δημοσίευση…" /> : 'Δημοσίευση'}</button></div>
+                  <div><button type="button" className="action-btn" onClick={() => { setShowAddUpdate(false); setUpdateText(''); setUpdateFile(null); setUpdateProject('') }}>Ακύρωση</button><button type="button" className="action-btn primary" onClick={handleAddUpdate} disabled={!updateText.trim() || sending}>{sending ? <ButtonSpinner label="Δημοσίευση…" /> : 'Δημοσίευση'}</button></div>
                 </div>
               </div>
             )}
@@ -746,7 +792,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
         open={showTaskModal}
         onClose={() => setShowTaskModal(false)}
         title="Νέα εργασία"
-        description="Ορίστε σαφή τίτλο, υπεύθυνο και προθεσμία."
+        description="Ορίστε τίτλο, υπεύθυνο και επιλέξτε ASAP ή συγκεκριμένη προθεσμία."
         icon={ClipboardCheck}
         size="lg"
         actions={<><button type="button" className="action-btn" onClick={() => setShowTaskModal(false)}>Ακύρωση</button><button type="button" className="action-btn primary" onClick={handleSaveTask} disabled={!taskTitle.trim() || taskSaving}>{taskSaving ? <ButtonSpinner label="Αποθήκευση…" /> : 'Δημιουργία εργασίας'}</button></>}
@@ -774,10 +820,11 @@ export default function TodayTab({ profile, onBadgeCount }) {
             </fieldset>
           )}
 
-          <div className="today-form-field"><label htmlFor="task-date">Ημερομηνία</label><div className="today-field-with-icon"><CalendarDays size={16} strokeWidth={1.8} aria-hidden="true" /><input id="task-date" type="date" value={taskDate} onChange={event => setTaskDate(event.target.value)} /></div></div>
-          <div className="today-form-field"><label htmlFor="task-time">Ώρα</label><input id="task-time" type="time" value={taskTime} onChange={event => setTaskTime(event.target.value)} /></div>
+          <div className="today-form-field is-full"><label>Χρόνος εκτέλεσης</label><div className="task-timing-choice"><button type="button" className={taskAsap ? 'is-active is-asap' : ''} onClick={() => { setTaskAsap(true); setTaskDate(''); setTaskUrgent(true) }} aria-pressed={taskAsap}><Zap size={17} strokeWidth={2} aria-hidden="true" /><span><strong>ASAP</strong><small>Να γίνει το συντομότερο δυνατό</small></span></button><button type="button" className={!taskAsap ? 'is-active' : ''} onClick={() => setTaskAsap(false)} aria-pressed={!taskAsap}><CalendarDays size={17} strokeWidth={1.8} aria-hidden="true" /><span><strong>Προγραμματισμός</strong><small>Ορισμός ημερομηνίας και ώρας</small></span></button></div></div>
 
-          <div className="today-form-field is-full"><label>Προτεραιότητα και αρχείο</label><div className="today-form-actions-row"><button type="button" className={`today-urgent-toggle ${taskUrgent ? 'is-active' : ''}`} onClick={() => setTaskUrgent(value => !value)} aria-pressed={taskUrgent}><AlertTriangle size={16} strokeWidth={1.8} aria-hidden="true" />{taskUrgent ? 'Έχει οριστεί ως επείγον' : 'Ορισμός ως επείγον'}</button><label className="today-attach-button is-wide"><FileText size={16} strokeWidth={1.8} aria-hidden="true" />{taskFile ? taskFile.name : 'Επισύναψη αρχείου'}<input type="file" onChange={event => setTaskFile(event.target.files[0])} hidden /></label></div></div>
+          {!taskAsap && <><div className="today-form-field"><label htmlFor="task-date">Ημερομηνία</label><div className="today-field-with-icon"><CalendarDays size={16} strokeWidth={1.8} aria-hidden="true" /><input id="task-date" type="date" value={taskDate} onChange={event => setTaskDate(event.target.value)} /></div></div><div className="today-form-field"><label htmlFor="task-time">Ώρα</label><input id="task-time" type="time" value={taskTime} onChange={event => setTaskTime(event.target.value)} /></div></>}
+
+          <div className="today-form-field is-full"><label>Προτεραιότητα και αρχείο</label><div className="today-form-actions-row">{taskAsap ? <div className="task-asap-summary"><Zap size={16} strokeWidth={2} aria-hidden="true" /><span><strong>ASAP</strong><small>Θα εμφανίζεται πρώτο στις επείγουσες εργασίες.</small></span></div> : <button type="button" className={`today-urgent-toggle ${taskUrgent ? 'is-active' : ''}`} onClick={() => setTaskUrgent(value => !value)} aria-pressed={taskUrgent}><AlertTriangle size={16} strokeWidth={1.8} aria-hidden="true" />{taskUrgent ? 'Έχει οριστεί ως επείγον' : 'Ορισμός ως επείγον'}</button>}<label className="today-attach-button is-wide"><FileText size={16} strokeWidth={1.8} aria-hidden="true" />{taskFile ? taskFile.name : 'Επισύναψη αρχείου'}<input type="file" onChange={event => setTaskFile(event.target.files[0])} hidden /></label></div></div>
         </div>
       </ModalShell>
 
