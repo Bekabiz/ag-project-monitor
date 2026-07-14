@@ -1,13 +1,17 @@
 import { useState, useEffect } from 'react'
-import { AlertTriangle, Plus, Paperclip, ChevronDown, Send, Mic, Clock, Flag, Circle, Play, Pause, Check } from 'lucide-react'
+import { AlertTriangle, Plus, Paperclip, ChevronDown, Send, Mic, Circle, Play, Pause, Check, CheckCircle2, ClipboardCheck, Clock3, FileText, Pencil, RefreshCw, Search, UserRound } from 'lucide-react'
 import { db, dbRead, supabase } from '../lib/db'
 import { getDaysInfo, formatDueTime, getStepCardClass } from '../lib/dates'
 import { useVoiceRecorder } from '../lib/voice'
+import { ButtonSpinner, EmptyState, LoadingState, ModalShell } from '../components/ui'
 
 export default function StepsView({ project, profile }) {
   const [steps, setSteps] = useState([])
   const [profiles, setProfiles] = useState([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+  const [filter, setFilter] = useState('active')
+  const [search, setSearch] = useState('')
   const [showAdd, setShowAdd] = useState(false)
   const [editStep, setEditStep] = useState(null)
   const [title, setTitle] = useState('')
@@ -32,6 +36,7 @@ export default function StepsView({ project, profile }) {
 
   async function loadSteps() {
     setLoading(true)
+    setLoadError(false)
     try {
     const stps = await dbRead(supabase
       .from('steps')
@@ -60,6 +65,7 @@ export default function StepsView({ project, profile }) {
     }
     } catch (err) {
       console.error('Load error:', err)
+      setLoadError(true)
       showToast('Σφάλμα φόρτωσης', true)
     } finally {
       setLoading(false)
@@ -199,179 +205,142 @@ export default function StepsView({ project, profile }) {
     { value: 'done', label: 'Ολοκληρώθηκε', icon: Check }
   ]
 
-  const doneCount = steps.filter(s => s.status === 'done').length
+  const doneCount = steps.filter(step => step.status === 'done').length
   const totalCount = steps.length
+  const activeCount = totalCount - doneCount
+  const urgentCount = steps.filter(step => step.is_urgent && step.status !== 'done').length
+  const overdueCount = steps.filter(step => getDaysInfo(step).className === 'step-overdue' && step.status !== 'done').length
+  const progress = totalCount > 0 ? Math.round(doneCount / totalCount * 100) : 0
 
-  if (loading) return <div className="loading-inline"><div className="spinner" /></div>
+  const normalizedSearch = search.trim().toLocaleLowerCase('el-GR')
+  const visibleSteps = steps.filter(step => {
+    if (filter === 'active' && step.status === 'done') return false
+    if (filter === 'done' && step.status !== 'done') return false
+    if (filter === 'urgent' && (!step.is_urgent || step.status === 'done')) return false
+    if (normalizedSearch && ![step.title, step.description, step.assigned_to_name].filter(Boolean).some(value => value.toLocaleLowerCase('el-GR').includes(normalizedSearch))) return false
+    return true
+  })
+
+  if (loading) return <LoadingState label="Φόρτωση εργασιών έργου…" cards={4} />
+
+  if (loadError) {
+    return <EmptyState icon={RefreshCw} title="Δεν φορτώθηκαν οι εργασίες" description="Δοκιμάστε ξανά χωρίς να χαθεί καμία αλλαγή." actionLabel="Δοκιμή ξανά" onAction={loadSteps} />
+  }
 
   return (
-    <div>
-      {/* Progress bar */}
-      {totalCount > 0 && (
-        <div className="steps-progress">
-          <div className="steps-progress-text">{doneCount}/{totalCount} βήματα</div>
-          <div className="steps-progress-bar">
-            <div className="steps-progress-fill" style={{ width: `${(doneCount / totalCount) * 100}%` }} />
-          </div>
+    <section className="project-tasks-workspace">
+      <header className="project-tasks-header">
+        <div className="project-tasks-title">
+          <span aria-hidden="true"><ClipboardCheck size={20} strokeWidth={1.7} /></span>
+          <div><h2>Εργασίες έργου</h2><p>Αναθέσεις, πρόοδος, σημειώσεις και προθεσμίες για το συγκεκριμένο έργο.</p></div>
         </div>
-      )}
+        <button type="button" className="project-task-add" onClick={openAdd}><Plus size={16} strokeWidth={2} aria-hidden="true" />Νέα εργασία</button>
+      </header>
 
-      {/* Steps list */}
-      {steps.map(step => {
-        const info = getDaysInfo(step)
-        const notes = stepNotes[step.id] || []
-        const isExpanded = expandedStep === step.id
-        const dueTime = formatDueTime(step)
+      <div className="project-task-summary-grid">
+        <article><span className="is-primary" aria-hidden="true"><ClipboardCheck size={18} strokeWidth={1.8} /></span><div><strong>{activeCount}</strong><small>Ενεργές</small></div></article>
+        <article><span className="is-success" aria-hidden="true"><CheckCircle2 size={18} strokeWidth={1.8} /></span><div><strong>{doneCount}</strong><small>Ολοκληρωμένες</small></div></article>
+        <article className={urgentCount ? 'is-attention' : ''}><span className="is-danger" aria-hidden="true"><AlertTriangle size={18} strokeWidth={1.8} /></span><div><strong>{urgentCount}</strong><small>Επείγουσες</small></div></article>
+        <article className={overdueCount ? 'is-attention' : ''}><span className="is-warning" aria-hidden="true"><Clock3 size={18} strokeWidth={1.8} /></span><div><strong>{overdueCount}</strong><small>Εκπρόθεσμες</small></div></article>
+      </div>
 
-        return (
-          <div key={step.id} className={getStepCardClass(step)} onClick={() => setExpandedStep(isExpanded ? null : step.id)}>
-            <div className="step-card-top">
-              <div style={{ flex: 1 }}>
-                <span className={`step-title ${step.status === 'done' ? 'step-title-done' : ''}`}>
-                  {step.is_urgent && <span className="urgent-badge" style={{ marginRight: 4 }}>!</span>}
-                  {step.title}
-                </span>
-                {step.description && <div className="step-desc-preview">{step.description}</div>}
-                <div className="step-meta">
-                  <span>{step.assigned_to_name || 'Χωρίς ανάθεση'}</span>
-                  {info.text && <><span className="step-sep">·</span><span>{info.text}</span></>}
-                  {dueTime && <><span className="step-sep">·</span><span>{dueTime}</span></>}
-                </div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                {step.file_url && (
-                  <Paperclip size={12} strokeWidth={1.6} color="var(--text3)" />
-                )}
-                {notes.length > 0 && <span className="step-note-count">{notes.length}</span>}
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" strokeWidth="1.5" strokeLinecap="round" onClick={e => openEdit(e, step)} style={{ cursor: 'pointer' }}>
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                </svg>
-              </div>
-            </div>
+      <section className="project-progress-panel" aria-label={`Πρόοδος εργασιών ${progress}%`}>
+        <div><span>Συνολική πρόοδος</span><strong>{doneCount} από {totalCount} εργασίες</strong></div>
+        <div className="project-progress-track"><span style={{ width: `${progress}%` }} /></div>
+        <em>{progress}%</em>
+      </section>
 
-            {isExpanded && (
-              <div className="step-expanded" onClick={e => e.stopPropagation()}>
-                <div className="step-status-row">
-                  {statusOptions.map(opt => {
-                    const StatusIcon = opt.icon
-                    return (
-                      <button
-                        key={opt.value}
-                        className={`step-status-btn step-status-${opt.value} ${step.status === opt.value ? 'step-status-active' : ''}`}
-                        onClick={() => updateStatus(step.id, opt.value)}
-                      >
-                        <StatusIcon size={13} strokeWidth={2} />
-                        <span>{opt.label}</span>
-                      </button>
-                    )
-                  })}
-                </div>
+      <div className="project-task-toolbar">
+        <div className="project-task-filters" role="group" aria-label="Φίλτρο εργασιών">
+          <button type="button" className={filter === 'active' ? 'is-active' : ''} onClick={() => setFilter('active')}>Ενεργές <span>{activeCount}</span></button>
+          <button type="button" className={filter === 'all' ? 'is-active' : ''} onClick={() => setFilter('all')}>Όλες <span>{totalCount}</span></button>
+          <button type="button" className={filter === 'urgent' ? 'is-active' : ''} onClick={() => setFilter('urgent')}>Επείγουσες <span>{urgentCount}</span></button>
+          <button type="button" className={filter === 'done' ? 'is-active' : ''} onClick={() => setFilter('done')}>Ολοκληρωμένες <span>{doneCount}</span></button>
+        </div>
+        <label className="project-task-search"><Search size={15} strokeWidth={1.8} aria-hidden="true" /><span className="sr-only">Αναζήτηση εργασιών</span><input value={search} onChange={event => setSearch(event.target.value)} placeholder="Αναζήτηση εργασίας…" /></label>
+      </div>
 
-                {step.file_url && (
-                  <a href={step.file_url} target="_blank" rel="noopener" className="step-file-link">
-                    <Paperclip size={14} strokeWidth={1.6} />
-                    {step.file_name || 'Αρχείο'}
-                  </a>
-                )}
+      {totalCount === 0 ? (
+        <EmptyState icon={ClipboardCheck} title="Δεν υπάρχουν εργασίες ακόμη" description="Δημιουργήστε την πρώτη σαφή ανάθεση για αυτό το έργο." actionLabel="Δημιουργία πρώτης εργασίας" onAction={openAdd} />
+      ) : visibleSteps.length === 0 ? (
+        <EmptyState icon={Search} title="Δεν βρέθηκε εργασία" description="Αλλάξτε φίλτρο ή όρο αναζήτησης." compact />
+      ) : (
+        <div className="project-task-list">
+          {visibleSteps.map(step => {
+            const info = getDaysInfo(step)
+            const notes = stepNotes[step.id] || []
+            const isExpanded = expandedStep === step.id
+            const dueTime = formatDueTime(step)
+            const currentStatus = statusOptions.find(option => option.value === step.status) || statusOptions[0]
+            const CurrentIcon = currentStatus.icon
 
-                {notes.map(n => (
-                  <div key={n.id} className="step-note">
-                    <span className="step-note-author">{n.user_name}:</span> {n.text}
-                    <span className="step-note-time">{new Date(n.created_at).toLocaleDateString('el-GR', { day: 'numeric', month: 'short' })}</span>
-                  </div>
-                ))}
-
-                <div className="step-add-note">
-                  <input
-                    className="step-note-input"
-                    placeholder="Σημείωση..."
-                    value={noteText}
-                    onChange={e => setNoteText(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && addNote(step.id)}
-                  />
-                  <button className="step-note-send" onClick={() => addNote(step.id)} disabled={!noteText.trim()}>
-                    <Send size={14} strokeWidth={1.6} />
+            return (
+              <article key={step.id} className={`project-task-card ${getStepCardClass(step)} ${isExpanded ? 'is-expanded' : ''}`}>
+                <div className="project-task-card-summary">
+                  <button type="button" className="project-task-toggle" onClick={() => setExpandedStep(isExpanded ? null : step.id)} aria-expanded={isExpanded}>
+                    <span className={`project-task-status status-${step.status}`} aria-hidden="true"><CurrentIcon size={16} strokeWidth={2} /></span>
+                    <span className="project-task-card-copy">
+                      <span className="project-task-card-title"><strong className={step.status === 'done' ? 'is-done' : ''}>{step.title}</strong>{step.is_urgent && <em>Επείγον</em>}</span>
+                      {step.description && <span className="project-task-card-description">{step.description}</span>}
+                      <span className="project-task-card-meta"><span><UserRound size={12} strokeWidth={1.8} aria-hidden="true" />{step.assigned_to_name || 'Χωρίς ανάθεση'}</span>{info.text && <span className={info.className === 'step-overdue' ? 'is-overdue' : ''}><Clock3 size={12} strokeWidth={1.8} aria-hidden="true" />{info.text}{dueTime ? ` · ${dueTime}` : ''}</span>}{notes.length > 0 && <span>{notes.length} σημειώσεις</span>}</span>
+                    </span>
                   </button>
+                  <span className="project-task-card-tools">
+                    {step.file_url && <Paperclip size={14} strokeWidth={1.7} aria-label="Υπάρχει συνημμένο" />}
+                    <button type="button" className="project-task-edit" onClick={event => openEdit(event, step)} aria-label={`Επεξεργασία εργασίας ${step.title}`}><Pencil size={15} strokeWidth={1.8} aria-hidden="true" /></button>
+                    <button type="button" className="project-task-expand-button" onClick={() => setExpandedStep(isExpanded ? null : step.id)} aria-label={isExpanded ? 'Σύμπτυξη εργασίας' : 'Άνοιγμα εργασίας'} aria-expanded={isExpanded}><ChevronDown size={17} strokeWidth={1.8} aria-hidden="true" className={isExpanded ? 'is-rotated' : ''} /></button>
+                  </span>
                 </div>
-              </div>
-            )}
-          </div>
-        )
-      })}
 
-      {/* Add step button */}
-      <button className="today-add-btn" onClick={openAdd}>
-        <Plus size={16} strokeWidth={1.6} />
-        Νέο βήμα
-      </button>
+                {isExpanded && (
+                  <div className="project-task-expanded">
+                    <div className="project-task-expanded-label">Κατάσταση εργασίας</div>
+                    <div className="project-task-status-options">
+                      {statusOptions.map(option => {
+                        const StatusIcon = option.icon
+                        return <button type="button" key={option.value} className={`status-${option.value} ${step.status === option.value ? 'is-active' : ''}`} onClick={() => updateStatus(step.id, option.value)} aria-pressed={step.status === option.value}><StatusIcon size={14} strokeWidth={2} aria-hidden="true" />{option.label}</button>
+                      })}
+                    </div>
 
-      {/* Add/Edit Modal */}
-      {showAdd && (
-        <div className="modal-overlay" onClick={() => setShowAdd(false)}>
-          <div className="modal-content task-modal" onClick={e => e.stopPropagation()}>
-            <p className="modal-title">{editStep ? 'Επεξεργασία' : 'Νέο βήμα'}</p>
+                    {step.file_url && <a href={step.file_url} target="_blank" rel="noopener noreferrer" className="project-task-file"><FileText size={15} strokeWidth={1.8} aria-hidden="true" />{step.file_name || 'Άνοιγμα αρχείου'}</a>}
 
-            {/* Title + voice */}
-            <div className="task-title-row">
-              <input className="modal-input" placeholder="Τίτλος *" value={title} onChange={e => setTitle(e.target.value)} autoFocus style={{ flex: 1 }} />
-              <button
-                className={`voice-btn ${voice.recording ? 'voice-btn-recording' : ''}`}
-                onClick={voice.recording ? voice.stopRecording : handleTitleVoice}
-                disabled={voice.transcribing}
-              >
-                {voice.transcribing ? (
-                  <div className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />
-                ) : (
-                  <Mic size={18} strokeWidth={1.6} />
+                    {notes.length > 0 && <div className="project-task-note-list">{notes.map(note => <div key={note.id}><p><strong>{note.user_name}</strong>{note.text}</p><time>{new Date(note.created_at).toLocaleDateString('el-GR', { day: 'numeric', month: 'short' })}</time></div>)}</div>}
+
+                    <div className="project-task-note-composer">
+                      <label className="sr-only" htmlFor={`project-task-note-${step.id}`}>Προσθήκη σημείωσης</label>
+                      <input id={`project-task-note-${step.id}`} placeholder="Προσθήκη σημείωσης ή ενημέρωσης…" value={noteText} onChange={event => setNoteText(event.target.value)} onKeyDown={event => event.key === 'Enter' && addNote(step.id)} />
+                      <button type="button" onClick={() => addNote(step.id)} disabled={!noteText.trim()} aria-label="Αποστολή σημείωσης"><Send size={15} strokeWidth={1.8} aria-hidden="true" /></button>
+                    </div>
+                  </div>
                 )}
-              </button>
-            </div>
-
-            {/* Description */}
-            <textarea
-              className="modal-input"
-              placeholder="Περιγραφή (προαιρετικά)"
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-              rows={2}
-              style={{ resize: 'vertical', fontFamily: 'inherit' }}
-            />
-
-            {/* Assign */}
-            <select className="modal-input" value={assignedTo} onChange={e => setAssignedTo(e.target.value)}>
-              <option value="">Ανάθεση σε...</option>
-              {profiles.map(p => <option key={p.id} value={p.id}>{p.full_name}</option>)}
-            </select>
-
-            {/* Date + Time */}
-            <div className="task-datetime-row">
-              <input className="modal-input" type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} style={{ flex: 1 }} />
-              <input className="modal-input" type="time" value={dueTime} onChange={e => setDueTime(e.target.value)} style={{ width: 110 }} />
-            </div>
-
-            {/* File */}
-            {/* Urgent + File */}
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button className={`urgent-toggle ${isUrgent ? 'urgent-toggle-on' : ''}`}
-                onClick={() => setIsUrgent(!isUrgent)}>
-                <AlertTriangle size={16} strokeWidth={1.6} /> Επείγον
-              </button>
-              <label className="task-attach-btn" style={{ flex: 1 }}>
-                <Paperclip size={16} strokeWidth={1.6} />
-                {stepFile ? stepFile.name : (editStep?.file_name || 'Αρχείο')}
-                <input type="file" onChange={e => setStepFile(e.target.files[0])} hidden />
-              </label>
-            </div>
-
-            <div className="modal-actions">
-              <button className="action-btn" onClick={() => setShowAdd(false)}>Ακύρωση</button>
-              <button className="action-btn primary" onClick={handleSave} disabled={!title.trim() || saving}>
-                {saving ? '...' : 'Αποθήκευση'}
-              </button>
-            </div>
-          </div>
+              </article>
+            )
+          })}
         </div>
       )}
-    </div>
+
+      <ModalShell
+        open={showAdd}
+        onClose={() => !saving && setShowAdd(false)}
+        title={editStep ? 'Επεξεργασία εργασίας' : 'Νέα εργασία έργου'}
+        description={editStep ? 'Οι αλλαγές θα ενημερωθούν άμεσα για το υπεύθυνο μέλος.' : 'Ορίστε σαφή τίτλο, υπεύθυνο, προθεσμία και προτεραιότητα.'}
+        icon={ClipboardCheck}
+        size="lg"
+        actions={<><button type="button" className="action-btn" onClick={() => setShowAdd(false)} disabled={saving}>Ακύρωση</button><button type="button" className="action-btn primary" onClick={handleSave} disabled={!title.trim() || saving}>{saving ? <ButtonSpinner label="Αποθήκευση…" /> : editStep ? 'Αποθήκευση αλλαγών' : 'Δημιουργία εργασίας'}</button></>}
+      >
+        <div className="project-task-form">
+          <div className="project-task-form-field is-full"><label htmlFor="project-step-title">Τίτλος εργασίας <span>*</span></label><div className="project-task-title-input"><input id="project-step-title" value={title} onChange={event => setTitle(event.target.value)} placeholder="π.χ. Επιβεβαίωση ηλεκτρολογικού σχεδίου" autoFocus /><button type="button" className={voice.recording ? 'is-recording' : ''} onClick={voice.recording ? voice.stopRecording : handleTitleVoice} disabled={voice.transcribing} aria-label="Υπαγόρευση τίτλου">{voice.transcribing ? <span className="spinner" /> : <Mic size={18} strokeWidth={1.8} aria-hidden="true" />}</button></div></div>
+          <div className="project-task-form-field is-full"><label htmlFor="project-step-description">Περιγραφή</label><textarea id="project-step-description" value={description} onChange={event => setDescription(event.target.value)} placeholder="Προσθέστε λεπτομέρειες, παραδοτέο ή κριτήριο ολοκλήρωσης…" rows={4} /></div>
+
+          <fieldset className="project-assignee-selector is-full"><legend>Ανάθεση σε</legend><div>{profiles.map(person => <label key={person.id} className={assignedTo === person.id ? 'is-selected' : ''}><input type="radio" name="project-assignee" value={person.id} checked={assignedTo === person.id} onChange={() => setAssignedTo(person.id)} /><span className="project-assignee-avatar" aria-hidden="true">{person.full_name?.charAt(0)}</span><span>{person.full_name}</span></label>)}<label className={!assignedTo ? 'is-selected' : ''}><input type="radio" name="project-assignee" value="" checked={!assignedTo} onChange={() => setAssignedTo('')} /><span className="project-assignee-avatar is-empty" aria-hidden="true">—</span><span>Χωρίς ανάθεση</span></label></div></fieldset>
+
+          <div className="project-task-form-field"><label htmlFor="project-step-date">Ημερομηνία</label><input id="project-step-date" type="date" value={dueDate} onChange={event => setDueDate(event.target.value)} /></div>
+          <div className="project-task-form-field"><label htmlFor="project-step-time">Ώρα</label><input id="project-step-time" type="time" value={dueTime} onChange={event => setDueTime(event.target.value)} /></div>
+          <div className="project-task-form-field is-full"><label>Προτεραιότητα και αρχείο</label><div className="project-task-form-actions"><button type="button" className={`project-urgent-toggle ${isUrgent ? 'is-active' : ''}`} onClick={() => setIsUrgent(value => !value)} aria-pressed={isUrgent}><AlertTriangle size={16} strokeWidth={1.8} aria-hidden="true" />{isUrgent ? 'Έχει οριστεί ως επείγον' : 'Ορισμός ως επείγον'}</button><label className="project-task-attach"><Paperclip size={16} strokeWidth={1.8} aria-hidden="true" />{stepFile ? stepFile.name : editStep?.file_name || 'Επισύναψη αρχείου'}<input type="file" onChange={event => setStepFile(event.target.files[0])} hidden /></label></div></div>
+        </div>
+      </ModalShell>
+
+      {toast && <div className={`toast ${toast.isError ? 'toast-error' : 'toast-success'}`} role="status">{toast.msg}</div>}
+    </section>
   )
 }

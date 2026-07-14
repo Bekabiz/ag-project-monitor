@@ -1,6 +1,8 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
+import { AlertTriangle, ArrowLeft, Building2, CalendarDays, Camera, CheckCircle2, ChevronRight, ClipboardCheck, Clock3, FileDown, FileText, FolderTree, Image, LayoutDashboard, ListTree, MapPin, Mic, Plus, RefreshCw, Sparkles } from 'lucide-react'
 import { db, dbRead, supabase } from '../lib/db'
 import StepsView from './StepsView'
+import { ButtonSpinner, EmptyState, InlineNotice, LoadingState, ModalShell } from '../components/ui'
 
 const CAT_CONFIG = {
   problem: { label: 'Προβλήματα', icon: 'M12 9v2m0 4h.01M5.07 19H19a2 2 0 001.75-2.96L13.75 4a2 2 0 00-3.5 0L3.32 16.04A2 2 0 005.07 19z', color: '#dc2626', bg: '#fef2f2' },
@@ -17,13 +19,12 @@ function CatIcon({ path, color, size = 18 }) {
 
 function StatusPill({ status }) {
   if (!status) return null
-  const colors = { open: { bg: '#fef2f2', color: '#dc2626', label: 'Ανοιχτό' }, resolved: { bg: '#ecfdf5', color: '#059669', label: 'Επιλύθηκε' } }
-  const c = colors[status] || colors.open
-  return <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 10px', borderRadius: 100, background: c.bg, color: c.color }}>{c.label}</span>
+  const label = status === 'resolved' ? 'Επιλύθηκε' : 'Ανοιχτό'
+  return <span className={`project-status-pill is-${status}`}>{label}</span>
 }
 
 function TagChip({ tag }) {
-  return <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 4, background: '#f3f4f6', color: '#6b7280', fontWeight: 500 }}>{tag}</span>
+  return <span className="project-tag-chip">{tag}</span>
 }
 
 export default function ProjectDetail({ project, profile, onBack, onAddUpdate }) {
@@ -32,6 +33,7 @@ export default function ProjectDetail({ project, profile, onBack, onAddUpdate })
   const [areas, setAreas] = useState([])
   const [deadlines, setDeadlines] = useState([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [areaFilter, setAreaFilter] = useState('all')
   const [catFilter, setCatFilter] = useState(null)
   const [lightboxUrl, setLightboxUrl] = useState(null)
@@ -45,6 +47,7 @@ export default function ProjectDetail({ project, profile, onBack, onAddUpdate })
 
   async function loadData() {
     setLoading(true)
+    setLoadError(false)
     try {
       const [entriesData, areasData, deadlinesData] = await Promise.all([
         dbRead(supabase.from('entries').select('*').eq('project_id', project.id).order('created_at', { ascending: false }).limit(200)),
@@ -56,6 +59,7 @@ export default function ProjectDetail({ project, profile, onBack, onAddUpdate })
       setDeadlines(deadlinesData)
     } catch (err) {
       console.error('Load error:', err)
+      setLoadError(true)
       showToast('Σφάλμα φόρτωσης', true)
     } finally {
       setLoading(false)
@@ -139,6 +143,7 @@ export default function ProjectDetail({ project, profile, onBack, onAddUpdate })
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: textContent })
       })
+      if (!res.ok) throw new Error('Η ανάλυση του εγγράφου απέτυχε')
       const data = await res.json()
       
       if (data.structure) {
@@ -278,427 +283,239 @@ export default function ProjectDetail({ project, profile, onBack, onAddUpdate })
     return new Date(iso).toLocaleDateString('el-GR', { day: 'numeric', month: 'short' })
   }
 
-  if (loading) return <div className="loading-screen"><div className="spinner" /></div>
+  if (loading) return <LoadingState label="Φόρτωση χώρου έργου…" cards={5} />
+
+  if (loadError) {
+    return (
+      <EmptyState
+        icon={RefreshCw}
+        title="Δεν φορτώθηκε το έργο"
+        description="Οι πληροφορίες του έργου δεν είναι διαθέσιμες αυτή τη στιγμή. Δοκιμάστε ξανά."
+        actionLabel="Δοκιμή ξανά"
+        onAction={loadData}
+      />
+    )
+  }
+
+  const lastEntry = entries[0]
+  const projectHealth = openProblems.length > 0 || overdueDeadlines.length > 0 ? 'attention' : entries.length === 0 ? 'empty' : 'healthy'
+  const tabItems = [
+    { id: 'overview', label: 'Επισκόπηση', icon: LayoutDashboard },
+    { id: 'memory', label: 'Μνήμη έργου', icon: ListTree, badge: entries.length },
+    { id: 'tasks', label: 'Εργασίες', icon: ClipboardCheck },
+    { id: 'photos', label: 'Φωτογραφίες', icon: Camera, badge: photos.length },
+    { id: 'timeline', label: 'Χρονολόγιο', icon: Clock3 },
+    { id: 'report', label: 'Αναφορά', icon: FileText },
+  ]
+
+  const uploadMessages = {
+    reading: { tone: 'info', text: 'Ανάγνωση του εγγράφου…' },
+    parsing: { tone: 'info', text: 'Ανάλυση της δομής του έργου…' },
+    saving: { tone: 'info', text: 'Αποθήκευση χώρων και συστημάτων…' },
+    done: { tone: 'success', text: 'Η δομή του έργου είναι έτοιμη.' },
+    error: { tone: 'danger', text: 'Δεν ήταν δυνατή η επεξεργασία του εγγράφου.' },
+  }
+
+  function entryTitle(entry) {
+    return entry.title || entry.ai_summary || entry.raw_text?.slice(0, 100) || 'Καταχώρηση έργου'
+  }
+
+  function renderEntry(entry, { detailed = false } = {}) {
+    const category = CAT_CONFIG[entry.category] || CAT_CONFIG.note
+    return (
+      <article key={entry.id} className={`project-entry-card category-${entry.category || 'note'}`}>
+        <div className="project-entry-heading">
+          <span className="project-entry-category" style={{ '--category-color': category.color, '--category-bg': category.bg }} aria-hidden="true">
+            <CatIcon path={category.icon} color={category.color} size={15} />
+          </span>
+          <div><h4>{entryTitle(entry)}</h4><p>{category.label}</p></div>
+          {entry.entry_status && (
+            entry.category === 'problem'
+              ? <button type="button" className="project-status-button" onClick={() => toggleProblemStatus(entry.id, entry.entry_status)} aria-label="Αλλαγή κατάστασης προβλήματος"><StatusPill status={entry.entry_status} /></button>
+              : <StatusPill status={entry.entry_status} />
+          )}
+        </div>
+        {detailed && entry.raw_text && entry.raw_text !== entry.title && <p className="project-entry-body">{entry.raw_text}</p>}
+        <div className="project-entry-meta"><span>{entry.submitter_name || 'Άγνωστο μέλος'}</span><span>{formatDate(entry.created_at)}</span></div>
+        {(entry.tags || []).length > 0 && <div className="project-tag-list">{entry.tags.map(tag => <TagChip key={tag} tag={tag} />)}</div>}
+        {entry.file_url && <a href={entry.file_url} target="_blank" rel="noopener noreferrer" className="project-entry-file"><FileDown size={14} strokeWidth={1.8} aria-hidden="true" />{entry.file_name || 'Άνοιγμα αρχείου'}</a>}
+      </article>
+    )
+  }
 
   return (
-    <div className="app" style={{ height: '100dvh', display: 'flex', flexDirection: 'column' }}>
-      {/* Header */}
-      <div className="detail-header">
-        <button className="back-btn" onClick={onBack}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
-        </button>
-        <div style={{ flex: 1 }}>
-          <div className="detail-name">{project.name}</div>
-          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)' }}>{project.location}</div>
+    <div className="project-workspace-page">
+      <section className="project-hero-card">
+        <div className="project-hero-top">
+          <button type="button" className="project-back-button" onClick={onBack}><ArrowLeft size={18} strokeWidth={1.8} aria-hidden="true" /><span>Όλα τα έργα</span></button>
+          <div className={`project-health-badge is-${projectHealth}`}>
+            <span aria-hidden="true" />
+            {projectHealth === 'attention' ? 'Χρειάζεται προσοχή' : projectHealth === 'empty' ? 'Χωρίς ενημερώσεις' : 'Σε καλή πορεία'}
+          </div>
         </div>
-        <div className="detail-header-actions">
-          {onAddUpdate && (
-            <button className="detail-add-update" onClick={onAddUpdate}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M12 5v14m-7-7h14"/></svg>
-              <span>Νέα ενημέρωση</span>
+        <div className="project-hero-main">
+          <div className="project-hero-icon" aria-hidden="true"><Building2 size={25} strokeWidth={1.6} /></div>
+          <div className="project-hero-copy">
+            <span>Ενεργό έργο</span>
+            <h2>{project.name}</h2>
+            <p><MapPin size={14} strokeWidth={1.7} aria-hidden="true" />{project.location || 'Δεν έχει οριστεί τοποθεσία'}{project.building_type ? ` · ${project.building_type.replaceAll('_', ' ')}` : ''}</p>
+          </div>
+          <div className="project-hero-actions">
+            {profile?.role === 'owner' && areas.length === 0 && (
+              <label className="project-structure-button">
+                <FolderTree size={16} strokeWidth={1.8} aria-hidden="true" />
+                <span>Εισαγωγή δομής</span>
+                <input type="file" accept=".pdf,.doc,.docx,.txt" onChange={handleTechDescUpload} hidden />
+              </label>
+            )}
+            {onAddUpdate && <button type="button" className="project-add-update-button" onClick={onAddUpdate}><Mic size={16} strokeWidth={1.8} aria-hidden="true" />Νέα ενημέρωση</button>}
+          </div>
+        </div>
+        <div className="project-hero-meta">
+          <span><Clock3 size={14} strokeWidth={1.7} aria-hidden="true" />Τελευταία ενημέρωση: {lastEntry ? formatDate(lastEntry.created_at) : 'Δεν υπάρχει'}</span>
+          <span><ListTree size={14} strokeWidth={1.7} aria-hidden="true" />{entries.length} καταχωρήσεις</span>
+          <span><Camera size={14} strokeWidth={1.7} aria-hidden="true" />{photos.length} φωτογραφίες</span>
+        </div>
+      </section>
+
+      {uploadStatus && uploadMessages[uploadStatus] && <InlineNotice tone={uploadMessages[uploadStatus].tone}>{uploadMessages[uploadStatus].text}</InlineNotice>}
+
+      <nav className="project-tab-navigation" aria-label="Ενότητες έργου">
+        {tabItems.map(item => {
+          const Icon = item.icon
+          return (
+            <button type="button" key={item.id} className={tab === item.id ? 'is-active' : ''} onClick={() => { setTab(item.id); setCatFilter(null) }} aria-current={tab === item.id ? 'page' : undefined}>
+              <Icon size={17} strokeWidth={1.75} aria-hidden="true" />
+              <span>{item.label}</span>
+              {item.badge > 0 && <em>{item.badge}</em>}
             </button>
-          )}
-          {profile?.role === 'owner' && areas.length === 0 && (
-            <label className="setup-btn">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M12 5v14m-7-7h14"/></svg>
-              <span>Δομή έργου</span>
-              <input type="file" accept=".pdf,.doc,.docx,.txt" onChange={handleTechDescUpload} hidden />
-            </label>
-          )}
-        </div>
-      </div>
+          )
+        })}
+      </nav>
 
-      {/* Upload status */}
-      {uploadStatus && (
-        <div className="upload-status-bar">
-          {uploadStatus === 'reading' && 'Reading document...'}
-          {uploadStatus === 'parsing' && 'AI extracting structure...'}
-          {uploadStatus === 'saving' && 'Saving project areas...'}
-          {uploadStatus === 'done' && 'Project structure ready!'}
-          {uploadStatus === 'error' && 'Error parsing document'}
-        </div>
-      )}
-
-      {/* Confirmation card after parsing */}
-      {parsedStructure && (
-        <div className="pd-confirm-overlay">
-          <div className="pd-confirm-card">
-            <div className="pd-confirm-title">AI found this structure</div>
-            
-            {parsedStructure.building_type && (
-              <div className="pd-confirm-type">
-                <span className="pd-confirm-label">Building type</span>
-                <span className="pd-confirm-value">{parsedStructure.building_type.replace('_', ' ')}</span>
-                {parsedStructure.building_type_confidence && (
-                  <span className="pd-confirm-confidence">{parsedStructure.building_type_confidence}% confidence</span>
-                )}
-              </div>
-            )}
-
-            <div className="pd-confirm-label">Areas</div>
-            {parsedStructure.buildings?.map((b, bi) => (
-              <div key={bi} className="pd-confirm-building">
-                <div className="pd-confirm-building-name">{b.name || `Building ${bi+1}`} {b.sqm ? `(${b.sqm} sqm)` : ''}</div>
-                {b.floors?.map((f, fi) => (
-                  <div key={fi} className="pd-confirm-floor">
-                    <div className="pd-confirm-floor-name">{f.name}</div>
-                    <div className="pd-confirm-rooms">
-                      {f.rooms?.map((r, ri) => (
-                        <span key={ri} className="pd-confirm-room-chip">{r.name} {r.sqm ? `${r.sqm}m2` : ''}</span>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ))}
-
-            {parsedStructure.systems?.length > 0 && (
-              <>
-                <div className="pd-confirm-label" style={{ marginTop: 12 }}>Systems</div>
-                <div className="pd-confirm-rooms">
-                  {parsedStructure.systems.map((s, i) => (
-                    <span key={i} className="pd-confirm-room-chip pd-confirm-system">{s.name}</span>
-                  ))}
-                </div>
-              </>
-            )}
-
-            {parsedStructure.exterior?.length > 0 && (
-              <>
-                <div className="pd-confirm-label" style={{ marginTop: 12 }}>Εξωτερικοί χώροι</div>
-                <div className="pd-confirm-rooms">
-                  {parsedStructure.exterior.map((e, i) => (
-                    <span key={i} className="pd-confirm-room-chip pd-confirm-exterior">{e.name}</span>
-                  ))}
-                </div>
-              </>
-            )}
-
-            <div className="pd-confirm-actions">
-              <button className="pd-confirm-btn-cancel" onClick={() => setParsedStructure(null)}>Ακύρωση</button>
-              <button className="pd-confirm-btn-save" onClick={saveConfirmedStructure}>Επιβεβαίωση και αποθήκευση</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Tabs */}
-      <div className="detail-tabs">
-        {['overview','memory','tasks','photos','timeline','report'].map(t => (
-          <button key={t} className={`detail-tab ${tab === t ? 'active' : ''}`} onClick={() => { setTab(t); setCatFilter(null) }}>
-            {t === 'overview' && 'Επισκόπηση'}
-            {t === 'memory' && 'Μνήμη'}
-            {t === 'tasks' && 'Εργασίες'}
-            {t === 'photos' && `Φωτογραφίες (${photos.length})`}
-            {t === 'timeline' && 'Χρονολόγιο'}
-            {t === 'report' && 'Αναφορά'}
-          </button>
-        ))}
-      </div>
-
-      <div style={{ flex: 1, overflowY: 'auto' }}>
-        {/* ========== OVERVIEW ========== */}
-        {tab === 'overview' && (
-          <div style={{ padding: '12px 16px' }}>
-            {/* Stats */}
-            <div className="pd-stats">
-              <div className="pd-stat" onClick={() => { setTab('memory'); setCatFilter('problem') }}>
-                <div className="pd-stat-n" style={{ color: '#dc2626' }}>{openProblems.length}</div>
-                <div className="pd-stat-l">Ανοιχτά προβλήματα</div>
-              </div>
-              <div className="pd-stat" onClick={() => setTab('tasks')}>
-                <div className="pd-stat-n" style={{ color: '#2563eb' }}>{entries.filter(e => e.category === 'work_update').length}</div>
-                <div className="pd-stat-l">Ενημερώσεις εργασιών</div>
-              </div>
-              <div className="pd-stat" onClick={() => { setTab('memory'); setCatFilter('decision') }}>
-                <div className="pd-stat-n" style={{ color: '#7c3aed' }}>{decisions.length}</div>
-                <div className="pd-stat-l">Αποφάσεις</div>
-              </div>
-              <div className="pd-stat">
-                <div className="pd-stat-n" style={{ color: '#d97706' }}>{overdueDeadlines.length}</div>
-                <div className="pd-stat-l">Overdue</div>
-              </div>
+      {tab === 'overview' && (
+        <div className="project-overview-layout">
+          <section className="project-overview-main">
+            <div className="project-stat-grid">
+              <button type="button" className="project-stat-card is-danger" onClick={() => { setTab('memory'); setCatFilter('problem') }}><span aria-hidden="true"><AlertTriangle size={18} strokeWidth={1.8} /></span><strong>{openProblems.length}</strong><small>Ανοιχτά προβλήματα</small></button>
+              <button type="button" className="project-stat-card is-primary" onClick={() => setTab('tasks')}><span aria-hidden="true"><ClipboardCheck size={18} strokeWidth={1.8} /></span><strong>{catCounts.work_update || 0}</strong><small>Ενημερώσεις εργασιών</small></button>
+              <button type="button" className="project-stat-card is-purple" onClick={() => { setTab('memory'); setCatFilter('decision') }}><span aria-hidden="true"><CheckCircle2 size={18} strokeWidth={1.8} /></span><strong>{decisions.length}</strong><small>Αποφάσεις</small></button>
+              <button type="button" className="project-stat-card is-warning" onClick={() => setTab('report')}><span aria-hidden="true"><CalendarDays size={18} strokeWidth={1.8} /></span><strong>{overdueDeadlines.length}</strong><small>Εκπρόθεσμες προθεσμίες</small></button>
             </div>
 
-            {/* Open problems */}
             {openProblems.length > 0 && (
-              <div className="pd-section">
-                <div className="pd-section-title">
-                  <CatIcon path={CAT_CONFIG.problem.icon} color="#dc2626" />
-                  Open problems
-                </div>
-                {openProblems.slice(0, 5).map(p => (
-                  <div key={p.id} className="pd-entry-card pd-entry-problem">
-                    <div className="pd-entry-top">
-                      <span className="pd-entry-title">{p.title || p.ai_summary || p.raw_text?.slice(0, 60)}</span>
-                      <StatusPill status={p.entry_status} />
-                    </div>
-                    <div className="pd-entry-meta">
-                      <span>{p.submitter_name}</span>
-                      <span className="pd-dot">.</span>
-                      <span>{formatDate(p.created_at)}</span>
-                    </div>
-                    {(p.tags || []).length > 0 && (
-                      <div className="pd-tags">{p.tags.map(t => <TagChip key={t} tag={t} />)}</div>
-                    )}
-                  </div>
-                ))}
-              </div>
+              <section className="project-content-panel">
+                <div className="project-panel-heading"><div><span className="is-danger" aria-hidden="true"><AlertTriangle size={18} strokeWidth={1.8} /></span><div><h3>Ανοιχτά προβλήματα</h3><p>Θέματα που χρειάζονται απόφαση ή ενέργεια.</p></div></div><button type="button" onClick={() => { setTab('memory'); setCatFilter('problem') }}>Προβολή όλων <ChevronRight size={15} strokeWidth={1.8} aria-hidden="true" /></button></div>
+                <div className="project-entry-list">{openProblems.slice(0, 5).map(entry => renderEntry(entry))}</div>
+              </section>
             )}
 
-            {/* Recent activity */}
-            <div className="pd-section">
-              <div className="pd-section-title">Πρόσφατη δραστηριότητα</div>
-              {entries.length === 0 && (
-                <div className="pd-empty pd-empty-actionable">
-                  <p>Δεν υπάρχουν ενημερώσεις ακόμη.</p>
-                  {onAddUpdate && <button className="pd-empty-action" onClick={onAddUpdate}>Προσθήκη ενημέρωσης</button>}
-                </div>
-              )}
-              {entries.slice(0, 8).map(e => {
-                const cat = CAT_CONFIG[e.category] || CAT_CONFIG.note
-                return (
-                  <div key={e.id} className="pd-entry-card" style={{ borderLeftColor: cat.color }}>
-                    <div className="pd-entry-top">
-                      <CatIcon path={cat.icon} color={cat.color} size={14} />
-                      <span className="pd-entry-title">{e.title || e.ai_summary || e.raw_text?.slice(0, 60)}</span>
-                    </div>
-                    <div className="pd-entry-meta">
-                      <span>{e.submitter_name}</span>
-                      <span className="pd-dot">.</span>
-                      <span>{formatDate(e.created_at)}</span>
-                      <span className="pd-dot">.</span>
-                      <span style={{ color: cat.color }}>{cat.label}</span>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
+            <section className="project-content-panel">
+              <div className="project-panel-heading"><div><span className="is-primary" aria-hidden="true"><Clock3 size={18} strokeWidth={1.8} /></span><div><h3>Πρόσφατη δραστηριότητα</h3><p>Οι πιο πρόσφατες πληροφορίες που καταχωρήθηκαν.</p></div></div>{entries.length > 8 && <button type="button" onClick={() => setTab('timeline')}>Πλήρες χρονολόγιο <ChevronRight size={15} strokeWidth={1.8} aria-hidden="true" /></button>}</div>
+              {entries.length === 0 ? <EmptyState icon={Sparkles} title="Δεν υπάρχουν ενημερώσεις ακόμη" description="Η πρώτη καταχώρηση θα δημιουργήσει τη μνήμη και το χρονολόγιο του έργου." actionLabel={onAddUpdate ? 'Προσθήκη πρώτης ενημέρωσης' : undefined} onAction={onAddUpdate} compact /> : <div className="project-entry-list">{entries.slice(0, 8).map(entry => renderEntry(entry))}</div>}
+            </section>
+          </section>
 
-        {/* ========== MEMORY ========== */}
-        {tab === 'memory' && (
-          <div style={{ padding: '12px 16px' }}>
-            {entries.length === 0 && (
-              <div className="pd-empty pd-empty-actionable">
-                <p>Η μνήμη του έργου είναι ακόμη κενή.</p>
-                {onAddUpdate && <button className="pd-empty-action" onClick={onAddUpdate}>Προσθήκη πρώτης ενημέρωσης</button>}
-              </div>
-            )}
-            {/* Area filter chips */}
-            {filterTags.length > 0 && (
-              <div className="pd-area-chips">
-                <button className={`pd-area-chip ${areaFilter === 'all' ? 'active' : ''}`} onClick={() => setAreaFilter('all')}>All</button>
-                {filterTags.map(tag => (
-                  <button key={tag} className={`pd-area-chip ${areaFilter === tag ? 'active' : ''}`} onClick={() => setAreaFilter(tag)}>{tag}</button>
-                ))}
-              </div>
-            )}
+          <aside className="project-overview-side">
+            <section className="project-content-panel">
+              <div className="project-panel-heading"><div><span className="is-warning" aria-hidden="true"><CalendarDays size={18} strokeWidth={1.8} /></span><div><h3>Προθεσμίες</h3><p>Επόμενες και εκπρόθεσμες δεσμεύσεις.</p></div></div><span className="project-panel-count">{deadlines.length}</span></div>
+              {deadlines.length === 0 ? <EmptyState icon={CalendarDays} title="Δεν υπάρχουν προθεσμίες" description="Οι προθεσμίες του έργου θα εμφανιστούν εδώ." compact /> : <div className="project-deadline-list">{deadlines.slice(0, 6).map(deadline => <article key={deadline.id} className={deadline.status === 'overdue' ? 'is-overdue' : deadline.status === 'completed' ? 'is-completed' : ''}><button type="button" onClick={() => toggleDeadline(deadline)} aria-label="Αλλαγή κατάστασης προθεσμίας"><CheckCircle2 size={16} strokeWidth={1.8} aria-hidden="true" /></button><div><strong>{deadline.description}</strong><small>{formatDate(deadline.due_date)}</small></div></article>)}</div>}
+            </section>
 
-            {/* Category rows */}
-            {!catFilter && Object.entries(CAT_CONFIG).map(([key, config]) => {
-              const count = areaFilter === 'all' ? catCounts[key] : entries.filter(e => e.category === key && (e.tags || []).includes(areaFilter)).length
-              const openCount = key === 'problem' ? entries.filter(e => e.category === 'problem' && e.entry_status === 'open' && (areaFilter === 'all' || (e.tags || []).includes(areaFilter))).length : 0
-              if (count === 0) return null
-              return (
-                <div key={key} className="pd-cat-row" onClick={() => setCatFilter(key)}>
-                  <div className="pd-cat-icon" style={{ background: config.bg }}>
-                    <CatIcon path={config.icon} color={config.color} size={16} />
-                  </div>
-                  <span className="pd-cat-name">{config.label}</span>
-                  {openCount > 0 && <span className="pd-cat-badge" style={{ background: '#fef2f2', color: '#dc2626' }}>{openCount} open</span>}
-                  <span className="pd-cat-count">{count}</span>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
-                </div>
-              )
-            })}
-
-            {/* Category detail view */}
-            {catFilter && (
-              <div>
-                <button className="pd-cat-back" onClick={() => setCatFilter(null)}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
-                  Back to categories
-                </button>
-                <div className="pd-section-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <CatIcon path={CAT_CONFIG[catFilter].icon} color={CAT_CONFIG[catFilter].color} />
-                  {CAT_CONFIG[catFilter].label}
-                  <span style={{ fontSize: 13, color: '#9ca3af', fontWeight: 400 }}>({filteredEntries.filter(e => e.category === catFilter).length})</span>
-                </div>
-                {filteredEntries.filter(e => e.category === catFilter).map(e => (
-                  <div key={e.id} className="pd-entry-card" style={{ borderLeftColor: CAT_CONFIG[catFilter].color }}>
-                    <div className="pd-entry-top">
-                      <span className="pd-entry-title">{e.title || e.ai_summary || e.raw_text?.slice(0, 80)}</span>
-                      {e.entry_status && (
-                        <button className="pd-status-toggle" onClick={() => toggleProblemStatus(e.id, e.entry_status)}>
-                          <StatusPill status={e.entry_status} />
-                        </button>
-                      )}
-                    </div>
-                    {e.raw_text && e.raw_text !== e.title && (
-                      <div className="pd-entry-body">{e.raw_text.slice(0, 200)}</div>
-                    )}
-                    <div className="pd-entry-meta">
-                      <span>{e.submitter_name}</span>
-                      <span className="pd-dot">.</span>
-                      <span>{formatDate(e.created_at)}</span>
-                    </div>
-                    {(e.tags || []).length > 0 && (
-                      <div className="pd-tags">{e.tags.map(t => <TagChip key={t} tag={t} />)}</div>
-                    )}
-                    {e.file_url && (
-                      <a href={e.file_url} target="_blank" rel="noopener" className="pd-file-link">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
-                        {e.file_name || 'File'}
-                      </a>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Photos category */}
-            {!catFilter && photos.length > 0 && (
-              <div className="pd-cat-row" onClick={() => setTab('photos')}>
-                <div className="pd-cat-icon" style={{ background: '#ecfdf5' }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="1.5" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-                </div>
-                <span className="pd-cat-name">Φωτογραφίες</span>
-                <span className="pd-cat-count">{photos.length}</span>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ========== TASKS ========== */}
-        {tab === 'tasks' && (
-          <div style={{ padding: '12px 16px' }}>
-            <StepsView project={project} profile={profile} />
-          </div>
-        )}
-
-        {/* ========== PHOTOS ========== */}
-        {tab === 'photos' && (
-          <div style={{ padding: '12px 16px' }}>
-            {photos.length === 0 && (
-              <div className="pd-empty pd-empty-actionable">
-                <p>Δεν υπάρχουν φωτογραφίες ακόμη.</p>
-                {onAddUpdate && <button className="pd-empty-action" onClick={onAddUpdate}>Προσθήκη φωτογραφίας</button>}
-              </div>
-            )}
-            <div className="pd-photo-grid">
-              {photos.map(p => (
-                <div key={p.id} className="pd-photo-card" onClick={() => setLightboxUrl(p.file_url)}>
-                  <img src={p.file_url} alt="" className="pd-photo-img" loading="lazy" />
-                  <div className="pd-photo-meta">
-                    <span>{p.ai_summary?.slice(0, 40) || 'Φωτογραφία'}</span>
-                    <span style={{ color: '#9ca3af' }}>{formatDate(p.created_at)}</span>
-                  </div>
-                  {(p.tags || []).length > 0 && (
-                    <div className="pd-tags" style={{ padding: '0 8px 8px' }}>{p.tags.slice(0, 3).map(t => <TagChip key={t} tag={t} />)}</div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ========== TIMELINE ========== */}
-        {tab === 'timeline' && (
-          <div style={{ padding: '12px 16px' }}>
-            {entries.length === 0 && (
-              <div className="pd-empty pd-empty-actionable">
-                <p>Το χρονολόγιο δεν έχει ακόμη καταχωρήσεις.</p>
-                {onAddUpdate && <button className="pd-empty-action" onClick={onAddUpdate}>Προσθήκη ενημέρωσης</button>}
-              </div>
-            )}
-            {entries.map(e => {
-              const cat = CAT_CONFIG[e.category] || CAT_CONFIG.note
-              return (
-                <div key={e.id} className="pd-timeline-item">
-                  <div className="pd-timeline-dot" style={{ background: cat.color }} />
-                  <div className="pd-timeline-content">
-                    <div className="pd-timeline-time">{formatDate(e.created_at)} . {e.submitter_name}</div>
-                    <div className="pd-timeline-text">{e.title || e.ai_summary || e.raw_text?.slice(0, 100)}</div>
-                    {(e.tags || []).length > 0 && (
-                      <div className="pd-tags">{e.tags.slice(0, 3).map(t => <TagChip key={t} tag={t} />)}</div>
-                    )}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        )}
-
-        {/* ========== REPORT ========== */}
-        {tab === 'report' && (
-          <div style={{ padding: '12px 16px' }}>
-            <div className="pd-report">
-              <div className="pd-report-header">
-                <div className="pd-report-title">{project.name}</div>
-                <div className="pd-report-sub">{project.location}</div>
-                <div className="pd-report-date">Δημιουργήθηκε: {new Date().toLocaleDateString('el-GR')}</div>
-              </div>
-
-              <div className="pd-report-section">
-                <div className="pd-report-label">Σύνοψη</div>
-                <div className="pd-report-row"><span>Σύνολο καταχωρίσεων</span><span>{entries.length}</span></div>
-                <div className="pd-report-row"><span>Ενημερώσεις εργασιών</span><span>{catCounts.work_update || 0}</span></div>
-                <div className="pd-report-row"><span>Προβλήματα (ανοιχτά / σύνολο)</span><span>{openProblems.length} / {problems.length}</span></div>
-                <div className="pd-report-row"><span>Αποφάσεις</span><span>{decisions.length}</span></div>
-                <div className="pd-report-row"><span>Υλικά</span><span>{catCounts.material || 0}</span></div>
-                <div className="pd-report-row"><span>Φωτογραφίες</span><span>{photos.length}</span></div>
-                <div className="pd-report-row"><span>Προθεσμίες (εκπρόθεσμες)</span><span>{overdueDeadlines.length} / {deadlines.length}</span></div>
-              </div>
-
-              {openProblems.length > 0 && (
-                <div className="pd-report-section">
-                  <div className="pd-report-label">Ανοιχτά προβλήματα</div>
-                  {openProblems.map(p => (
-                    <div key={p.id} className="pd-report-item">
-                      <span>{p.title || p.raw_text?.slice(0, 60)}</span>
-                      <span style={{ color: '#9ca3af' }}>{formatDate(p.created_at)}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {decisions.length > 0 && (
-                <div className="pd-report-section">
-                  <div className="pd-report-label">Ληφθείσες αποφάσεις</div>
-                  {decisions.map(d => (
-                    <div key={d.id} className="pd-report-item">
-                      <span>{d.title || d.raw_text?.slice(0, 60)}</span>
-                      <span style={{ color: '#9ca3af' }}>{formatDate(d.created_at)}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {overdueDeadlines.length > 0 && (
-                <div className="pd-report-section">
-                  <div className="pd-report-label">Εκπρόθεσμες προθεσμίες</div>
-                  {overdueDeadlines.map(d => (
-                    <div key={d.id} className="pd-report-item">
-                      <span>{d.description}</span>
-                      <span style={{ color: '#dc2626' }}>{formatDate(d.due_date)}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Lightbox */}
-      {lightboxUrl && (
-        <div className="pd-lightbox" onClick={() => setLightboxUrl(null)}>
-          <img src={lightboxUrl} alt="" style={{ maxWidth: '95%', maxHeight: '85vh', borderRadius: 8 }} />
+            <section className="project-content-panel">
+              <div className="project-panel-heading"><div><span className="is-purple" aria-hidden="true"><FolderTree size={18} strokeWidth={1.8} /></span><div><h3>Δομή έργου</h3><p>Χώροι, συστήματα και εξωτερικές περιοχές.</p></div></div><span className="project-panel-count">{areas.length}</span></div>
+              {areas.length === 0 ? <EmptyState icon={FolderTree} title="Δεν έχει εισαχθεί δομή" description={profile?.role === 'owner' ? 'Χρησιμοποιήστε την τεχνική περιγραφή για να δημιουργηθούν χώροι και συστήματα.' : 'Ο διαχειριστής δεν έχει εισαγάγει ακόμη τη δομή του έργου.'} compact /> : <div className="project-area-preview">{areas.slice(0, 10).map(area => <span key={area.id}>{area.area_name}</span>)}</div>}
+            </section>
+          </aside>
         </div>
       )}
+
+      {tab === 'memory' && (
+        <section className="project-memory-layout">
+          <header className="project-memory-header">
+            <div><h2>Μνήμη έργου</h2><p>Όλες οι αποφάσεις, τα προβλήματα, τα υλικά και οι ενημερώσεις οργανωμένα ανά κατηγορία και χώρο.</p></div>
+            {onAddUpdate && <button type="button" onClick={onAddUpdate}><Plus size={16} strokeWidth={2} aria-hidden="true" />Νέα καταχώρηση</button>}
+          </header>
+
+          {entries.length === 0 ? <EmptyState icon={ListTree} title="Η μνήμη του έργου είναι κενή" description="Προσθέστε την πρώτη ενημέρωση για να ξεκινήσει η οργάνωση της γνώσης του έργου." actionLabel={onAddUpdate ? 'Προσθήκη ενημέρωσης' : undefined} onAction={onAddUpdate} /> : (
+            <>
+              {filterTags.length > 0 && <div className="project-filter-chips"><button type="button" className={areaFilter === 'all' ? 'is-active' : ''} onClick={() => setAreaFilter('all')}>Όλοι οι χώροι</button>{filterTags.map(tag => <button type="button" key={tag} className={areaFilter === tag ? 'is-active' : ''} onClick={() => setAreaFilter(tag)}>{tag}</button>)}</div>}
+
+              {!catFilter ? (
+                <div className="project-category-grid">
+                  {Object.entries(CAT_CONFIG).map(([key, config]) => {
+                    const count = areaFilter === 'all' ? catCounts[key] : entries.filter(entry => entry.category === key && (entry.tags || []).includes(areaFilter)).length
+                    const openCount = key === 'problem' ? entries.filter(entry => entry.category === 'problem' && entry.entry_status === 'open' && (areaFilter === 'all' || (entry.tags || []).includes(areaFilter))).length : 0
+                    if (count === 0) return null
+                    return <button type="button" key={key} className="project-category-card" onClick={() => setCatFilter(key)}><span style={{ '--category-bg': config.bg }} aria-hidden="true"><CatIcon path={config.icon} color={config.color} size={19} /></span><div><strong>{config.label}</strong><small>{openCount > 0 ? `${openCount} ανοιχτά` : `${count} καταχωρήσεις`}</small></div><em>{count}</em><ChevronRight size={16} strokeWidth={1.8} aria-hidden="true" /></button>
+                  })}
+                  {photos.length > 0 && <button type="button" className="project-category-card" onClick={() => setTab('photos')}><span className="is-photo" aria-hidden="true"><Camera size={19} strokeWidth={1.8} /></span><div><strong>Φωτογραφίες</strong><small>{photos.length} αρχεία εικόνας</small></div><em>{photos.length}</em><ChevronRight size={16} strokeWidth={1.8} aria-hidden="true" /></button>}
+                </div>
+              ) : (
+                <div className="project-category-detail">
+                  <button type="button" className="project-category-back" onClick={() => setCatFilter(null)}><ArrowLeft size={15} strokeWidth={1.8} aria-hidden="true" />Πίσω στις κατηγορίες</button>
+                  <div className="project-category-detail-heading"><span style={{ '--category-bg': CAT_CONFIG[catFilter].bg }} aria-hidden="true"><CatIcon path={CAT_CONFIG[catFilter].icon} color={CAT_CONFIG[catFilter].color} size={19} /></span><div><h3>{CAT_CONFIG[catFilter].label}</h3><p>{filteredEntries.filter(entry => entry.category === catFilter).length} καταχωρήσεις</p></div></div>
+                  <div className="project-entry-grid">{filteredEntries.filter(entry => entry.category === catFilter).map(entry => renderEntry(entry, { detailed: true }))}</div>
+                </div>
+              )}
+            </>
+          )}
+        </section>
+      )}
+
+      {tab === 'tasks' && <StepsView project={project} profile={profile} />}
+
+      {tab === 'photos' && (
+        <section className="project-gallery-panel">
+          <header className="project-memory-header"><div><h2>Φωτογραφίες έργου</h2><p>Οπτικό ιστορικό από εργοτάξιο, έγγραφα και επιμέρους χώρους.</p></div>{onAddUpdate && <button type="button" onClick={onAddUpdate}><Plus size={16} strokeWidth={2} aria-hidden="true" />Προσθήκη φωτογραφίας</button>}</header>
+          {photos.length === 0 ? <EmptyState icon={Image} title="Δεν υπάρχουν φωτογραφίες" description="Οι φωτογραφίες του έργου θα εμφανιστούν εδώ μαζί με ημερομηνία και ετικέτες." actionLabel={onAddUpdate ? 'Προσθήκη φωτογραφίας' : undefined} onAction={onAddUpdate} /> : <div className="project-photo-grid">{photos.map(photo => <button type="button" key={photo.id} className="project-photo-card" onClick={() => setLightboxUrl(photo.file_url)}><img src={photo.file_url} alt={photo.ai_summary || `Φωτογραφία έργου ${project.name}`} loading="lazy" /><span><strong>{photo.ai_summary?.slice(0, 70) || 'Φωτογραφία έργου'}</strong><small>{formatDate(photo.created_at)}</small></span>{(photo.tags || []).length > 0 && <em>{photo.tags.slice(0, 2).join(' · ')}</em>}</button>)}</div>}
+        </section>
+      )}
+
+      {tab === 'timeline' && (
+        <section className="project-timeline-panel">
+          <header className="project-memory-header"><div><h2>Χρονολόγιο έργου</h2><p>Η πλήρης σειρά των καταχωρήσεων από την πιο πρόσφατη προς την παλαιότερη.</p></div>{onAddUpdate && <button type="button" onClick={onAddUpdate}><Plus size={16} strokeWidth={2} aria-hidden="true" />Νέα ενημέρωση</button>}</header>
+          {entries.length === 0 ? <EmptyState icon={Clock3} title="Το χρονολόγιο είναι κενό" description="Η πρώτη ενημέρωση θα δημιουργήσει το ιστορικό του έργου." actionLabel={onAddUpdate ? 'Προσθήκη ενημέρωσης' : undefined} onAction={onAddUpdate} /> : <div className="project-timeline-list">{entries.map(entry => { const category = CAT_CONFIG[entry.category] || CAT_CONFIG.note; return <article key={entry.id}><span className="project-timeline-marker" style={{ '--marker-color': category.color }} aria-hidden="true" /><div><time>{formatDate(entry.created_at)} · {entry.submitter_name || 'Άγνωστο μέλος'}</time><h3>{entryTitle(entry)}</h3><p>{category.label}</p>{(entry.tags || []).length > 0 && <div className="project-tag-list">{entry.tags.slice(0, 4).map(tag => <TagChip key={tag} tag={tag} />)}</div>}</div></article>})}</div>}
+        </section>
+      )}
+
+      {tab === 'report' && (
+        <section className="project-report-workspace">
+          <header className="project-memory-header"><div><h2>Αναφορά έργου</h2><p>Συνοπτική εικόνα κατάστασης για εκτύπωση ή παρουσίαση.</p></div><button type="button" onClick={() => window.print()}><FileDown size={16} strokeWidth={1.8} aria-hidden="true" />Εκτύπωση / PDF</button></header>
+          <article className="project-report-sheet">
+            <header><div><span>AG Project Monitor</span><h2>{project.name}</h2><p>{project.location || 'Χωρίς τοποθεσία'}</p></div><time>Δημιουργήθηκε {new Date().toLocaleDateString('el-GR')}</time></header>
+            <section><h3>Σύνοψη</h3><div className="project-report-metrics"><div><strong>{entries.length}</strong><span>Σύνολο καταχωρήσεων</span></div><div><strong>{openProblems.length}/{problems.length}</strong><span>Ανοιχτά / συνολικά προβλήματα</span></div><div><strong>{decisions.length}</strong><span>Αποφάσεις</span></div><div><strong>{photos.length}</strong><span>Φωτογραφίες</span></div><div><strong>{overdueDeadlines.length}/{deadlines.length}</strong><span>Εκπρόθεσμες / προθεσμίες</span></div></div></section>
+            {openProblems.length > 0 && <section><h3>Ανοιχτά προβλήματα</h3><div className="project-report-list">{openProblems.map(problem => <div key={problem.id}><span>{entryTitle(problem)}</span><time>{formatDate(problem.created_at)}</time></div>)}</div></section>}
+            {decisions.length > 0 && <section><h3>Ληφθείσες αποφάσεις</h3><div className="project-report-list">{decisions.map(decision => <div key={decision.id}><span>{entryTitle(decision)}</span><time>{formatDate(decision.created_at)}</time></div>)}</div></section>}
+            {overdueDeadlines.length > 0 && <section><h3>Εκπρόθεσμες προθεσμίες</h3><div className="project-report-list is-danger">{overdueDeadlines.map(deadline => <div key={deadline.id}><span>{deadline.description}</span><time>{formatDate(deadline.due_date)}</time></div>)}</div></section>}
+          </article>
+        </section>
+      )}
+
+      <ModalShell
+        open={Boolean(parsedStructure)}
+        onClose={() => setParsedStructure(null)}
+        title="Επιβεβαίωση δομής έργου"
+        description="Ελέγξτε τους χώρους και τα συστήματα που αναγνώρισε η εφαρμογή πριν αποθηκευτούν."
+        icon={FolderTree}
+        size="lg"
+        actions={<><button type="button" className="action-btn" onClick={() => setParsedStructure(null)}>Ακύρωση</button><button type="button" className="action-btn primary" onClick={saveConfirmedStructure} disabled={uploadStatus === 'saving'}>{uploadStatus === 'saving' ? <ButtonSpinner label="Αποθήκευση…" /> : 'Επιβεβαίωση και αποθήκευση'}</button></>}
+      >
+        {parsedStructure && <div className="project-structure-review">
+          {parsedStructure.building_type && <div className="project-structure-type"><span>Τύπος κτιρίου</span><strong>{parsedStructure.building_type.replaceAll('_', ' ')}</strong>{parsedStructure.building_type_confidence && <em>{parsedStructure.building_type_confidence}% βεβαιότητα</em>}</div>}
+          <div className="project-structure-sections">
+            {parsedStructure.buildings?.map((building, buildingIndex) => <section key={buildingIndex}><h3>{building.name || `Κτίριο ${buildingIndex + 1}`}{building.sqm ? ` · ${building.sqm} m²` : ''}</h3>{building.floors?.map((floor, floorIndex) => <div key={floorIndex}><strong>{floor.name}</strong><div>{floor.rooms?.map((room, roomIndex) => <span key={roomIndex}>{room.name}{room.sqm ? ` · ${room.sqm} m²` : ''}</span>)}</div></div>)}</section>)}
+          </div>
+          {parsedStructure.systems?.length > 0 && <div className="project-structure-tags"><h3>Συστήματα</h3><div>{parsedStructure.systems.map((system, index) => <span key={index}>{system.name}</span>)}</div></div>}
+          {parsedStructure.exterior?.length > 0 && <div className="project-structure-tags"><h3>Εξωτερικοί χώροι</h3><div>{parsedStructure.exterior.map((area, index) => <span key={index}>{area.name}</span>)}</div></div>}
+        </div>}
+      </ModalShell>
+
+      <ModalShell open={Boolean(lightboxUrl)} onClose={() => setLightboxUrl(null)} title="Προβολή φωτογραφίας" icon={Image} size="xl" className="project-lightbox-modal">
+        {lightboxUrl && <img src={lightboxUrl} alt={`Μεγέθυνση φωτογραφίας έργου ${project.name}`} className="project-lightbox-image" />}
+      </ModalShell>
+
+      {toast && <div className={`toast ${toast.isError ? 'toast-error' : 'toast-success'}`} role="status">{toast.msg}</div>}
     </div>
   )
 }
