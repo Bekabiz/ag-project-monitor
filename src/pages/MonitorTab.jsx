@@ -533,13 +533,29 @@ export default function MonitorTab({ profile }) {
 
       {/* ========== PLANNER ========== */}
       {activeSection === 'planner' && (
-        <div>
-          <button className="new-task-fab" onClick={() => setShowPlanModal(true)} style={{ marginBottom: 16 }}>
-            <Plus size={18} strokeWidth={1.6} />
-            Νέο σχέδιο
-          </button>
+        <div className="planner-section">
+          <div className="planner-toolbar">
+            <div>
+              <h2>Σχεδιασμός</h2>
+              <p>Οργάνωσε τις επόμενες ενέργειες και τις υπενθυμίσεις σου.</p>
+            </div>
+            <button className="planner-add-btn" onClick={() => setShowPlanModal(true)}>
+              <Plus size={17} strokeWidth={2} />
+              <span>Νέο σχέδιο</span>
+            </button>
+          </div>
 
-          {plans.length === 0 && <div className="empty-state" style={{ padding: '40px 16px' }}>Κανένα σχέδιο</div>}
+          {plans.length === 0 && (
+            <div className="empty-state planner-empty-state">
+              <div className="planner-empty-icon"><Calendar size={23} strokeWidth={1.7} /></div>
+              <h3>Δεν υπάρχουν σχέδια ακόμη</h3>
+              <p>Πρόσθεσε την πρώτη ενέργεια, υπενθύμιση ή εργασία προγραμματισμού.</p>
+              <button className="planner-empty-action" onClick={() => setShowPlanModal(true)}>
+                <Plus size={16} strokeWidth={2} />
+                Προσθήκη πρώτου σχεδίου
+              </button>
+            </div>
+          )}
 
           {plans.map(plan => {
             const pd = new Date(plan.plan_date)
