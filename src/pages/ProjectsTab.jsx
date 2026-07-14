@@ -228,7 +228,7 @@ export default function ProjectsTab({ profile, onSelectProject }) {
                         : projectStats.daysSinceUpdate === null
                           ? 'Δεν υπάρχουν ακόμη ενημερώσεις'
                           : projectStats.daysSinceUpdate > 30
-                            ? `Τελευταία ενημέρωση ${formatDate(projectStats.lastUpdate)}`
+                            ? 'Πάνω από 30 ημέρες χωρίς ενημέρωση'
                             : `${projectStats.daysSinceUpdate} ημέρες χωρίς ενημέρωση`}
                     </span>
                   )}

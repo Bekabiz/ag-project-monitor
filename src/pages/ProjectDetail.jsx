@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { AlertTriangle, ArrowLeft, Building2, CalendarDays, Camera, CheckCircle2, ChevronRight, ClipboardCheck, Clock3, FileDown, FileText, FolderTree, Image, LayoutDashboard, ListTree, MapPin, Mic, Plus, RefreshCw, Sparkles } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Building2, CalendarDays, Camera, CheckCircle2, ChevronRight, ClipboardCheck, Clock3, FileDown, FileText, FolderTree, Image, LayoutDashboard, ListTree, MapPin, Mic, Plus, RefreshCw, Search, Sparkles } from 'lucide-react'
 import { db, dbRead, supabase } from '../lib/db'
 import StepsView from './StepsView'
 import { ButtonSpinner, EmptyState, InlineNotice, LoadingState, ModalShell } from '../components/ui'
@@ -36,6 +36,7 @@ export default function ProjectDetail({ project, profile, onBack, onAddUpdate })
   const [loadError, setLoadError] = useState(false)
   const [areaFilter, setAreaFilter] = useState('all')
   const [catFilter, setCatFilter] = useState(null)
+  const [memorySearch, setMemorySearch] = useState('')
   const [lightboxUrl, setLightboxUrl] = useState(null)
   const [uploadStatus, setUploadStatus] = useState(null)
   const [parsedStructure, setParsedStructure] = useState(null)
@@ -255,10 +256,17 @@ export default function ProjectDetail({ project, profile, onBack, onAddUpdate })
     }
   }
 
-  // Filters
+  // Filters — client-side over the already-loaded entries (limit 200)
+  const normalizedMemorySearch = memorySearch.trim().toLocaleLowerCase('el-GR')
+  const matchesMemorySearch = e => {
+    if (!normalizedMemorySearch) return true
+    const haystacks = [e.title, e.raw_text, e.ai_summary, ...(e.tags || [])].filter(Boolean)
+    return haystacks.some(value => String(value).toLocaleLowerCase('el-GR').includes(normalizedMemorySearch))
+  }
   const filteredEntries = entries.filter(e => {
     if (areaFilter !== 'all' && !(e.tags || []).includes(areaFilter)) return false
     if (catFilter && e.category !== catFilter) return false
+    if (!matchesMemorySearch(e)) return false
     return true
   })
 
@@ -439,13 +447,18 @@ export default function ProjectDetail({ project, profile, onBack, onAddUpdate })
 
           {entries.length === 0 ? <EmptyState icon={ListTree} title="Η μνήμη του έργου είναι κενή" description="Προσθέστε την πρώτη ενημέρωση για να ξεκινήσει η οργάνωση της γνώσης του έργου." actionLabel={onAddUpdate ? 'Προσθήκη ενημέρωσης' : undefined} onAction={onAddUpdate} /> : (
             <>
+              <label className="project-memory-search">
+                <Search size={15} strokeWidth={1.5} aria-hidden="true" />
+                <span className="sr-only">Αναζήτηση στη μνήμη του έργου</span>
+                <input value={memorySearch} onChange={event => setMemorySearch(event.target.value)} placeholder="Αναζήτηση σε τίτλο, κείμενο ή ετικέτες…" />
+              </label>
               {filterTags.length > 0 && <div className="project-filter-chips"><button type="button" className={areaFilter === 'all' ? 'is-active' : ''} onClick={() => setAreaFilter('all')}>Όλοι οι χώροι</button>{filterTags.map(tag => <button type="button" key={tag} className={areaFilter === tag ? 'is-active' : ''} onClick={() => setAreaFilter(tag)}>{tag}</button>)}</div>}
 
               {!catFilter ? (
                 <div className="project-category-grid">
                   {Object.entries(CAT_CONFIG).map(([key, config]) => {
-                    const count = areaFilter === 'all' ? catCounts[key] : entries.filter(entry => entry.category === key && (entry.tags || []).includes(areaFilter)).length
-                    const openCount = key === 'problem' ? entries.filter(entry => entry.category === 'problem' && entry.entry_status === 'open' && (areaFilter === 'all' || (entry.tags || []).includes(areaFilter))).length : 0
+                    const count = entries.filter(entry => entry.category === key && (areaFilter === 'all' || (entry.tags || []).includes(areaFilter)) && matchesMemorySearch(entry)).length
+                    const openCount = key === 'problem' ? entries.filter(entry => entry.category === 'problem' && entry.entry_status === 'open' && (areaFilter === 'all' || (entry.tags || []).includes(areaFilter)) && matchesMemorySearch(entry)).length : 0
                     if (count === 0) return null
                     return <button type="button" key={key} className="project-category-card" onClick={() => setCatFilter(key)}><span style={{ '--category-bg': config.bg }} aria-hidden="true"><CatIcon path={config.icon} color={config.color} size={19} /></span><div><strong>{config.label}</strong><small>{openCount > 0 ? `${openCount} ανοιχτά` : `${count} καταχωρήσεις`}</small></div><em>{count}</em><ChevronRight size={16} strokeWidth={1.5} aria-hidden="true" /></button>
                   })}
