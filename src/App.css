@@ -2897,7 +2897,6 @@ body { color: var(--ag-ink); }
 .new-task-compact.member { width: 40px; padding: 0; border-radius: 12px; }
 .announcement-add-compact { background: #ffffff; border-color: var(--ag-border); color: #515969; box-shadow: none; }
 .announcement-add-compact:hover { background: #f7f8fb; border-color: #d3d7e1; color: #3449aa; }
-.new-task-fab { display: none!important; }
 
 /* Premium task cards: semantic cues are small, calm and text-led */
 .step-card {
@@ -3087,3 +3086,142 @@ body { color: var(--ag-ink); }
   .planner-add-btn span { display: none; }
   .planner-empty-state { min-height: 220px; padding: 28px 18px; }
 }
+
+/* ============================================================
+   ACTION VISIBILITY & EMPTY-STATE SAFETY AUDIT
+   Core actions use dedicated classes; no global action hiding.
+   ============================================================ */
+.empty-state-action,
+.pd-empty-action {
+  min-height: 40px!important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 14px;
+  border: 1px solid #2e409a;
+  border-radius: 11px;
+  background: #3449aa;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 680;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(52,73,170,.15);
+  transition: background .15s ease, transform .15s ease, box-shadow .15s ease;
+}
+.empty-state-action:hover,
+.pd-empty-action:hover {
+  background: #293c91;
+  transform: translateY(-1px);
+  box-shadow: 0 7px 17px rgba(52,73,170,.18);
+}
+
+.project-empty-state {
+  grid-column: 1 / -1;
+  min-height: 310px;
+}
+.project-empty-state h2,
+.input-empty-state h2 {
+  margin: 0;
+  color: var(--ag-ink);
+  font-size: 17px;
+  letter-spacing: -.02em;
+}
+.project-empty-state p,
+.input-empty-state p,
+.monitor-task-empty p {
+  max-width: 430px;
+  margin: 8px auto 15px;
+  color: var(--ag-muted);
+  font-size: 12px;
+  line-height: 1.55;
+  text-align: center;
+}
+.project-add-card {
+  min-height: 160px;
+  border: 1px dashed #cbd0de!important;
+  background: #fafbfe!important;
+  color: #3449aa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 680;
+  font-size: 13px;
+}
+.project-add-card:hover {
+  border-color: #aeb8eb!important;
+  background: #f4f6ff!important;
+}
+.input-empty-state { min-height: 300px; }
+.monitor-task-empty { min-height: 245px; }
+.monitor-task-empty h3 { margin: 0; color: var(--ag-ink); font-size: 15px; }
+
+.detail-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+.detail-add-update,
+.detail-header-actions .setup-btn {
+  min-height: 40px!important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 13px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 680;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.detail-add-update {
+  border: 1px solid rgba(183,194,255,.28);
+  background: #5369d8;
+  color: #fff;
+  box-shadow: 0 5px 14px rgba(26,37,85,.24);
+}
+.detail-add-update:hover { background: #4358c4; }
+.detail-header-actions .setup-btn {
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.08);
+  color: #fff;
+  box-shadow: none;
+}
+.detail-header-actions .setup-btn:hover { background: rgba(255,255,255,.13); }
+
+.pd-empty-actionable {
+  min-height: 210px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px dashed #d8dbe4;
+  border-radius: 16px;
+  background: #fafbfc;
+}
+.pd-empty-actionable p { margin: 0; color: #737a88; font-size: 12px; }
+
+@media (max-width: 640px) {
+  .project-empty-state { min-height: 260px; }
+  .project-add-card { min-height: 120px; }
+  .detail-header-actions { gap: 6px; }
+  .detail-add-update,
+  .detail-header-actions .setup-btn {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border-radius: 11px;
+  }
+  .detail-add-update span,
+  .detail-header-actions .setup-btn span { display: none; }
+  .pd-empty-actionable { min-height: 190px; }
+}
+
+.profile-error-screen h2 { margin: 0; color: var(--ag-ink); font-size: 18px; }
+.profile-error-screen > p { max-width: 420px; text-align: center; line-height: 1.55; }
+.profile-error-actions { display: flex; gap: 8px; }

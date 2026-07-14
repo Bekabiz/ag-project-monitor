@@ -18,9 +18,11 @@ const NAV_ITEMS = [
 export default function App() {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
+  const [profileError, setProfileError] = useState(false)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('today')
   const [selectedProject, setSelectedProject] = useState(null)
+  const [inputProject, setInputProject] = useState(null)
   const [todayBadge, setTodayBadge] = useState(0)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
@@ -41,7 +43,15 @@ export default function App() {
   }, [])
 
   async function loadProfile(userId) {
-    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single()
+    setProfileError(false)
+    const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single()
+    if (error || !data) {
+      console.error('Profile load error:', error)
+      setProfile(null)
+      setProfileError(true)
+      setLoading(false)
+      return
+    }
     setProfile(data)
     setLoading(false)
   }
@@ -56,9 +66,18 @@ export default function App() {
   function changeTab(id) {
     setActiveTab(id)
     setSelectedProject(null)
+    if (id !== 'input') setInputProject(null)
     setMobileMenuOpen(false)
     setProfileOpen(false)
     if (id === 'today') setTodayBadge(0)
+  }
+
+  function openInputForProject(project) {
+    setInputProject(project || null)
+    setSelectedProject(null)
+    setActiveTab('input')
+    setMobileMenuOpen(false)
+    setProfileOpen(false)
   }
 
   const availableNav = NAV_ITEMS.filter(item => !item.ownerOnly || profile?.role === 'owner')
@@ -73,8 +92,20 @@ export default function App() {
   )
   if (!session) return <Login />
 
+  if (profileError || !profile) return (
+    <div className="loading-screen app-boot-screen profile-error-screen">
+      <div className="ag-logo ag-logo-large">AG</div>
+      <h2>Δεν φορτώθηκε το προφίλ</h2>
+      <p>Η σύνδεση υπάρχει, αλλά τα στοιχεία χρήστη δεν ήταν διαθέσιμα.</p>
+      <div className="profile-error-actions">
+        <button className="action-btn primary" onClick={() => loadProfile(session.user.id)}>Δοκιμή ξανά</button>
+        <button className="action-btn" onClick={handleLogout}>Αποσύνδεση</button>
+      </div>
+    </div>
+  )
+
   if (selectedProject) {
-    return <ProjectDetail project={selectedProject} profile={profile} onBack={() => setSelectedProject(null)} />
+    return <ProjectDetail project={selectedProject} profile={profile} onBack={() => setSelectedProject(null)} onAddUpdate={() => openInputForProject(selectedProject)} />
   }
 
   return (
@@ -144,9 +175,9 @@ export default function App() {
 
         <main className="app-main workspace-main">
           {activeTab === 'today' && <TodayTab profile={profile} onBadgeCount={setTodayBadge} />}
-          {activeTab === 'input' && <InputTab profile={profile} />}
+          {activeTab === 'input' && <InputTab profile={profile} initialProject={inputProject} onOpenProjects={() => changeTab('projects')} />}
           {activeTab === 'projects' && <ProjectsTab profile={profile} onSelectProject={setSelectedProject} />}
-          {activeTab === 'summary' && <MonitorTab profile={profile} />}
+          {activeTab === 'summary' && <MonitorTab profile={profile} onOpenToday={() => changeTab('today')} />}
         </main>
       </section>
 

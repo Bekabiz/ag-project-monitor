@@ -135,12 +135,13 @@ export default function TodayTab({ profile, onBadgeCount }) {
 
     // Notification badge
     const lastSeen = localStorage.getItem('ag_last_seen') || new Date(0).toISOString()
-    const { count } = await supabase
+    const { count, error: countError } = await supabase
       .from('steps')
       .select('*', { count: 'exact', head: true })
       .gt('updated_at', lastSeen)
       .neq('updated_by', profile.id)
-    if (onBadgeCount) onBadgeCount(count || 0)
+    if (countError) console.warn('Notification count error:', countError)
+    else if (onBadgeCount) onBadgeCount(count || 0)
     localStorage.setItem('ag_last_seen', new Date().toISOString())
     } catch (err) {
       console.error('Load error:', err)
