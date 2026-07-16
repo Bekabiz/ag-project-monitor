@@ -8,6 +8,7 @@ import { Bell, Plus, ClipboardCheck, MessageCircle, AlertTriangle, Paperclip, Ch
 import { db, dbRead, supabase } from '../lib/db'
 import { getDaysInfo, formatDueTime, getOverdueCount } from '../lib/dates'
 import { extractText } from '../lib/voice'
+import { sortProfiles } from '../lib/people'
 import { ButtonSpinner, EmptyState, LoadingState, ModalShell } from '../components/ui'
 
 export default function TodayTab({ profile, onBadgeCount }) {
@@ -75,7 +76,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
     tomorrow.setDate(tomorrow.getDate() + 1)
 
     const profs = await dbRead(supabase.from('profiles').select('*'))
-    setProfiles(profs)
+    setProfiles(sortProfiles(profs))
 
     const projs = await dbRead(supabase.from('projects').select('*').eq('status', 'active').order('name'))
     setProjects(projs)
@@ -246,6 +247,8 @@ export default function TodayTab({ profile, onBadgeCount }) {
         } else {
           setTaskTitle(prev => prev ? prev + ' ' + data.transcript : data.transcript)
         }
+      } else if (target === 'taskDesc') {
+        setTaskDesc(prev => prev ? prev + ' ' + data.transcript : data.transcript)
       } else if (target === 'announcement') {
         setAnnText(prev => prev ? prev + ' ' + data.transcript : data.transcript)
       } else if (target === 'update') {
@@ -808,7 +811,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
             </div>
           </div>
 
-          <div className="today-form-field is-full"><label htmlFor="task-description">Περιγραφή</label><textarea id="task-description" placeholder="Προσθέστε τις απαραίτητες λεπτομέρειες…" value={taskDesc} onChange={event => setTaskDesc(event.target.value)} rows={3} /></div>
+          <div className="today-form-field is-full"><label htmlFor="task-description">Περιγραφή</label><div className="today-update-input-wrap"><textarea id="task-description" placeholder="Προσθέστε τις απαραίτητες λεπτομέρειες…" value={taskDesc} onChange={event => setTaskDesc(event.target.value)} rows={3} /><button type="button" className={`today-voice-button ${isRecording && voiceTarget === 'taskDesc' ? 'is-recording' : ''}`} onClick={isRecording && voiceTarget === 'taskDesc' ? stopRecording : () => startRecording('taskDesc')} disabled={isTranscribing} aria-label={isRecording ? 'Διακοπή εγγραφής' : 'Υπαγόρευση περιγραφής'}>{isTranscribing && voiceTarget === 'taskDesc' ? <span className="spinner" /> : <Mic size={17} strokeWidth={1.5} aria-hidden="true" />}</button></div></div>
 
           <div className="today-form-field is-full"><label htmlFor="task-project">Έργο ή τύπος εργασίας</label><select id="task-project" value={taskProject} onChange={event => { setTaskProject(event.target.value); if (event.target.value === 'personal' || event.target.value === 'staff') setTaskAssignees([]) }}><option value="">Επιλέξτε έργο</option><option value="personal">Για εμένα</option><option value="staff">Όλο το γραφείο</option>{projects.map(project => <option key={project.id} value={project.id}>{project.name}</option>)}</select></div>
 

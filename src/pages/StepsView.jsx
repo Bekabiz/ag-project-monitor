@@ -3,6 +3,7 @@ import { AlertTriangle, Plus, Paperclip, ChevronDown, Send, Mic, Circle, Play, P
 import { db, dbRead, supabase } from '../lib/db'
 import { getDaysInfo, formatDueTime, getStepCardClass } from '../lib/dates'
 import { useVoiceRecorder } from '../lib/voice'
+import { sortProfiles } from '../lib/people'
 import { ButtonSpinner, EmptyState, LoadingState, ModalShell } from '../components/ui'
 
 export default function StepsView({ project, profile }) {
@@ -27,8 +28,9 @@ export default function StepsView({ project, profile }) {
   const [noteText, setNoteText] = useState('')
   const [stepNotes, setStepNotes] = useState({})
 
-  // Voice recording (shared hook)
+  // Voice recording (shared hook) — voiceField tracks which input is dictating
   const voice = useVoiceRecorder()
+  const [voiceField, setVoiceField] = useState(null)
 
   const [toast, setToast] = useState(null)
   function showToast(msg, isError) { setToast({ msg, isError }); setTimeout(() => setToast(null), 2500) }
@@ -48,7 +50,7 @@ export default function StepsView({ project, profile }) {
     setSteps(stps)
 
     const profs = await dbRead(supabase.from('profiles').select('id, full_name'))
-    setProfiles(profs)
+    setProfiles(sortProfiles(profs))
 
     if (stps.length > 0) {
       const stepIds = stps.map(s => s.id)
@@ -74,13 +76,17 @@ export default function StepsView({ project, profile }) {
   }
 
   // === VOICE (shared hook) ===
-  async function handleTitleVoice() {
+  async function handleFieldVoice(field) {
+    setVoiceField(field)
     try {
       const blob = await voice.startRecording()
       const transcript = await voice.transcribeBlob(blob)
-      setTitle(prev => prev ? prev + ' ' + transcript : transcript)
+      const apply = field === 'description' ? setDescription : setTitle
+      apply(prev => prev ? prev + ' ' + transcript : transcript)
     } catch (err) {
       showToast(err.message || 'Σφάλμα μικροφώνου', true)
+    } finally {
+      setVoiceField(null)
     }
   }
 
@@ -332,8 +338,8 @@ export default function StepsView({ project, profile }) {
         actions={<><button type="button" className="action-btn" onClick={() => setShowAdd(false)} disabled={saving}>Ακύρωση</button><button type="button" className="action-btn primary" onClick={handleSave} disabled={!title.trim() || saving}>{saving ? <ButtonSpinner label="Αποθήκευση…" /> : editStep ? 'Αποθήκευση αλλαγών' : 'Δημιουργία εργασίας'}</button></>}
       >
         <div className="project-task-form">
-          <div className="project-task-form-field is-full"><label htmlFor="project-step-title">Τίτλος εργασίας <span>*</span></label><div className="project-task-title-input"><input id="project-step-title" value={title} onChange={event => setTitle(event.target.value)} placeholder="π.χ. Επιβεβαίωση ηλεκτρολογικού σχεδίου" autoFocus /><button type="button" className={voice.recording ? 'is-recording' : ''} onClick={voice.recording ? voice.stopRecording : handleTitleVoice} disabled={voice.transcribing} aria-label="Υπαγόρευση τίτλου">{voice.transcribing ? <span className="spinner" /> : <Mic size={18} strokeWidth={1.5} aria-hidden="true" />}</button></div></div>
-          <div className="project-task-form-field is-full"><label htmlFor="project-step-description">Περιγραφή</label><textarea id="project-step-description" value={description} onChange={event => setDescription(event.target.value)} placeholder="Προσθέστε λεπτομέρειες, παραδοτέο ή κριτήριο ολοκλήρωσης…" rows={4} /></div>
+          <div className="project-task-form-field is-full"><label htmlFor="project-step-title">Τίτλος εργασίας <span>*</span></label><div className="project-task-title-input"><input id="project-step-title" value={title} onChange={event => setTitle(event.target.value)} placeholder="π.χ. Επιβεβαίωση ηλεκτρολογικού σχεδίου" autoFocus /><button type="button" className={voice.recording && voiceField === 'title' ? 'is-recording' : ''} onClick={voice.recording ? voice.stopRecording : () => handleFieldVoice('title')} disabled={voice.transcribing || (voice.recording && voiceField !== 'title')} aria-label="Υπαγόρευση τίτλου">{voice.transcribing && voiceField === 'title' ? <span className="spinner" /> : <Mic size={18} strokeWidth={1.5} aria-hidden="true" />}</button></div></div>
+          <div className="project-task-form-field is-full"><label htmlFor="project-step-description">Περιγραφή</label><div className="project-task-title-input"><textarea id="project-step-description" value={description} onChange={event => setDescription(event.target.value)} placeholder="Προσθέστε λεπτομέρειες, παραδοτέο ή κριτήριο ολοκλήρωσης…" rows={4} /><button type="button" className={voice.recording && voiceField === 'description' ? 'is-recording' : ''} onClick={voice.recording ? voice.stopRecording : () => handleFieldVoice('description')} disabled={voice.transcribing || (voice.recording && voiceField !== 'description')} aria-label="Υπαγόρευση περιγραφής">{voice.transcribing && voiceField === 'description' ? <span className="spinner" /> : <Mic size={18} strokeWidth={1.5} aria-hidden="true" />}</button></div></div>
 
           <fieldset className="project-assignee-selector is-full"><legend>Ανάθεση σε</legend><div>{profiles.map(person => <label key={person.id} className={assignedTo === person.id ? 'is-selected' : ''}><input type="radio" name="project-assignee" value={person.id} checked={assignedTo === person.id} onChange={() => setAssignedTo(person.id)} /><span className="project-assignee-avatar" aria-hidden="true">{person.full_name?.charAt(0)}</span><span>{person.full_name}</span></label>)}<label className={!assignedTo ? 'is-selected' : ''}><input type="radio" name="project-assignee" value="" checked={!assignedTo} onChange={() => setAssignedTo('')} /><span className="project-assignee-avatar is-empty" aria-hidden="true">—</span><span>Χωρίς ανάθεση</span></label></div></fieldset>
 
