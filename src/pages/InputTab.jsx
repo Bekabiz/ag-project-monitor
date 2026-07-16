@@ -83,12 +83,13 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
 
   // Save entry (with or without AI extraction) - now with structured fields
   async function saveEntry(rawText, extracted, type = 'text') {
+    const targetProject = selected
+    if (!targetProject?.id) {
+      showToast('Επιλέξτε πρώτα έργο', true)
+      return
+    }
     setSending(true)
     try {
-      const matchedProject = extracted?.project_name
-        ? projects.find(p => p.name === extracted.project_name)
-        : null
-      const targetProject = selected
 
       // Handle multiple entries from AI (one voice message can produce multiple entries)
       const entries = extracted?.entries || []
@@ -574,7 +575,7 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
                 <section className="input-review-card">
                   <div className="input-review-card-heading"><div><h3>Στοιχεία καταχώρησης</h3><p>Διορθώστε ό,τι χρειάζεται.</p></div></div>
                   <div className="input-review-fields">
-                    <div className="input-review-field"><label htmlFor="review-project">Έργο</label><select id="review-project" value={extracted.project_name || selected.name} onChange={event => updateExtracted('project_name', event.target.value)}>{projects.map(project => <option key={project.id} value={project.name}>{project.name}</option>)}</select></div>
+                    <div className="input-review-field"><label htmlFor="review-project">Έργο</label><select id="review-project" value={extracted.project_name || selected?.name || ''} onChange={event => updateExtracted('project_name', event.target.value)}>{projects.map(project => <option key={project.id} value={project.name}>{project.name}</option>)}</select></div>
                     {extracted.people?.length > 0 && <div className="input-review-field"><label htmlFor="review-people">Άτομα</label><input id="review-people" value={extracted.people.join(', ')} onChange={event => updateExtracted('people', event.target.value.split(',').map(value => value.trim()).filter(Boolean))} /></div>}
                     {extracted.deadline_description && <div className="input-review-field"><label htmlFor="review-deadline">Προθεσμία</label><input id="review-deadline" value={extracted.deadline_description} onChange={event => updateExtracted('deadline_description', event.target.value)} />{extracted.deadline_date && <input type="date" value={extracted.deadline_date} onChange={event => updateExtracted('deadline_date', event.target.value)} />}</div>}
                     {extracted.budget_change !== 0 && extracted.budget_change != null && <div className="input-review-field"><label htmlFor="review-budget">Μεταβολή προϋπολογισμού (€)</label><input id="review-budget" type="number" value={extracted.budget_change} onChange={event => updateExtracted('budget_change', Number(event.target.value))} /></div>}
