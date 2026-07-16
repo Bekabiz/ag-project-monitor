@@ -18,7 +18,7 @@
 .today-command-copy .today-date { margin-bottom: 7px; color: var(--text-secondary); font-size: 12px; }
 .today-command-copy .today-hello {
   color: var(--ink);
-  font-family: var(--font-display); font-size: 28px; font-weight: 300;
+  font-family: var(--font-display); font-size: 28px; font-weight: 600;
   letter-spacing: -.01em; line-height: 1.2;
 }
 .today-command-copy p { margin-top: 7px; color: var(--text-secondary); font-size: 13px; line-height: 1.5; }
@@ -50,12 +50,12 @@
 .today-kpi-card > div { min-width: 0; display: grid; gap: 2px; }
 .today-kpi-card strong {
   color: var(--ink);
-  font-family: var(--font-display); font-size: 32px; font-weight: 300; line-height: 1;
+  font-family: var(--font-display); font-size: 32px; font-weight: 600; line-height: 1;
   font-variant-numeric: tabular-nums;
 }
 .today-kpi-card span:last-child {
   color: var(--text-secondary);
-  font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+  font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
@@ -97,13 +97,12 @@
 .today-icon-action:hover { background: var(--wash); color: var(--ink); }
 
 /* Announcements: warn-wash ledger rows */
-.today-announcements-panel { background: var(--warn-wash); border-color: var(--warn-wash); }
-.today-announcements-panel .today-panel-heading { border-bottom-color: rgba(154, 107, 31, .18); }
+
 .today-announcement-list { display: grid; }
 .today-announcement-item {
   min-height: 64px; padding: 14px 21px;
   display: flex; align-items: center; justify-content: space-between; gap: 14px;
-  border-bottom: 1px solid rgba(154, 107, 31, .14);
+  border-bottom: 1px solid var(--border);
 }
 .today-announcement-item:last-child { border-bottom: 0; }
 .today-announcement-copy { min-width: 0; }
@@ -119,13 +118,12 @@
 .today-text-action.is-danger:hover { background: var(--danger-wash); color: var(--danger); }
 
 /* Plan reminders: veil rows */
-.today-plans-panel { background: var(--veil); border-color: var(--veil); }
-.today-plans-panel .today-panel-heading { border-bottom-color: rgba(15, 62, 23, .12); }
+
 .today-plan-list { display: grid; }
 .today-plan-row {
   min-height: 56px; padding: 11px 21px;
   display: flex; align-items: center; justify-content: space-between; gap: 14px;
-  border-bottom: 1px solid rgba(15, 62, 23, .1);
+  border-bottom: 1px solid var(--border);
 }
 .today-plan-row:last-child { border-bottom: 0; }
 .today-plan-row > span { min-width: 0; color: var(--text-primary); font-size: 13px; line-height: 1.4; }
@@ -177,7 +175,7 @@
 .today-task-end svg.is-rotated, .today-person-summary svg.is-rotated { transform: rotate(180deg); }
 
 .today-task-details { padding: 7px 21px 21px; display: grid; gap: 14px; animation: paper-fade var(--transition); }
-.today-task-detail-label { color: var(--text-secondary); font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.today-task-detail-label { color: var(--text-secondary); font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
 .today-status-options { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; }
 .today-status-button {
   min-height: 44px; padding: 0 8px;
@@ -356,10 +354,10 @@ button.today-person-summary:hover { background: var(--wash); }
   background: var(--wash);
 }
 .projects-overview-copy { min-width: 0; }
-.projects-eyebrow { display: block; margin-bottom: 7px; color: var(--text-secondary); font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.projects-eyebrow { display: block; margin-bottom: 7px; color: var(--text-secondary); font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
 .projects-overview-copy h2 {
   color: var(--ink);
-  font-family: var(--font-display); font-size: 28px; font-weight: 300;
+  font-family: var(--font-display); font-size: 28px; font-weight: 600;
   letter-spacing: -.01em; line-height: 1.2;
   font-variant-numeric: tabular-nums;
 }
@@ -373,7 +371,7 @@ button.today-person-summary:hover { background: var(--wash); }
 }
 .projects-health-summary strong {
   color: var(--ink);
-  font-family: var(--font-display); font-size: 28px; font-weight: 300; line-height: 1;
+  font-family: var(--font-display); font-size: 28px; font-weight: 600; line-height: 1;
   font-variant-numeric: tabular-nums;
 }
 .projects-health-summary small { color: var(--text-secondary); font-size: 11px; }
@@ -423,7 +421,7 @@ button.today-person-summary:hover { background: var(--wash); }
   min-height: 22px; padding: 4px 10px;
   display: inline-flex; align-items: center; gap: 6px;
   border-radius: var(--radius-pill);
-  background: var(--ok-wash); color: var(--ink);
+  background: var(--ok-wash); color: var(--success);
   font-size: 11px; font-weight: 600; line-height: 1;
 }
 .project-professional-card.is-yellow .project-health-label { background: var(--warn-wash); color: var(--warn); }
@@ -489,7 +487,7 @@ button.today-person-summary:hover { background: var(--wash); }
   min-height: 24px; padding: 4px 12px;
   display: inline-flex; align-items: center; gap: 7px;
   border-radius: var(--radius-pill);
-  background: var(--ok-wash); color: var(--ink);
+  background: var(--ok-wash); color: var(--success);
   font-size: 11px; font-weight: 600;
 }
 .project-health-badge > span { width: 8px; height: 8px; border-radius: var(--radius-pill); background: var(--ink); }
@@ -505,10 +503,10 @@ button.today-person-summary:hover { background: var(--wash); }
   background: var(--paper); color: var(--ink);
 }
 .project-hero-copy { min-width: 0; flex: 1; }
-.project-hero-copy > span { display: block; margin-bottom: 4px; color: var(--text-secondary); font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.project-hero-copy > span { display: block; margin-bottom: 4px; color: var(--text-secondary); font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
 .project-hero-copy h2 {
   color: var(--ink);
-  font-family: var(--font-display); font-size: 28px; font-weight: 300;
+  font-family: var(--font-display); font-size: 28px; font-weight: 600;
   letter-spacing: -.01em; line-height: 1.2;
 }
 .project-hero-copy p { margin-top: 6px; display: flex; align-items: center; gap: 6px; color: var(--text-secondary); font-size: 13px; }
@@ -566,10 +564,10 @@ button.today-person-summary:hover { background: var(--wash); }
 .project-stat-card.is-warning > span { color: var(--warn); }
 .project-stat-card strong {
   color: var(--ink);
-  font-family: var(--font-display); font-size: 32px; font-weight: 300; line-height: 1;
+  font-family: var(--font-display); font-size: 32px; font-weight: 600; line-height: 1;
   font-variant-numeric: tabular-nums;
 }
-.project-stat-card small { color: var(--text-secondary); font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.project-stat-card small { color: var(--text-secondary); font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
 
 .project-content-panel { overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius); background: var(--paper); }
 .project-panel-heading {
@@ -670,7 +668,7 @@ button.today-person-summary:hover { background: var(--wash); }
 .project-memory-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
 .project-memory-header h2 {
   color: var(--ink);
-  font-family: var(--font-display); font-size: 21px; font-weight: 300; line-height: 1.2;
+  font-family: var(--font-display); font-size: 21px; font-weight: 600; line-height: 1.2;
 }
 .project-memory-header p { margin-top: 5px; max-width: 560px; color: var(--text-secondary); font-size: 13px; line-height: 1.5; }
 .project-memory-header > button {
@@ -785,16 +783,16 @@ button.today-person-summary:hover { background: var(--wash); }
 /* Report sheet */
 .project-report-sheet { padding: 28px; display: grid; gap: 28px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--paper); }
 .project-report-sheet > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; padding-bottom: 21px; border-bottom: 1px solid var(--border); }
-.project-report-sheet > header span { display: block; margin-bottom: 4px; color: var(--text-secondary); font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
-.project-report-sheet > header h2 { color: var(--ink); font-family: var(--font-display); font-size: 28px; font-weight: 300; line-height: 1.2; }
+.project-report-sheet > header span { display: block; margin-bottom: 4px; color: var(--text-secondary); font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
+.project-report-sheet > header h2 { color: var(--ink); font-family: var(--font-display); font-size: 28px; font-weight: 600; line-height: 1.2; }
 .project-report-sheet > header p { margin-top: 4px; color: var(--text-secondary); font-size: 13px; }
 .project-report-sheet > header time { color: var(--text-secondary); font-size: 12px; white-space: nowrap; }
-.project-report-sheet h3 { margin-bottom: 14px; color: var(--ink); font-family: var(--font-display); font-size: 21px; font-weight: 300; }
+.project-report-sheet h3 { margin-bottom: 14px; color: var(--ink); font-family: var(--font-display); font-size: 21px; font-weight: 600; }
 .project-report-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; }
 .project-report-metrics > div { padding: 21px; display: grid; gap: 4px; border-radius: var(--radius); background: var(--wash); }
 .project-report-metrics strong {
   color: var(--ink);
-  font-family: var(--font-display); font-size: 32px; font-weight: 300; line-height: 1;
+  font-family: var(--font-display); font-size: 32px; font-weight: 600; line-height: 1;
   font-variant-numeric: tabular-nums;
 }
 .project-report-metrics span { color: var(--text-secondary); font-size: 12px; }
@@ -836,7 +834,7 @@ button.today-person-summary:hover { background: var(--wash); }
 .project-tasks-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
 .project-tasks-title { display: flex; align-items: flex-start; gap: 11px; min-width: 0; }
 .project-tasks-title > span { display: grid; place-items: center; margin-top: 3px; color: var(--ink); }
-.project-tasks-title h2 { color: var(--ink); font-family: var(--font-display); font-size: 21px; font-weight: 300; line-height: 1.2; }
+.project-tasks-title h2 { color: var(--ink); font-family: var(--font-display); font-size: 21px; font-weight: 600; line-height: 1.2; }
 .project-tasks-title p { margin-top: 4px; color: var(--text-secondary); font-size: 13px; line-height: 1.4; }
 .project-task-add {
   min-height: 44px; padding: 0 14px; flex: 0 0 auto;
@@ -860,24 +858,24 @@ button.today-person-summary:hover { background: var(--wash); }
 .project-task-summary-grid article > span.is-warning { color: var(--warn); }
 .project-task-summary-grid strong {
   display: block; color: var(--ink);
-  font-family: var(--font-display); font-size: 32px; font-weight: 300; line-height: 1;
+  font-family: var(--font-display); font-size: 32px; font-weight: 600; line-height: 1;
   font-variant-numeric: tabular-nums;
 }
-.project-task-summary-grid small { display: block; margin-top: 2px; color: var(--text-secondary); font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.project-task-summary-grid small { display: block; margin-top: 2px; color: var(--text-secondary); font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
 
 .project-progress-panel {
   padding: 21px;
   display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px;
-  border-radius: var(--radius);
-  background: var(--mist);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--wash);
 }
-.project-progress-panel > div:first-child span { display: block; color: var(--text-secondary); font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.project-progress-panel > div:first-child span { display: block; color: var(--text-secondary); font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
 .project-progress-panel > div:first-child strong { display: block; margin-top: 2px; color: var(--ink); font-size: 14px; font-variant-numeric: tabular-nums; }
 .project-progress-track { position: relative; height: 8px; border-radius: var(--radius-pill); background: var(--paper); overflow: hidden; }
 .project-progress-track span { position: absolute; inset: 0 auto 0 0; border-radius: var(--radius-pill); background: var(--ink); }
 .project-progress-panel em {
   color: var(--ink);
-  font-family: var(--font-display); font-size: 28px; font-style: normal; font-weight: 300;
+  font-family: var(--font-display); font-size: 28px; font-style: normal; font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
@@ -937,7 +935,7 @@ button.today-person-summary:hover { background: var(--wash); }
 .project-task-expand-button svg.is-rotated { transform: rotate(180deg); }
 
 .project-task-expanded { padding: 0 21px 21px; display: grid; gap: 14px; animation: paper-fade var(--transition); }
-.project-task-expanded-label { color: var(--text-secondary); font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.project-task-expanded-label { color: var(--text-secondary); font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
 .project-task-status-options { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; }
 .project-task-status-options button {
   min-height: 44px; padding: 0 8px;
@@ -1043,10 +1041,10 @@ button.today-person-summary:hover { background: var(--wash); }
 
 .input-project-rail { display: grid; gap: 14px; padding: 21px; border-radius: var(--radius); background: var(--wash); }
 .input-project-rail-heading > div { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
-.input-project-rail-heading span { color: var(--text-secondary); font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.input-project-rail-heading span { color: var(--text-secondary); font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
 .input-project-rail-heading strong {
   color: var(--ink);
-  font-family: var(--font-display); font-size: 28px; font-weight: 300; line-height: 1;
+  font-family: var(--font-display); font-size: 28px; font-weight: 600; line-height: 1;
   font-variant-numeric: tabular-nums;
 }
 .input-project-rail-heading p { margin-top: 4px; color: var(--text-secondary); font-size: 12px; line-height: 1.4; }
@@ -1094,7 +1092,7 @@ button.today-person-summary:hover { background: var(--wash); }
   border-radius: var(--radius-pill);
   background: var(--wash); color: var(--ink);
 }
-.input-start-state h2 { color: var(--ink); font-family: var(--font-display); font-size: 21px; font-weight: 300; }
+.input-start-state h2 { color: var(--ink); font-family: var(--font-display); font-size: 21px; font-weight: 600; }
 .input-start-state p { max-width: 420px; margin-top: 8px; color: var(--text-secondary); font-size: 13px; line-height: 1.5; }
 
 .input-workspace-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
@@ -1104,10 +1102,10 @@ button.today-person-summary:hover { background: var(--wash); }
   display: grid; place-items: center;
   border: 1px solid var(--ink); border-radius: var(--radius-pill);
   background: var(--paper); color: var(--ink);
-  font-family: var(--font-display); font-size: 19px; font-weight: 300; line-height: 1;
+  font-family: var(--font-display); font-size: 19px; font-weight: 600; line-height: 1;
 }
-.input-selected-project span { display: block; color: var(--text-secondary); font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
-.input-selected-project h2 { margin-top: 2px; color: var(--ink); font-family: var(--font-display); font-size: 21px; font-weight: 300; line-height: 1.2; }
+.input-selected-project span { display: block; color: var(--text-secondary); font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
+.input-selected-project h2 { margin-top: 2px; color: var(--ink); font-family: var(--font-display); font-size: 21px; font-weight: 600; line-height: 1.2; }
 .input-selected-project p { margin-top: 3px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; color: var(--text-secondary); font-size: 12px; line-height: 1.4; }
 .input-visibility-control {
   display: inline-flex; gap: 4px; flex: 0 0 auto;
@@ -1181,8 +1179,8 @@ button.today-person-summary:hover { background: var(--wash); }
   border: 1px solid var(--ink); border-radius: var(--radius-pill);
   background: var(--paper); color: var(--ink);
 }
-.input-review-title span { display: block; color: var(--text-secondary); font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
-.input-review-title h2 { margin-top: 2px; color: var(--ink); font-family: var(--font-display); font-size: 21px; font-weight: 300; line-height: 1.2; }
+.input-review-title span { display: block; color: var(--text-secondary); font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
+.input-review-title h2 { margin-top: 2px; color: var(--ink); font-family: var(--font-display); font-size: 21px; font-weight: 600; line-height: 1.2; }
 .input-review-title p { margin-top: 3px; max-width: 520px; color: var(--text-secondary); font-size: 12px; line-height: 1.4; }
 .input-reanalyse-button {
   min-height: 44px; padding: 0 12px; flex: 0 0 auto;
@@ -1258,10 +1256,10 @@ button.today-person-summary:hover { background: var(--wash); }
   background: var(--wash);
 }
 .management-center-copy { min-width: 0; }
-.management-center-copy > span { display: block; margin-bottom: 7px; color: var(--text-secondary); font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.management-center-copy > span { display: block; margin-bottom: 7px; color: var(--text-secondary); font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
 .management-center-copy h2 {
   max-width: 640px; color: var(--ink);
-  font-family: var(--font-display); font-size: 28px; font-weight: 300;
+  font-family: var(--font-display); font-size: 28px; font-weight: 600;
   letter-spacing: -.01em; line-height: 1.2;
 }
 .management-center-copy p { margin-top: 7px; max-width: 560px; color: var(--text-secondary); font-size: 13px; line-height: 1.5; }
@@ -1279,20 +1277,18 @@ button.today-person-summary:hover { background: var(--wash); }
 .management-kpi-grid article {
   min-height: 88px; padding: 21px;
   display: flex; align-items: center; gap: 14px;
-  border-radius: var(--radius);
-  background: var(--wash);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--paper);
 }
-.management-kpi-grid article:nth-child(2) { background: var(--veil); }
-.management-kpi-grid article:nth-child(3) { background: var(--mist); }
 .management-kpi-grid article.is-attention { background: var(--danger-wash); }
 .management-kpi-grid article > span { display: grid; place-items: center; color: var(--ink); }
 .management-kpi-grid article.is-attention > span { color: var(--danger); }
 .management-kpi-grid strong {
   display: block; color: var(--ink);
-  font-family: var(--font-display); font-size: 32px; font-weight: 300; line-height: 1;
+  font-family: var(--font-display); font-size: 32px; font-weight: 600; line-height: 1;
   font-variant-numeric: tabular-nums;
 }
-.management-kpi-grid small { display: block; margin-top: 2px; color: var(--text-secondary); font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.management-kpi-grid small { display: block; margin-top: 2px; color: var(--text-secondary); font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
 
 .management-section-nav { display: flex; gap: 4px; overflow-x: auto; padding: 4px; border-radius: var(--radius-pill); background: var(--wash); }
 .management-section-nav > button {
@@ -1317,8 +1313,7 @@ button.today-person-summary:hover { background: var(--wash); }
 
 .management-section-stack { display: grid; gap: 21px; }
 .management-panel { overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius); background: var(--paper); }
-.management-review-panel { border-color: var(--veil); background: var(--veil); }
-.management-review-panel .management-panel-heading { border-bottom-color: rgba(15, 62, 23, .12); }
+
 .management-panel-heading {
   min-height: 64px; padding: 14px 21px;
   display: flex; align-items: center; justify-content: space-between; gap: 14px;
@@ -1492,7 +1487,7 @@ button.today-person-summary:hover { background: var(--wash); }
   border-radius: var(--radius-pill);
   background: var(--wash); color: var(--ink);
 }
-.management-search-hero h2 { color: var(--ink); font-family: var(--font-display); font-size: 28px; font-weight: 300; line-height: 1.2; }
+.management-search-hero h2 { color: var(--ink); font-family: var(--font-display); font-size: 28px; font-weight: 600; line-height: 1.2; }
 .management-search-hero p { max-width: 480px; color: var(--text-secondary); font-size: 13px; line-height: 1.5; }
 .management-search-box {
   width: min(100%, 640px); margin-top: 14px;

@@ -95,7 +95,7 @@ input[type="date"], input[type="time"] { min-height: 44px; }
 }
 .ui-modal-heading h2 {
   margin-top: 2px; color: var(--ink);
-  font-family: var(--font-display); font-size: 21px; font-weight: 300; line-height: 1.2;
+  font-family: var(--font-display); font-size: 21px; font-weight: 600; line-height: 1.2;
 }
 .ui-modal-heading p { margin-top: 5px; color: var(--text-secondary); font-size: 12px; line-height: 1.4; }
 .ui-icon-button {
@@ -129,7 +129,7 @@ input[type="date"], input[type="time"] { min-height: 44px; }
   background: var(--wash); color: var(--ink);
 }
 .ui-empty-state.is-compact .ui-empty-icon { width: 64px; height: 64px; }
-.ui-empty-state h3 { color: var(--ink); font-family: var(--font-display); font-size: 21px; font-weight: 300; line-height: 1.2; }
+.ui-empty-state h3 { color: var(--ink); font-family: var(--font-display); font-size: 21px; font-weight: 600; line-height: 1.2; }
 .ui-empty-state p { max-width: 430px; margin: 8px auto 14px; color: var(--text-secondary); font-size: 13px; line-height: 1.5; }
 
 /* --- Loading skeletons: wash tint pulse --- */
@@ -236,10 +236,34 @@ input[type="date"], input[type="time"] { min-height: 44px; }
 .task-asap-summary strong { display: block; font-size: 12px; }
 .task-asap-summary small { display: block; font-size: 11px; }
 
+/* --- Containers: 24px radius + whisper card shadow (the only shadow) --- */
+.ui-modal, .ui-empty-state, .ui-skeleton-card,
+.today-panel, .today-kpi-card, .today-command-header,
+.projects-overview-bar, .project-professional-card, .project-hero-card,
+.project-content-panel, .project-stat-card, .project-category-card,
+.project-report-sheet, .project-timeline-list, .project-task-list,
+.project-task-summary-grid article, .project-gallery-panel,
+.input-project-rail, .input-primary-composer, .input-attachment-panel,
+.input-review-workspace, .input-review-card, .input-start-state,
+.management-center-hero, .management-kpi-grid article, .management-panel,
+.error-boundary-card, .login-brand-panel {
+  border-radius: var(--radius-card);
+}
+.ui-skeleton-card, .ui-empty-state,
+.today-panel, .today-kpi-card, .project-professional-card,
+.project-content-panel, .project-stat-card, .project-category-card,
+.project-report-sheet, .project-timeline-list, .project-task-list,
+.project-task-summary-grid article,
+.input-primary-composer, .input-attachment-panel, .input-review-card,
+.input-start-state, .management-panel, .management-kpi-grid article,
+.error-boundary-card {
+  box-shadow: var(--shadow-card);
+}
+
 @media (max-width: 900px) {
   .ui-loading-grid { grid-template-columns: 1fr; }
   .ui-modal-backdrop { padding: 0; place-items: end center; }
-  .ui-modal { width: 100%; max-height: min(91dvh, 860px); border-radius: var(--radius) var(--radius) 0 0; }
+  .ui-modal { width: 100%; max-height: min(91dvh, 860px); border-radius: var(--radius-card) var(--radius-card) 0 0; }
   .ui-modal-header { padding: 14px 14px 12px; }
   .ui-modal-body { padding: 14px; }
   .ui-modal-actions { padding: 12px 14px calc(12px + env(safe-area-inset-bottom)); }
