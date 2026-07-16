@@ -1,7 +1,9 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
+import { createServer } from 'http';
 
 // ============================================
 // AG Project Monitor MCP Server
@@ -505,8 +507,57 @@ server.tool(
 );
 
 // ============================================
-// Start server
+// Start server — SSE for remote (phone), stdio for local (Claude Desktop)
 // ============================================
-const transport = new StdioServerTransport();
-await server.connect(transport);
-console.error('AG Project Monitor MCP server running');
+
+const mode = process.env.MCP_MODE || (process.env.PORT ? 'sse' : 'stdio');
+
+if (mode === 'sse') {
+  // Remote mode: HTTP server with SSE for Claude.ai / phone access
+  const PORT = process.env.PORT || 3001;
+  let sseTransport = null;
+
+  const httpServer = createServer(async (req, res) => {
+    // CORS
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
+
+    const url = new URL(req.url, `http://localhost:${PORT}`);
+
+    if (url.pathname === '/sse' && req.method === 'GET') {
+      // SSE connection
+      sseTransport = new SSEServerTransport('/messages', res);
+      await server.connect(sseTransport);
+      console.error('SSE client connected');
+    } else if (url.pathname === '/messages' && req.method === 'POST') {
+      // Message from Claude
+      if (!sseTransport) { res.writeHead(400); res.end('No SSE connection'); return; }
+      let body = '';
+      req.on('data', chunk => { body += chunk; });
+      req.on('end', async () => {
+        try {
+          await sseTransport.handlePostMessage(req, res, body);
+        } catch (err) {
+          console.error('Message error:', err);
+          res.writeHead(500); res.end('Error');
+        }
+      });
+    } else if (url.pathname === '/health') {
+      res.writeHead(200); res.end('ok');
+    } else {
+      res.writeHead(404); res.end('Not found');
+    }
+  });
+
+  httpServer.listen(PORT, () => {
+    console.error(`AG Project MCP server (SSE) running on port ${PORT}`);
+    console.error(`Connect Claude to: http://localhost:${PORT}/sse`);
+  });
+} else {
+  // Local mode: stdio for Claude Desktop
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+  console.error('AG Project Monitor MCP server running (stdio)');
+}

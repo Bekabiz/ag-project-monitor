@@ -16,7 +16,36 @@ Giorgos controls his entire office from Claude chat. 11 tools:
 | get_project_summary | "Πώς πάει η Πεύκη;" |
 | register_to_timeline | "Καταχώρησε αυτό στο ιστορικό" |
 
-## Setup for Claude Desktop
+## Setup for Claude on Phone (Remote SSE)
+
+Deploy the MCP server to any hosting platform:
+
+### Railway (easiest)
+1. Push the repo to GitHub
+2. Go to railway.app → New Project → Deploy from GitHub
+3. Set root directory to `mcp/`
+4. Add environment variables:
+   - `SUPABASE_URL` = your Supabase URL
+   - `SUPABASE_SERVICE_KEY` = your service role key
+   - `PORT` = 3001 (Railway sets this automatically)
+5. Deploy — you get a URL like `https://ag-project-mcp.up.railway.app`
+6. In Claude.ai → Settings → MCP Servers → Add:
+   ```
+   URL: https://ag-project-mcp.up.railway.app/sse
+   ```
+7. Now Giorgos opens Claude on his phone and the 11 tools are available.
+
+### Test locally
+```bash
+cd mcp
+SUPABASE_URL=https://your-project.supabase.co \
+SUPABASE_SERVICE_KEY=your-key \
+PORT=3001 \
+node server.js
+```
+Then connect Claude Desktop to `http://localhost:3001/sse`
+
+## Setup for Claude Desktop (Local stdio)
 
 1. Install Node.js 18+
 2. Clone the repo
