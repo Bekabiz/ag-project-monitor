@@ -49,6 +49,26 @@ export default function App() {
     return () => subscription.unsubscribe()
   }, [])
 
+  // Browser back navigates within the app instead of closing the PWA.
+  useEffect(() => {
+    if (!window.history.state?.agTab) {
+      window.history.replaceState({ agTab: 'today', agProject: null }, '')
+    }
+    function handlePopState(event) {
+      const state = event.state || {}
+      setActiveTab(state.agTab || 'today')
+      setSelectedProject(state.agProject || null)
+      setMobileMenuOpen(false)
+      setProfileOpen(false)
+    }
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+
+  function pushHistory(tab, project = null) {
+    window.history.pushState({ agTab: tab, agProject: project }, '')
+  }
+
   useEffect(() => {
     function closeTransientUi(event) {
       if (event.type === 'keydown' && event.key !== 'Escape') return
@@ -100,6 +120,17 @@ export default function App() {
     setMobileMenuOpen(false)
     setProfileOpen(false)
     if (id === 'today') setTodayBadge(0)
+    pushHistory(id)
+  }
+
+  function openProject(project) {
+    setSelectedProject(project)
+    pushHistory(activeTab, project)
+  }
+
+  function closeProject() {
+    if (window.history.state?.agProject) window.history.back()
+    else setSelectedProject(null)
   }
 
   function openInputForProject(project) {
@@ -234,12 +265,12 @@ export default function App() {
 
         <main className="app-main workspace-main">
           {selectedProject ? (
-            <ProjectDetail project={selectedProject} profile={profile} onBack={() => setSelectedProject(null)} onAddUpdate={() => openInputForProject(selectedProject)} />
+            <ProjectDetail project={selectedProject} profile={profile} onBack={closeProject} onAddUpdate={() => openInputForProject(selectedProject)} />
           ) : (
             <>
               {activeTab === 'today' && <TodayTab profile={profile} onBadgeCount={setTodayBadge} />}
               {activeTab === 'input' && <InputTab profile={profile} initialProject={inputProject} onOpenProjects={() => changeTab('projects')} />}
-              {activeTab === 'projects' && <ProjectsTab profile={profile} onSelectProject={setSelectedProject} />}
+              {activeTab === 'projects' && <ProjectsTab profile={profile} onSelectProject={openProject} />}
               {activeTab === 'summary' && <MonitorTab profile={profile} onOpenToday={() => changeTab('today')} />}
             </>
           )}

@@ -15,6 +15,12 @@ export function ModalShell({ open, onClose, title, description, icon: Icon, chil
   const descriptionId = useId()
   const dialogRef = useRef(null)
   const previousFocusRef = useRef(null)
+  // onClose is usually an inline arrow that changes identity on every parent
+  // render (each keystroke). Keeping it in a ref lets the focus-trap effect
+  // depend only on `open` — otherwise it re-runs per keystroke and steals
+  // focus back to the first field, closing the mobile keyboard.
+  const onCloseRef = useRef(onClose)
+  useEffect(() => { onCloseRef.current = onClose }, [onClose])
 
   useEffect(() => {
     if (!open) return undefined
@@ -27,7 +33,7 @@ export function ModalShell({ open, onClose, title, description, icon: Icon, chil
     function handleKeyDown(event) {
       if (event.key === 'Escape') {
         event.preventDefault()
-        onClose?.()
+        onCloseRef.current?.()
         return
       }
       if (event.key !== 'Tab' || !dialog) return
@@ -54,7 +60,7 @@ export function ModalShell({ open, onClose, title, description, icon: Icon, chil
       document.body.style.overflow = previousOverflow
       previousFocusRef.current?.focus?.()
     }
-  }, [open, onClose])
+  }, [open])
 
   if (!open) return null
 
