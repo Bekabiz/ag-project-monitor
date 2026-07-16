@@ -1,0 +1,14 @@
+{
+  "name": "ag-project-mcp",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "MCP server for AG Project Monitor — Giorgos controls tasks, entries, search from Claude",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "@supabase/supabase-js": "^2.49.0"
+  }
+}
