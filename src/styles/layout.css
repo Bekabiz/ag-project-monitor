@@ -21,14 +21,14 @@
   display: grid; place-items: center;
   border: 1px solid rgba(255, 254, 252, .3); border-radius: var(--radius-pill);
   color: var(--paper);
-  font-family: var(--font-display); font-size: 19px; font-weight: 300; line-height: 1;
+  font-family: var(--font-display); font-size: 19px; font-weight: 600; line-height: 1;
 }
-.sidebar-brand strong { display: block; font-family: var(--font-display); font-size: 21px; font-weight: 300; letter-spacing: -.01em; }
+.sidebar-brand strong { display: block; font-family: var(--font-display); font-size: 21px; font-weight: 600; letter-spacing: -.01em; }
 .sidebar-brand span { display: block; margin-top: 2px; color: rgba(255, 254, 252, .55); font-size: 11px; }
 .mobile-sidebar-close { display: none; }
 
 .sidebar-nav { display: flex; flex-direction: column; gap: 7px; margin-top: 21px; }
-.sidebar-eyebrow { margin: 0 7px 7px; color: rgba(255, 254, 252, .45); font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.sidebar-eyebrow { margin: 0 7px 7px; color: rgba(255, 254, 252, .45); font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
 .sidebar-item {
   min-height: 54px; padding: 7px 14px;
   display: flex; align-items: center; gap: 14px;
@@ -38,7 +38,7 @@
   transition: color var(--transition), background var(--transition);
 }
 .sidebar-item:hover { color: var(--paper); background: rgba(255, 254, 252, .07); }
-.sidebar-item.active { background: var(--veil); color: var(--ink); border-radius: var(--radius-pill); }
+.sidebar-item.active { background: rgba(255, 255, 255, .12); color: #ffffff; border-radius: var(--radius-pill); }
 .sidebar-item-icon { position: relative; display: grid; place-items: center; flex: 0 0 auto; }
 .sidebar-item-icon em {
   position: absolute; top: -7px; right: -10px;
@@ -88,7 +88,7 @@
 .workspace-kicker { display: block; color: var(--text-secondary); font-size: 12px; }
 .workspace-title-group h1 {
   color: var(--ink);
-  font-family: var(--font-display); font-size: 28px; font-weight: 300;
+  font-family: var(--font-display); font-size: 28px; font-weight: 600;
   letter-spacing: -.01em; line-height: 1.2;
 }
 .workspace-title-group p { margin-top: 2px; color: var(--text-secondary); font-size: 12px; line-height: 1.4; }
@@ -168,7 +168,7 @@
   border: 2px solid var(--veil); border-top-color: var(--ink); border-radius: var(--radius-pill);
   animation: paper-spin 850ms linear infinite;
 }
-.profile-error-screen h1 { color: var(--ink); font-family: var(--font-display); font-size: 28px; font-weight: 300; }
+.profile-error-screen h1 { color: var(--ink); font-family: var(--font-display); font-size: 28px; font-weight: 600; }
 .profile-error-actions { display: flex; gap: 8px; }
 .logout-modal-copy { color: var(--text-secondary); font-size: 13px; line-height: 1.5; text-align: center; }
 
@@ -185,7 +185,7 @@
   border-radius: var(--radius-pill);
   background: var(--danger-wash); color: var(--danger);
 }
-.error-boundary-card h1 { color: var(--ink); font-family: var(--font-display); font-size: 28px; font-weight: 300; }
+.error-boundary-card h1 { color: var(--ink); font-family: var(--font-display); font-size: 28px; font-weight: 600; }
 .error-boundary-card > p { max-width: 360px; margin: 10px auto 21px; color: var(--text-secondary); font-size: 13px; line-height: 1.5; }
 .error-boundary-actions { display: flex; justify-content: center; gap: 8px; }
 .error-boundary-details { margin-top: 21px; padding-top: 14px; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 12px; text-align: left; }
@@ -210,15 +210,15 @@
   display: grid; place-items: center;
   border: 1px solid var(--ink); border-radius: var(--radius-pill);
   background: var(--paper); color: var(--ink);
-  font-family: var(--font-display); font-size: 19px; font-weight: 300; line-height: 1;
+  font-family: var(--font-display); font-size: 19px; font-weight: 600; line-height: 1;
 }
-.login-brand-mark strong { display: block; font-family: var(--font-display); font-size: 21px; font-weight: 300; }
+.login-brand-mark strong { display: block; font-family: var(--font-display); font-size: 21px; font-weight: 600; }
 .login-brand-mark span { display: block; margin-top: 2px; color: var(--text-secondary); font-size: 12px; }
 .login-brand-copy { max-width: 610px; margin: auto 0; }
-.login-brand-copy .eyebrow { margin-bottom: 14px; color: var(--ink); font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.login-brand-copy .eyebrow { margin-bottom: 14px; color: var(--ink); font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
 .login-brand-copy h1 {
   max-width: 620px; color: var(--ink);
-  font-family: var(--font-display); font-size: clamp(36px, 4.4vw, 56px); font-weight: 300;
+  font-family: var(--font-display); font-size: clamp(36px, 4.4vw, 56px); font-weight: 600;
   line-height: 1.1; letter-spacing: -.01em;
 }
 .login-brand-copy p { max-width: 520px; margin-top: 21px; color: var(--text-secondary); font-size: 14px; line-height: 1.5; }
@@ -231,7 +231,7 @@
 .login-card { width: min(100%, 420px); }
 .login-card-heading { margin-bottom: 28px; }
 .login-card-heading .mobile-brand { display: none; }
-.login-title { color: var(--ink); font-family: var(--font-display); font-size: 36px; font-weight: 300; line-height: 1.2; }
+.login-title { color: var(--ink); font-family: var(--font-display); font-size: 36px; font-weight: 600; line-height: 1.2; }
 .login-subtitle { margin-top: 8px; color: var(--text-secondary); font-size: 14px; line-height: 1.5; }
 .login-form { display: grid; gap: 14px; }
 .login-field { display: grid; gap: 7px; }
@@ -306,7 +306,7 @@
   .login-brand-panel { display: none; }
   .login-form-panel { min-height: 100dvh; padding: 28px 21px; }
   .login-card-heading .mobile-brand { margin-bottom: 28px; display: flex; align-items: center; gap: 11px; }
-  .login-brand-mark-copy strong { display: block; font-family: var(--font-display); font-size: 19px; font-weight: 300; }
+  .login-brand-mark-copy strong { display: block; font-family: var(--font-display); font-size: 19px; font-weight: 600; }
   .login-brand-mark-copy span { display: block; margin-top: 2px; color: var(--text-secondary); font-size: 11px; }
   .login-title { font-size: 30px; }
 }
