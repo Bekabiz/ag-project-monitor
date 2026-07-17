@@ -91,7 +91,7 @@ export default async function handler(req, res) {
           const queryEmbedding = embData.data?.[0]?.embedding
 
           if (queryEmbedding) {
-            const { data: semanticResults } = await supabase.rpc('search_entries', {
+            const { data: semanticResults } = await supabase.rpc('match_entries', {
               query_embedding: queryEmbedding,
               match_threshold: 0.3,
               match_count: limit,

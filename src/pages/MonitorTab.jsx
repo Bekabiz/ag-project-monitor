@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Check, X, PlusCircle, AlertTriangle, Paperclip, ChevronDown, Send, Mic, Plus, CheckCircle2, Search, CalendarDays, Eye, Users, ClipboardCheck, Gauge, RefreshCw, Clock3, FileText, Sparkles } from 'lucide-react'
+import { Check, X, PlusCircle, AlertTriangle, Paperclip, ChevronDown, Send, Mic, Plus, CheckCircle2, Search, CalendarDays, Eye, Users, ClipboardCheck, Gauge, RefreshCw, Clock3, FileText, Sparkles, Mail, ExternalLink } from 'lucide-react'
 import { db, dbRead, supabase } from '../lib/db'
 import { getDaysInfo, getStatusColor, getStatusLabel } from '../lib/dates'
 import { useVoiceRecorder } from '../lib/voice'
@@ -34,6 +34,10 @@ export default function MonitorTab({ profile, onOpenToday }) {
   const [searching, setSearching] = useState(false)
   const [searchFilter, setSearchFilter] = useState({ category: null, project: null })
   const [toast, setToast] = useState(null)
+
+  // Email entries (unassigned)
+  const [emailEntries, setEmailEntries] = useState([])
+  const [emailSaving, setEmailSaving] = useState(null)
 
   function showToast(msg, isError) {
     setToast({ msg, isError })
@@ -82,12 +86,35 @@ export default function MonitorTab({ profile, onOpenToday }) {
     const projs = await dbRead(supabase
       .from('projects').select('*').eq('status', 'active').order('name'))
     setProjects(projs)
+
+    // Load unassigned email entries
+    const emails = await dbRead(supabase
+      .from('entries').select('*')
+      .eq('entry_type', 'email')
+      .is('project_id', null)
+      .order('created_at', { ascending: false })
+      .limit(50))
+    setEmailEntries(emails)
     } catch (err) {
       console.error('Load error:', err)
       showToast('Σφάλμα φόρτωσης', true)
     } finally {
       setLoading(false)
     }
+  }
+
+  // === EMAIL ASSIGN TO PROJECT ===
+  async function assignEmailToProject(entryId, projectId) {
+    if (!projectId) return
+    setEmailSaving(entryId)
+    try {
+      await db(supabase.from('entries').update({ project_id: projectId }).eq('id', entryId))
+      setEmailEntries(prev => prev.filter(e => e.id !== entryId))
+      showToast('Αντιστοιχίστηκε στο έργο')
+    } catch (err) {
+      showToast('Σφάλμα: ' + err.message, true)
+    }
+    setEmailSaving(null)
   }
 
   // === VOICE FOR PLANNER (shared hook) ===
@@ -301,6 +328,7 @@ export default function MonitorTab({ profile, onOpenToday }) {
 
   const sectionItems = [
     { id: 'tasks', label: 'Εργασίες', description: 'Αναθέσεις και αξιολόγηση', icon: ClipboardCheck, badge: reviewTasks.length },
+    { id: 'emails', label: 'Email', description: 'Αντιστοίχιση σε έργο', icon: Mail, badge: emailEntries.length },
     { id: 'search', label: 'Αναζήτηση', description: 'Μνήμη όλων των έργων', icon: Search },
     { id: 'planner', label: 'Σχεδιασμός', description: 'Πλάνο και υπενθυμίσεις', icon: CalendarDays, badge: plans.length },
     { id: 'overview', label: 'Εποπτεία', description: 'Προθεσμίες και κόστος', icon: Gauge, badge: overdueDeadlines.length },
@@ -448,6 +476,48 @@ export default function MonitorTab({ profile, onOpenToday }) {
             )}
           </section>
         </div>
+      )}
+
+      {activeSection === 'emails' && (
+        <section className="management-panel management-email-panel">
+          <div className="management-panel-heading">
+            <div><span className="is-blue" aria-hidden="true"><Mail size={18} strokeWidth={1.5} /></span><div><h3>Email χωρίς έργο</h3><p>Αντιστοιχίστε κάθε email στο σωστό έργο.</p></div></div>
+            <button type="button" className="management-heading-action" onClick={loadData}><RefreshCw size={15} strokeWidth={1.5} aria-hidden="true" />Ανανέωση</button>
+          </div>
+          {emailEntries.length === 0 ? (
+            <EmptyState icon={Mail} title="Δεν υπάρχουν email χωρίς έργο" description="Τα νέα business email θα εμφανιστούν εδώ αυτόματα." compact />
+          ) : (
+            <div className="management-email-list">
+              {emailEntries.map(entry => (
+                <article key={entry.id} className="management-email-card">
+                  <div className="management-email-header">
+                    <Mail size={16} strokeWidth={1.5} aria-hidden="true" />
+                    <div>
+                      <h3>{entry.title || entry.raw_text?.slice(0, 80)}</h3>
+                      <p className="management-email-meta">
+                        <span>{entry.submitter_name}</span>
+                        <time>{new Date(entry.created_at).toLocaleDateString('el-GR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</time>
+                      </p>
+                    </div>
+                  </div>
+                  {entry.ai_summary && <p className="management-email-summary">{entry.ai_summary}</p>}
+                  {entry.tags?.length > 0 && <div className="management-result-tags">{entry.tags.map(tag => <span key={tag}>{tag}</span>)}</div>}
+                  <div className="management-email-assign">
+                    <select
+                      defaultValue=""
+                      onChange={event => assignEmailToProject(entry.id, event.target.value)}
+                      disabled={emailSaving === entry.id}
+                    >
+                      <option value="" disabled>Επιλογή έργου…</option>
+                      {projects.map(project => <option key={project.id} value={project.id}>{project.name}</option>)}
+                    </select>
+                    {emailSaving === entry.id && <ButtonSpinner label="Αποθήκευση…" />}
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
       )}
 
       {activeSection === 'search' && (

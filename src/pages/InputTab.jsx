@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Mic, Camera, FileUp, Check, RotateCcw, FolderPlus, Search, Sparkles, LockKeyhole, Users, Send, RefreshCw, FileText, ChevronRight } from 'lucide-react'
+import { Mic, Camera, FileUp, Check, RotateCcw, FolderPlus, Search, Sparkles, LockKeyhole, Users, Send, RefreshCw, FileText, ChevronRight, Link2, ExternalLink } from 'lucide-react'
 import { db, dbRead, supabase } from '../lib/db'
 import { ButtonSpinner, EmptyState, LoadingState, ModalShell } from '../components/ui'
 
@@ -19,6 +19,8 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
   const [docName, setDocName] = useState('')
   const [docVersion, setDocVersion] = useState('')
   const [docNotes, setDocNotes] = useState('')
+  const [linkUrl, setLinkUrl] = useState('')
+  const [linkTitle, setLinkTitle] = useState('')
   const [teamVisible, setTeamVisible] = useState(false) // false = private (owner only), true = team can see
 
   // AI Confirmation state
@@ -364,6 +366,33 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
     setShowFileModal(null)
   }
 
+  // FILE LINK (external URL — OneDrive, Google Drive, etc.)
+  async function handleLinkSave() {
+    if (!linkUrl.trim() || !selected) return
+    setSending(true)
+    try {
+      await db(supabase.from('entries').insert({
+        project_id: selected.id,
+        user_id: profile.id,
+        entry_type: 'document',
+        file_url: linkUrl.trim(),
+        file_name: linkTitle.trim() || linkUrl.trim(),
+        raw_text: `[Σύνδεσμος αρχείου] ${linkTitle || linkUrl}`,
+        title: linkTitle.trim() || 'Σύνδεσμος αρχείου',
+        category: 'note',
+        tags: ['link', 'file'],
+        submitter_name: profile.full_name,
+        is_team_visible: profile?.role === 'owner' ? teamVisible : true
+      }))
+      setLinkUrl(''); setLinkTitle('')
+      showToast('Σύνδεσμος αποθηκεύτηκε')
+    } catch (err) {
+      showToast('Σφάλμα: ' + err.message, true)
+    }
+    setSending(false)
+    setShowFileModal(null)
+  }
+
   async function compressImage(file) {
     return new Promise(resolve => {
       const img = new Image()
@@ -526,6 +555,11 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
                   <span><strong>Έγγραφο ή σχέδιο</strong><small>PDF, Word, Excel ή DWG</small></span>
                   <ChevronRight size={16} strokeWidth={1.5} aria-hidden="true" />
                 </button>
+                <button type="button" className="input-attachment-action is-link" onClick={() => setShowFileModal('link')}>
+                  <span aria-hidden="true"><Link2 size={20} strokeWidth={1.5} /></span>
+                  <span><strong>Σύνδεσμος αρχείου</strong><small>OneDrive, Google Drive ή URL</small></span>
+                  <ChevronRight size={16} strokeWidth={1.5} aria-hidden="true" />
+                </button>
                 <div className="input-visibility-note">
                   {profile?.role === 'owner' && !teamVisible ? <LockKeyhole size={15} strokeWidth={1.5} aria-hidden="true" /> : <Users size={15} strokeWidth={1.5} aria-hidden="true" />}
                   <span>{profile?.role === 'owner' && !teamVisible ? 'Η καταχώρηση θα είναι ιδιωτική για τον διαχειριστή.' : 'Η καταχώρηση θα είναι διαθέσιμη στην ομάδα.'}</span>
@@ -629,6 +663,26 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
           <label className="input-file-dropzone is-full"><span aria-hidden="true"><FileUp size={24} strokeWidth={1.5} /></span><strong>Επιλογή αρχείου</strong><small>PDF, DWG, Word ή Excel</small><input type="file" accept=".pdf,.dwg,.doc,.docx,.xls,.xlsx" onChange={handleDocUpload} /></label>
         </div>
         {sending && <div className="input-upload-progress"><ButtonSpinner label="Μεταφόρτωση αρχείου…" /></div>}
+      </ModalShell>
+
+      <ModalShell
+        open={showFileModal === 'link'}
+        onClose={() => setShowFileModal(null)}
+        title="Σύνδεσμος αρχείου"
+        description={`Ο σύνδεσμος θα αποθηκευτεί στο έργο «${selected?.name || ''}».`}
+        icon={Link2}
+        size="md"
+        actions={<>
+          <button type="button" className="action-btn" onClick={() => setShowFileModal(null)}>Ακύρωση</button>
+          <button type="button" className="action-btn primary" onClick={handleLinkSave} disabled={!linkUrl.trim() || sending}>
+            {sending ? <ButtonSpinner label="Αποθήκευση…" /> : <><ExternalLink size={15} strokeWidth={1.5} aria-hidden="true" />Αποθήκευση</>}
+          </button>
+        </>}
+      >
+        <div className="input-document-form">
+          <div className="is-full"><label htmlFor="link-title">Τίτλος αρχείου</label><input id="link-title" value={linkTitle} onChange={event => setLinkTitle(event.target.value)} placeholder="π.χ. Σχέδιο κάτοψης ισογείου" /></div>
+          <div className="is-full"><label htmlFor="link-url">URL</label><input id="link-url" type="url" value={linkUrl} onChange={event => setLinkUrl(event.target.value)} placeholder="https://onedrive.live.com/... ή https://drive.google.com/..." /></div>
+        </div>
       </ModalShell>
 
       {toast && <div className={`toast ${toast.isError ? 'toast-error' : 'toast-success'}`} role="status">{toast.msg}</div>}
