@@ -122,15 +122,49 @@ export default async function handler(req, res) {
       if (recentEntries.length === 0) inactiveCount++
     }
 
-    // 3. Supabase auto-ping (keeps free tier alive - same request counts)
-    // The calls above already keep Supabase active, no extra ping needed
+    // 3. Auto-generate embeddings for entries that don't have one yet
+    let embeddingsCreated = 0
+    if (openaiKey) {
+      try {
+        const noEmbRes = await fetch(
+          `${supabaseUrl}/rest/v1/entries?embedding=is.null&select=id,title,raw_text,ai_summary,category,tags&limit=50`,
+          { headers }
+        )
+        const noEmbEntries = await noEmbRes.json()
 
-    console.log(`Cron complete: ${alertsCreated} overdue deadlines flagged, ${inactiveCount} inactive projects`)
+        for (const entry of noEmbEntries) {
+          const parts = [entry.title, entry.raw_text, entry.ai_summary, entry.category, ...(entry.tags || [])].filter(Boolean)
+          const textToEmbed = parts.join(' ').substring(0, 8000)
+          if (!textToEmbed.trim()) continue
+
+          const embRes = await fetch('https://api.openai.com/v1/embeddings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
+            body: JSON.stringify({ model: 'text-embedding-3-small', input: textToEmbed })
+          })
+          if (!embRes.ok) continue
+          const embData = await embRes.json()
+          const embedding = embData.data?.[0]?.embedding
+          if (!embedding) continue
+
+          await fetch(`${supabaseUrl}/rest/v1/entries?id=eq.${entry.id}`, {
+            method: 'PATCH', headers,
+            body: JSON.stringify({ embedding })
+          })
+          embeddingsCreated++
+        }
+      } catch (embErr) {
+        console.error('Embedding backfill error:', embErr)
+      }
+    }
+
+    console.log(`Cron complete: ${alertsCreated} overdue deadlines flagged, ${inactiveCount} inactive projects, ${embeddingsCreated} embeddings created`)
 
     return res.status(200).json({
       success: true,
       overdue_flagged: alertsCreated,
       inactive_projects: inactiveCount,
+      embeddings_created: embeddingsCreated,
       ran_at: new Date().toISOString()
     })
 
