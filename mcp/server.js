@@ -49,13 +49,11 @@ async function getOwner() {
 }
 
 // ============================================
-// Server setup
+// Tool registration function
+// Called per-session for SSE, or once for stdio
 // ============================================
 
-const server = new McpServer({
-  name: 'ag-project-monitor',
-  version: '1.0.0',
-});
+function registerAllTools(server) {
 
 // ============================================
 // TOOL 1: create_task
@@ -506,6 +504,8 @@ server.tool(
   }
 );
 
+} // end registerAllTools
+
 // ============================================
 // Start server — SSE for remote (phone), stdio for local (Claude Desktop)
 // ============================================
@@ -538,7 +538,8 @@ if (mode === 'sse') {
     return tokens.has(token);
   }
 
-  let sseTransport = null;
+  // Session-based transport store (supports multiple clients)
+  const transports = {};
 
   const httpServer = createServer(async (req, res) => {
     // CORS
@@ -673,26 +674,57 @@ if (mode === 'sse') {
       });
     }
 
-    // ---- MCP endpoints ----
+    // ---- MCP endpoints (session-based) ----
 
     if (url.pathname === '/sse' && req.method === 'GET') {
-      sseTransport = new SSEServerTransport('/messages', res);
-      await server.connect(sseTransport);
-      console.error('SSE client connected');
+      console.error('New SSE connection request');
+      const transport = new SSEServerTransport('/messages', res);
+      const sessionId = transport.sessionId;
+      transports[sessionId] = transport;
+
+      transport.onclose = () => {
+        console.error(`SSE session ${sessionId} closed`);
+        delete transports[sessionId];
+      };
+
+      // Each SSE connection gets its own server instance with shared tools
+      const sessionServer = new McpServer({
+        name: 'ag-project-monitor',
+        version: '1.0.0',
+      });
+      // Re-register all tools on the session server
+      registerAllTools(sessionServer);
+      await sessionServer.connect(transport);
+      console.error(`SSE client connected (session: ${sessionId})`);
+
     } else if (url.pathname === '/messages' && req.method === 'POST') {
-      if (!sseTransport) { res.writeHead(400); res.end('No SSE connection'); return; }
+      // Route POST to the correct session's transport
+      const sessionId = url.searchParams.get('sessionId');
+      const transport = sessionId ? transports[sessionId] : null;
+      if (!transport) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'No active SSE session' }));
+        return;
+      }
       let body = '';
       req.on('data', chunk => { body += chunk; });
       req.on('end', async () => {
         try {
-          await sseTransport.handlePostMessage(req, res, body);
+          await transport.handlePostMessage(req, res, body);
         } catch (err) {
           console.error('Message error:', err);
-          res.writeHead(500); res.end('Error');
+          if (!res.headersSent) { res.writeHead(500); res.end('Error'); }
         }
       });
+
     } else if (url.pathname === '/health') {
-      res.writeHead(200); res.end('ok');
+      json(res, 200, { 
+        status: 'ok', 
+        server: 'ag-project-mcp',
+        sessions: Object.keys(transports).length,
+        uptime: Math.floor(process.uptime()),
+      });
+
     } else {
       res.writeHead(404); res.end('Not found');
     }
@@ -705,6 +737,11 @@ if (mode === 'sse') {
   });
 } else {
   // Local mode: stdio for Claude Desktop
+  const server = new McpServer({
+    name: 'ag-project-monitor',
+    version: '1.0.0',
+  });
+  registerAllTools(server);
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error('AG Project Monitor MCP server running (stdio)');
