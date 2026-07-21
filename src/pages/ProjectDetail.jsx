@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { AlertTriangle, ArrowLeft, Building2, CalendarDays, Camera, CheckCircle2, ChevronRight, ClipboardCheck, Clock3, FileDown, FileText, FolderTree, Image, LayoutDashboard, ListTree, MapPin, Mic, Plus, RefreshCw, Search, Sparkles } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Building2, CalendarDays, Camera, CheckCircle2, ChevronRight, ClipboardCheck, Clock3, FileDown, FileText, FolderTree, Image, LayoutDashboard, ListTree, MapPin, Mic, Plus, RefreshCw, Search, Sparkles, Trash2 } from 'lucide-react'
 import { db, dbRead, supabase } from '../lib/db'
 import StepsView from './StepsView'
 import { ButtonSpinner, EmptyState, InlineNotice, LoadingState, ModalShell } from '../components/ui'
@@ -42,6 +42,9 @@ export default function ProjectDetail({ project, profile, onBack, onAddUpdate })
   const [parsedStructure, setParsedStructure] = useState(null)
 
   const [toast, setToast] = useState(null)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteConfirmName, setDeleteConfirmName] = useState('')
+  const [deleting, setDeleting] = useState(false)
   function showToast(msg, isError) { setToast({ msg, isError }); setTimeout(() => setToast(null), 2500) }
 
   useEffect(() => { loadData() }, [project.id])
@@ -123,8 +126,12 @@ export default function ProjectDetail({ project, profile, onBack, onAddUpdate })
             return /[α-ωΑ-Ωά-ώa-zA-Z]{3,}/.test(trimmed)
           })
           textContent = readableLines.join('\n')
+        } else if (file.name.endsWith('.docx') || file.name.endsWith('.doc')) {
+          const mammoth = await import('mammoth')
+          const arrayBuf = await file.arrayBuffer()
+          const result = await mammoth.extractRawText({ arrayBuffer: arrayBuf })
+          textContent = result.value
         } else {
-          // For docx and other formats, try reading as text
           textContent = await file.text()
         }
       }
@@ -256,6 +263,26 @@ export default function ProjectDetail({ project, profile, onBack, onAddUpdate })
     }
   }
 
+  async function handleDeleteProject() {
+    setDeleting(true)
+    try {
+      await db(supabase.from('entries').delete().eq('project_id', project.id))
+      await db(supabase.from('steps').delete().eq('project_id', project.id))
+      await db(supabase.from('step_notes').delete().in('step_id',
+        (await dbRead(supabase.from('steps').select('id').eq('project_id', project.id))).map(s => s.id)
+      )).catch(() => {})
+      await db(supabase.from('project_areas').delete().eq('project_id', project.id))
+      await db(supabase.from('deadlines').delete().eq('project_id', project.id))
+      await db(supabase.from('projects').delete().eq('id', project.id))
+      setShowDeleteModal(false)
+      onBack()
+    } catch (err) {
+      showToast('Σφάλμα διαγραφής: ' + err.message, true)
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   // Filters — client-side over the already-loaded entries (limit 200)
   const normalizedMemorySearch = memorySearch.trim().toLocaleLowerCase('el-GR')
   const matchesMemorySearch = e => {
@@ -377,6 +404,7 @@ export default function ProjectDetail({ project, profile, onBack, onAddUpdate })
               </label>
             )}
             {onAddUpdate && <button type="button" className="project-add-update-button" onClick={onAddUpdate}><Mic size={16} strokeWidth={1.5} aria-hidden="true" />Νέα ενημέρωση</button>}
+            {profile?.role === 'owner' && <button type="button" className="project-delete-button" onClick={() => setShowDeleteModal(true)}><Trash2 size={16} strokeWidth={1.5} aria-hidden="true" />Διαγραφή</button>}
           </div>
         </div>
         <div className="project-hero-meta">
@@ -526,6 +554,28 @@ export default function ProjectDetail({ project, profile, onBack, onAddUpdate })
 
       <ModalShell open={Boolean(lightboxUrl)} onClose={() => setLightboxUrl(null)} title="Προβολή φωτογραφίας" icon={Image} size="xl" className="project-lightbox-modal">
         {lightboxUrl && <img src={lightboxUrl} alt={`Μεγέθυνση φωτογραφίας έργου ${project.name}`} className="project-lightbox-image" />}
+      </ModalShell>
+
+      <ModalShell
+        open={showDeleteModal}
+        onClose={() => { setShowDeleteModal(false); setDeleteConfirmName('') }}
+        title="Διαγραφή έργου"
+        description="Η διαγραφή του έργου θα αφαιρέσει όλες τις καταχωρήσεις, εργασίες, φωτογραφίες και αρχεία. Αυτή η ενέργεια δεν μπορεί να αναιρεθεί."
+        icon={Trash2}
+        size="sm"
+        actions={<>
+          <button type="button" className="action-btn" onClick={() => { setShowDeleteModal(false); setDeleteConfirmName('') }}>Ακύρωση</button>
+          <button type="button" className="action-btn primary" style={{ background: 'var(--danger)', borderColor: 'var(--danger)' }} onClick={handleDeleteProject} disabled={deleteConfirmName !== project.name || deleting}>
+            {deleting ? <ButtonSpinner label="Διαγραφή…" /> : 'Οριστική διαγραφή'}
+          </button>
+        </>}
+      >
+        <div className="project-modal-form">
+          <div className="project-modal-field">
+            <label htmlFor="delete-confirm">Πληκτρολογήστε <strong>{project.name}</strong> για επιβεβαίωση</label>
+            <input id="delete-confirm" value={deleteConfirmName} onChange={e => setDeleteConfirmName(e.target.value)} placeholder={project.name} autoFocus />
+          </div>
+        </div>
       </ModalShell>
 
       {toast && <div className={`toast ${toast.isError ? 'toast-error' : 'toast-success'}`} role="status">{toast.msg}</div>}
