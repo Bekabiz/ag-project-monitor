@@ -109,35 +109,26 @@ button:disabled, input:disabled, textarea:disabled, select:disabled { cursor: no
 @keyframes paper-pulse { 50% { opacity: .45; } }
 @keyframes record-pulse { 50% { outline: 6px solid rgba(153, 27, 27, .2); outline-offset: 0; } }
 
-/* --- Team theme: lighter teal/green for non-owner users ---
-   George (owner) keeps monochrome. Team members get green accents. */
-.team-theme .desktop-sidebar { background: #1a7a72; }
-.team-theme .sidebar-item.active { background: rgba(255, 255, 255, .2); }
-.team-theme .sidebar-brand { border-bottom-color: rgba(255, 254, 252, .2); }
-.team-theme .sidebar-footer { border-top-color: rgba(255, 254, 252, .2); }
-.team-theme .mobile-tab-bar .tab.active { color: #0d9488; background: #f0fdfa; }
-.team-theme .action-btn.primary,
-.team-theme .ui-button-primary { border-color: #0d9488; background: #0d9488; color: #fff; }
-.team-theme .action-btn.primary:hover:not(:disabled),
-.team-theme .ui-button-primary:hover:not(:disabled) { background: #0f766e; border-color: #0f766e; color: #fff; }
-.team-theme .header-quick-action { border-color: #0d9488; background: #0d9488; color: #fff; }
-.team-theme .header-quick-action:hover { background: #0f766e; }
-.team-theme input:focus,
-.team-theme textarea:focus,
-.team-theme select:focus { border-color: #0d9488; }
-.team-theme button:focus-visible,
-.team-theme a:focus-visible,
-.team-theme input:focus-visible,
-.team-theme textarea:focus-visible,
-.team-theme select:focus-visible,
-.team-theme [tabindex]:focus-visible { outline-color: #0d9488; }
-.team-theme input[type="checkbox"],
-.team-theme input[type="radio"] { border-color: #0d9488; }
-.team-theme input[type="checkbox"]:checked,
-.team-theme input[type="radio"]:checked { background: #ccfbf1; }
-.team-theme input[type="checkbox"]:checked::before { border-color: #0d9488; }
-.team-theme input[type="radio"]:checked::before { background: #0d9488; }
-.team-theme .spinner { border-top-color: #0d9488; }
+/* --- Team theme: full teal/green for non-owner users ---
+   George (owner) keeps monochrome. Team gets the old green design back. */
+.team-theme {
+  --ink:            #0f766e;
+  --ink-deep:       #115e59;
+  --veil:           #ccfbf1;
+  --wash:           #f0fdfa;
+  --border:         rgba(11, 21, 18, .08);
+  --border-strong:  rgba(11, 21, 18, .14);
+  --shadow-card:    0 1px 2px rgba(11, 21, 18, .03);
+  --success:        #059669;
+  --success-wash:   #ecfdf5;
+  --green:          #059669;
+}
+.team-theme .desktop-sidebar { background: #115e59; }
+.team-theme .sidebar-item:hover { background: rgba(255, 255, 255, .1); }
+.team-theme .sidebar-item.active { background: rgba(255, 255, 255, .18); }
+.team-theme .mobile-tab-bar .tab.active { color: #0f766e; }
+.team-theme .mobile-tab-bar .tab.active .tab-icon-wrap { background: #ccfbf1; }
+.team-theme ::selection { background: #ccfbf1; color: #115e59; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
