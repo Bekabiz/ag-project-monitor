@@ -478,7 +478,7 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
               type="button"
               key={project.id}
               className={`input-project-option ${selected?.id === project.id ? 'is-selected' : ''}`}
-              onClick={() => { setSelected(project); setConfirm(null) }}
+              onClick={() => { setConfirm(null); setTimeout(() => setSelected(project), 50) }}
               aria-pressed={selected?.id === project.id}
             >
               <span className="input-project-option-icon" aria-hidden="true">{project.name.charAt(0)}</span>
@@ -573,7 +573,9 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
             </div>
           </>
         ) : (
-          <section className="input-review-workspace" key={selected?.id}>
+          <section className="input-review-workspace" key={`${selected?.id}-${confirm?.rawText?.length || 0}`}>
+            {confirm && confirm.rawText != null && (
+            <>
             <header className="input-review-header">
               <div className="input-review-title">
                 <span className="input-ai-mark" aria-hidden="true"><Sparkles size={19} strokeWidth={1.5} /></span>
@@ -630,6 +632,8 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
               <button type="button" className="action-btn" onClick={handleSkipAI} disabled={sending}>Αποθήκευση μόνο του κειμένου</button>
               <button type="button" className="action-btn primary" onClick={handleConfirm} disabled={sending}>{sending ? <ButtonSpinner label="Αποθήκευση…" /> : <><Check size={15} strokeWidth={1.5} aria-hidden="true" />Επιβεβαίωση και αποθήκευση</>}</button>
             </footer>
+            </>
+            )}
           </section>
         )}
       </section>
