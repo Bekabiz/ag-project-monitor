@@ -9,6 +9,7 @@ import { db, dbRead, supabase } from '../lib/db'
 import { getDaysInfo, formatDueTime, getOverdueCount } from '../lib/dates'
 import { extractText } from '../lib/voice'
 import { sortProfiles } from '../lib/people'
+import { isPushSupported, subscribeToPush, isSubscribed as checkPushSubscribed } from '../lib/push'
 import { ButtonSpinner, EmptyState, LoadingState, ModalShell } from '../components/ui'
 
 export default function TodayTab({ profile, onBadgeCount }) {
@@ -28,6 +29,9 @@ export default function TodayTab({ profile, onBadgeCount }) {
   const [updateFile, setUpdateFile] = useState(null)
   const [sending, setSending] = useState(false)
   const [expandedPerson, setExpandedPerson] = useState(null)
+  const [seenUpdates, setSeenUpdates] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('ag_seen_updates') || '{}') } catch { return {} }
+  })
 
   // Inline task expand
   const [expandedTask, setExpandedTask] = useState(null)
@@ -59,8 +63,26 @@ export default function TodayTab({ profile, onBadgeCount }) {
   const [voiceTarget, setVoiceTarget] = useState(null) // 'task' | 'announcement' | 'update'
   const mediaRecorderRef = useRef(null)
   const audioChunksRef = useRef([])
+  const [pushEnabled, setPushEnabled] = useState(false)
 
   useEffect(() => { loadData() }, [selectedDate])
+
+  useEffect(() => {
+    if (isPushSupported()) checkPushSubscribed().then(setPushEnabled)
+  }, [])
+
+  async function handleTogglePush() {
+    if (pushEnabled) return
+    const result = await subscribeToPush(profile.id)
+    if (result.ok) {
+      setPushEnabled(true)
+      showToast('Οι ειδοποιήσεις ενεργοποιήθηκαν')
+    } else if (result.reason === 'denied') {
+      showToast('Οι ειδοποιήσεις δεν επιτρέπονται από το πρόγραμμα περιήγησης', true)
+    } else if (result.reason !== 'unsupported') {
+      showToast('Σφάλμα ενεργοποίησης ειδοποιήσεων', true)
+    }
+  }
 
   function showToast(msg, isError) {
     setToast({ msg, isError })
@@ -446,6 +468,19 @@ export default function TodayTab({ profile, onBadgeCount }) {
           user_id: profile.id, user_name: profile.full_name,
           text: updateText.trim(), file_url: fileUrl
         }))
+        await db(supabase.from('entries').insert({
+          project_id: null,
+          user_id: profile.id,
+          entry_type: 'general',
+          raw_text: updateText.trim(),
+          ai_summary: updateText.trim().substring(0, 200),
+          title: updateText.trim().substring(0, 80),
+          category: 'note',
+          tags: ['general', 'update'],
+          submitter_name: profile.full_name,
+          file_url: fileUrl,
+          is_team_visible: true
+        }))
       }
       setUpdateText(''); setUpdateFile(null); setUpdateProject(''); setShowAddUpdate(false)
       await loadData()
@@ -468,6 +503,23 @@ export default function TodayTab({ profile, onBadgeCount }) {
 
   // === HELPERS ===
 
+  function markPersonSeen(name, items) {
+    const latest = items.reduce((max, item) => {
+      const t = item.rawTime || 0
+      return t > max ? t : max
+    }, 0)
+    if (latest > 0) {
+      const next = { ...seenUpdates, [name]: latest }
+      setSeenUpdates(next)
+      try { localStorage.setItem('ag_seen_updates', JSON.stringify(next)) } catch {}
+    }
+  }
+
+  function getUnreadCount(name, items) {
+    const lastSeen = seenUpdates[name] || 0
+    return items.filter(item => (item.rawTime || 0) > lastSeen).length
+  }
+
   function getStatusClass(step) {
     if (step.status === 'done') return 'step-done'
     const info = getDaysInfo(step)
@@ -484,12 +536,14 @@ export default function TodayTab({ profile, onBadgeCount }) {
       const name = u.assigned_to_name || 'Άγνωστο μέλος'
       if (!people[name]) people[name] = []
       people[name].push({ type: 'task_done', text: u.title, project: u.projects?.name,
+        rawTime: new Date(u.updated_at).getTime(),
         time: new Date(u.updated_at).toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit' }) })
     })
     generalUpdates.forEach(u => {
       const name = u.user_name || 'Άγνωστο μέλος'
       if (!people[name]) people[name] = []
       people[name].push({ type: 'general', text: u.text, file_url: u.file_url, project: u.project_name,
+        rawTime: new Date(u.created_at).getTime(),
         time: new Date(u.created_at).toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit' }) })
     })
     return people
@@ -551,6 +605,11 @@ export default function TodayTab({ profile, onBadgeCount }) {
             <Plus size={17} strokeWidth={1.5} aria-hidden="true" />
             <span>Νέα εργασία</span>
           </button>
+          {isPushSupported() && (
+            <button type="button" className={`today-push-toggle ${pushEnabled ? 'is-active' : ''}`} onClick={handleTogglePush} aria-label={pushEnabled ? 'Ειδοποιήσεις ενεργές' : 'Ενεργοποίηση ειδοποιήσεων'} title={pushEnabled ? 'Ειδοποιήσεις ενεργές' : 'Ενεργοποίηση ειδοποιήσεων'}>
+              <Bell size={17} strokeWidth={1.5} aria-hidden="true" />
+            </button>
+          )}
         </div>
       </section>
 
@@ -707,12 +766,13 @@ export default function TodayTab({ profile, onBadgeCount }) {
             <div className="today-team-list">
               {Object.entries(personUpdates).map(([name, items]) => {
                 const isExpanded = expandedPerson === name
+                const unread = getUnreadCount(name, items)
                 return (
                   <article key={name} className={`today-person-card ${isExpanded ? 'is-expanded' : ''}`}>
-                    <button type="button" className="today-person-summary" onClick={() => setExpandedPerson(isExpanded ? null : name)} aria-expanded={isExpanded}>
+                    <button type="button" className="today-person-summary" onClick={() => { setExpandedPerson(isExpanded ? null : name); if (!isExpanded) markPersonSeen(name, items) }} aria-expanded={isExpanded}>
                       <span className="today-person-avatar" aria-hidden="true">{name.charAt(0)}</span>
                       <span className="today-person-copy"><strong>{name}</strong><small>{items.length} ενημέρωσ{items.length === 1 ? 'η' : 'εις'}</small></span>
-                      <span className="today-activity-dot" aria-label="Υπάρχει δραστηριότητα" />
+                      {unread > 0 ? <span className="today-unread-badge">{unread}</span> : <span className="today-activity-dot" aria-label="Υπάρχει δραστηριότητα" />}
                       <ChevronDown size={16} strokeWidth={1.5} aria-hidden="true" className={isExpanded ? 'is-rotated' : ''} />
                     </button>
                     {isExpanded && (

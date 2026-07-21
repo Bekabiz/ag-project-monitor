@@ -28,6 +28,11 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
 
   useEffect(() => { loadProjects() }, [initialProject?.id])
 
+  // Clear confirmation state when switching projects to prevent DOM crash
+  useEffect(() => {
+    setConfirm(null)
+  }, [selected?.id])
+
   async function loadProjects() {
     setProjectsLoading(true)
     setProjectsError(false)
@@ -568,7 +573,7 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
             </div>
           </>
         ) : (
-          <section className="input-review-workspace">
+          <section className="input-review-workspace" key={selected?.id}>
             <header className="input-review-header">
               <div className="input-review-title">
                 <span className="input-ai-mark" aria-hidden="true"><Sparkles size={19} strokeWidth={1.5} /></span>

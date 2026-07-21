@@ -159,9 +159,9 @@ export default function ProjectsTab({ profile, onSelectProject }) {
       <EmptyState
         icon={Building2}
         title="Δεν υπάρχουν έργα ακόμη"
-        description={profile?.role === 'owner' ? 'Δημιουργήστε το πρώτο έργο για να ξεκινήσει η οργάνωση εργασιών, ενημερώσεων και αρχείων.' : 'Ο διαχειριστής δεν έχει δημιουργήσει ακόμη ενεργό έργο.'}
-        actionLabel={profile?.role === 'owner' ? 'Δημιουργία πρώτου έργου' : undefined}
-        onAction={profile?.role === 'owner' ? openAddModal : undefined}
+        description="Δημιουργήστε το πρώτο έργο για να ξεκινήσει η οργάνωση εργασιών, ενημερώσεων και αρχείων."
+        actionLabel="Δημιουργία πρώτου έργου"
+        onAction={openAddModal}
       />
     )
   }
@@ -189,7 +189,7 @@ export default function ProjectsTab({ profile, onSelectProject }) {
         </label>
         <div className="projects-toolbar-actions">
           <button type="button" className="projects-refresh-button" onClick={loadProjects} aria-label="Ανανέωση έργων"><RefreshCw size={17} strokeWidth={1.5} aria-hidden="true" /></button>
-          {profile?.role === 'owner' && <button type="button" className="projects-add-button" onClick={openAddModal}><Plus size={17} strokeWidth={1.5} aria-hidden="true" />Νέο έργο</button>}
+          <button type="button" className="projects-add-button" onClick={openAddModal}><Plus size={17} strokeWidth={1.5} aria-hidden="true" />Νέο έργο</button>
         </div>
       </section>
 

@@ -35,6 +35,15 @@
 .today-primary-action:hover { background: var(--ink-deep); }
 .today-secondary-action { border: 1px solid var(--border); background: var(--paper); color: var(--ink); }
 .today-secondary-action:hover { border-color: var(--border-strong); background: var(--wash); }
+.today-push-toggle {
+  width: 44px; height: 44px;
+  display: grid; place-items: center;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--paper); color: var(--text-secondary);
+  transition: background var(--transition), color var(--transition);
+}
+.today-push-toggle:hover { border-color: var(--border-strong); color: var(--ink); }
+.today-push-toggle.is-active { border-color: var(--ok); background: var(--ok-wash); color: var(--ok); }
 
 /* KPI panel cards: one number per card, serif 300 */
 .today-kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
@@ -237,6 +246,14 @@ button.today-person-summary:hover { background: var(--wash); }
 .today-person-copy small { color: var(--text-secondary); font-size: 12px; }
 .today-activity-dot, .today-quiet-dot { width: 8px; height: 8px; border-radius: var(--radius-pill); background: var(--ink); }
 .today-quiet-dot { background: var(--border-strong); }
+.today-unread-badge {
+  min-width: 20px; height: 20px; padding: 0 6px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-pill);
+  background: var(--ink); color: var(--paper);
+  font-size: 11px; font-weight: 700; line-height: 1;
+}
+.team-theme .today-unread-badge { background: var(--team-accent, var(--ink)); }
 .today-person-summary > svg { color: var(--text-secondary); transition: transform var(--transition); }
 .today-person-card.is-quiet .today-person-summary { grid-template-columns: 34px minmax(0, 1fr) auto; opacity: .72; }
 .today-person-updates { padding: 0 14px 14px 58px; display: grid; gap: 7px; }
@@ -1613,6 +1630,40 @@ button.today-person-summary:hover { background: var(--wash); }
 }
 .management-budget-list em.is-warning { background: var(--warn-wash); color: var(--warn); }
 .management-budget-list em.is-danger { background: var(--danger-wash); color: var(--danger); }
+
+/* Delete button (ProjectDetail) */
+.project-delete-button {
+  min-height: 38px; padding: 0 16px;
+  display: inline-flex; align-items: center; gap: 7px;
+  border: 1px solid var(--danger); border-radius: var(--radius-sm);
+  background: var(--danger); color: var(--paper);
+  font-size: 13px; font-weight: 600;
+  transition: opacity var(--transition);
+}
+.project-delete-button:hover { opacity: .85; }
+
+/* Task card visual separation (BUG 5) */
+.today-task-card { border-left: 3px solid transparent; }
+.today-task-card.step-overdue { border-left-color: var(--danger); }
+.today-task-card.step-soon { border-left-color: var(--warn); }
+.today-task-card.step-progress { border-left-color: var(--ink); }
+.today-task-card.step-done { border-left-color: var(--ok); }
+.today-task-card.step-waiting { border-left-color: var(--text-secondary); }
+
+/* ASAP pill green (UI 2) */
+.today-task-title-row em.is-asap { background: var(--ok-wash); color: var(--ok); }
+
+/* Entry card left border by category (UI 3) */
+.project-entry-card { border-left: 3px solid transparent; }
+.project-entry-card.category-problem { border-left-color: var(--danger); }
+.project-entry-card.category-decision { border-left-color: var(--ink); }
+.project-entry-card.category-material { border-left-color: var(--warn); }
+.project-entry-card.category-work_update { border-left-color: var(--ok); }
+.project-entry-card.category-client_request { border-left-color: var(--warn); }
+.project-entry-card.category-note { border-left-color: var(--text-secondary); }
+
+/* File link attachment action (FEATURE 5 / UI 1) */
+.input-attachment-action.is-link > span:first-child { color: var(--ink); }
 
 /* ==========================================================================
    Responsive
