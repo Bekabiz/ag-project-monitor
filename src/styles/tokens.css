@@ -109,26 +109,140 @@ button:disabled, input:disabled, textarea:disabled, select:disabled { cursor: no
 @keyframes paper-pulse { 50% { opacity: .45; } }
 @keyframes record-pulse { 50% { outline: 6px solid rgba(153, 27, 27, .2); outline-offset: 0; } }
 
-/* --- Team theme: full teal/green for non-owner users ---
-   George (owner) keeps monochrome. Team gets the old green design back. */
-.team-theme {
-  --ink:            #0f766e;
-  --ink-deep:       #115e59;
-  --veil:           #ccfbf1;
-  --wash:           #f0fdfa;
-  --border:         rgba(11, 21, 18, .08);
-  --border-strong:  rgba(11, 21, 18, .14);
-  --shadow-card:    0 1px 2px rgba(11, 21, 18, .03);
-  --success:        #059669;
-  --success-wash:   #ecfdf5;
-  --green:          #059669;
-}
+/* --- Team theme: green accents for non-owner users ---
+   George (owner) keeps monochrome. Team gets teal-green on ALL interactive
+   elements: backgrounds, borders, active states, focus rings.
+   Text color (var(--ink) used as color:) is NOT overridden — stays dark. */
+
+/* --- Sidebar --- */
 .team-theme .desktop-sidebar { background: #115e59; }
 .team-theme .sidebar-item:hover { background: rgba(255, 255, 255, .1); }
 .team-theme .sidebar-item.active { background: rgba(255, 255, 255, .18); }
-.team-theme .mobile-tab-bar .tab.active { color: #0f766e; }
-.team-theme .mobile-tab-bar .tab.active .tab-icon-wrap { background: #ccfbf1; }
-.team-theme ::selection { background: #ccfbf1; color: #115e59; }
+
+/* --- Global: focus rings & input focus --- */
+.team-theme button:focus-visible,
+.team-theme a:focus-visible,
+.team-theme input:focus-visible,
+.team-theme textarea:focus-visible,
+.team-theme select:focus-visible,
+.team-theme [tabindex]:focus-visible { outline-color: #0f766e; }
+.team-theme input:focus,
+.team-theme textarea:focus,
+.team-theme select:focus { border-color: #0f766e; }
+
+/* --- Global: checkboxes & radios --- */
+.team-theme input[type="checkbox"],
+.team-theme input[type="radio"] { border-color: #0f766e; }
+.team-theme input[type="checkbox"]:checked,
+.team-theme input[type="radio"]:checked { background: #ccfbf1; }
+.team-theme input[type="checkbox"]:checked::before { border-color: #0f766e; }
+.team-theme input[type="radio"]:checked::before { background: #0f766e; }
+
+/* --- Spinner --- */
+.team-theme .spinner { border-top-color: #0f766e; }
+
+/* --- Buttons: primary (filled) --- */
+.team-theme .action-btn.primary,
+.team-theme .ui-button-primary { border-color: #0f766e; background: #0f766e; color: #fff; }
+.team-theme .action-btn.primary:hover:not(:disabled),
+.team-theme .ui-button-primary:hover:not(:disabled) { background: #115e59; border-color: #115e59; color: #fff; }
+
+/* --- Layout: header quick action --- */
+.team-theme .header-quick-action { border-color: #0f766e; background: #0f766e; color: #fff; }
+.team-theme .header-quick-action:hover { background: #115e59; border-color: #115e59; }
+
+/* --- Layout: mobile tab bar --- */
+.team-theme .mobile-tab-bar .tab.active { color: #0f766e; background: #f0fdfa; }
+
+/* --- Layout: login form submit --- */
+.team-theme .login-form button[type="submit"] { border-color: #0f766e; background: #0f766e; }
+.team-theme .login-form button[type="submit"]:hover:not(:disabled) { background: #115e59; }
+
+/* --- Layout: search boxes focus-within --- */
+.team-theme .projects-search:focus-within,
+.team-theme .project-memory-search:focus-within,
+.team-theme .project-task-search:focus-within,
+.team-theme .input-project-search:focus-within,
+.team-theme .management-search-box:focus-within { border-color: #0f766e; }
+
+/* --- Layout: avatars with ink border --- */
+.team-theme .profile-avatar,
+.team-theme .today-person-avatar,
+.team-theme .project-hero-icon,
+.team-theme .input-project-option-icon,
+.team-theme .input-selected-project-icon,
+.team-theme .input-ai-mark,
+.team-theme .project-assignee-avatar,
+.team-theme .management-person-avatar { border-color: #0f766e; }
+
+/* --- Layout: boot screen logo --- */
+.team-theme .ag-logo-large { border-color: #0f766e; }
+
+/* --- Components: toast dot --- */
+.team-theme .toast::before { background: #0f766e; }
+
+/* --- Pages: Today --- */
+.team-theme .today-primary-action { border-color: #0f766e; background: #0f766e; color: #fff; }
+.team-theme .today-primary-action:hover { background: #115e59; }
+.team-theme .today-voice-button { border-color: #0f766e; background: #0f766e; }
+.team-theme .today-voice-button:hover:not(:disabled) { background: #115e59; }
+.team-theme .today-note-composer button { border-color: #0f766e; background: #0f766e; }
+.team-theme .today-note-composer button:hover:not(:disabled) { background: #115e59; }
+.team-theme .today-status-button.is-active { border-color: #0f766e; color: #0f766e; }
+.team-theme .today-assignee-option.is-selected { border-color: #0f766e; }
+.team-theme .today-activity-dot { background: #0f766e; }
+.team-theme .today-open-composer:hover { border-color: #0f766e; }
+
+/* --- Pages: Projects --- */
+.team-theme .projects-add-button { border-color: #0f766e; background: #0f766e; color: #fff; }
+.team-theme .projects-add-button:hover { background: #115e59; }
+
+/* --- Pages: Project Detail --- */
+.team-theme .project-add-update-button { border-color: #0f766e; background: #0f766e; color: #fff; }
+.team-theme .project-add-update-button:hover { background: #115e59; }
+.team-theme .project-hero-icon { border-color: #0f766e; }
+.team-theme .project-health-badge > span { background: #0f766e; }
+.team-theme .project-memory-header > button { border-color: #0f766e; background: #0f766e; color: #fff; }
+.team-theme .project-memory-header > button:hover { background: #115e59; }
+.team-theme .project-task-add { border-color: #0f766e; background: #0f766e; color: #fff; }
+.team-theme .project-task-add:hover { background: #115e59; }
+.team-theme .project-progress-track span { background: #0f766e; }
+.team-theme .project-task-status.status-done { color: #0f766e; }
+.team-theme .project-task-status.status-in_progress { color: #0f766e; }
+.team-theme .project-task-status-options button.is-active { border-color: #0f766e; color: #0f766e; }
+.team-theme .project-task-note-composer button { border-color: #0f766e; background: #0f766e; }
+.team-theme .project-task-note-composer button:hover:not(:disabled) { background: #115e59; }
+.team-theme .project-task-title-input button { border-color: #0f766e; background: #0f766e; }
+.team-theme .project-filter-chips button.is-active,
+.team-theme .project-task-filters button.is-active { border-color: #0f766e; color: #0f766e; }
+.team-theme .project-assignee-selector label.is-selected { border-color: #0f766e; }
+.team-theme .input-project-option.is-selected { border-color: #0f766e; }
+.team-theme .project-deadline-list article.is-completed > button { border-color: #0f766e; }
+.team-theme .project-timeline-marker { background: #0f766e; }
+
+/* --- Pages: Input --- */
+.team-theme .input-submit-button { border-color: #0f766e; background: #0f766e; color: #fff; }
+.team-theme .input-submit-button:hover:not(:disabled) { background: #115e59; }
+.team-theme .input-file-dropzone:hover { border-color: #0f766e; }
+
+/* --- Pages: Management Center --- */
+.team-theme .center-task-status-icon.is-done { border-color: #0f766e; }
+.team-theme .center-task-status-icon.status-in_progress > span { background: #0f766e; }
+.team-theme .center-register-button { border-color: #0f766e; background: #0f766e; color: #fff; }
+.team-theme .center-register-button:hover { background: #115e59; }
+.team-theme .center-approve-button { border-color: #0f766e; background: #0f766e; color: #fff; }
+.team-theme .center-approve-button:hover { background: #115e59; }
+.team-theme .center-reply-composer button { border-color: #0f766e; background: #0f766e; }
+.team-theme .management-search-box button { border-color: #0f766e; background: #0f766e; }
+.team-theme .management-plan-text-wrap button { border-color: #0f766e; background: #0f766e; }
+.team-theme .management-plan-list article.is-today { border-color: #0f766e; }
+.team-theme .management-filter-chips button.is-active { border-color: #0f766e; color: #0f766e; }
+
+/* --- Segmented controls: active state border --- */
+.team-theme .task-timing-choice > button.is-active { border-color: #0f766e; color: #0f766e; }
+
+/* --- Login page elements --- */
+.team-theme .login-logo { border-color: #0f766e; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
