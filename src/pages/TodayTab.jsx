@@ -67,6 +67,12 @@ export default function TodayTab({ profile, onBadgeCount }) {
 
   useEffect(() => { loadData() }, [selectedDate])
 
+  // Auto-refresh every 10 seconds for real-time updates
+  useEffect(() => {
+    const interval = setInterval(() => { loadData() }, 10000)
+    return () => clearInterval(interval)
+  }, [selectedDate])
+
   useEffect(() => {
     if (isPushSupported()) checkPushSubscribed().then(setPushEnabled)
   }, [])
@@ -638,11 +644,6 @@ export default function TodayTab({ profile, onBadgeCount }) {
             <Plus size={17} strokeWidth={1.5} aria-hidden="true" />
             <span>Νέα εργασία</span>
           </button>
-          {isPushSupported() && (
-            <button type="button" className={`today-push-toggle ${pushEnabled ? 'is-active' : ''}`} onClick={handleTogglePush} aria-label={pushEnabled ? 'Ειδοποιήσεις ενεργές' : 'Ενεργοποίηση ειδοποιήσεων'} title={pushEnabled ? 'Ειδοποιήσεις ενεργές' : 'Ενεργοποίηση ειδοποιήσεων'}>
-              <Bell size={17} strokeWidth={1.5} aria-hidden="true" />
-            </button>
-          )}
         </div>
       </section>
 

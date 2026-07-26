@@ -8,6 +8,7 @@ import ProjectsTab from './pages/ProjectsTab'
 import MonitorTab from './pages/MonitorTab'
 import ProjectDetail from './pages/ProjectDetail'
 import { ModalShell } from './components/ui'
+import { isPushSupported, subscribeToPush, isSubscribed as checkPushSubscribed } from './lib/push'
 
 const NAV_ITEMS = [
   { id: 'today', label: 'Σήμερα', description: 'Εργασίες και ενημερώσεις', icon: Home },
@@ -104,6 +105,15 @@ export default function App() {
     }
     setProfile(data)
     setLoading(false)
+
+    // Auto-subscribe to push notifications on login
+    if (isPushSupported()) {
+      checkPushSubscribed().then(subscribed => {
+        if (!subscribed) {
+          subscribeToPush(data.id).catch(() => {})
+        }
+      })
+    }
   }
 
   async function handleLogout() {
@@ -243,7 +253,15 @@ export default function App() {
             <button type="button" className="header-quick-action" onClick={() => openInputForProject(selectedProject)}>
               <Mic size={17} strokeWidth={1.5} aria-hidden="true" /> Νέα ενημέρωση
             </button>
-            <button type="button" className="header-icon-button" aria-label={todayBadge > 0 ? `${todayBadge} νέες ειδοποιήσεις` : 'Ειδοποιήσεις'} onClick={() => changeTab('today')}>
+            <button type="button" className="header-icon-button" aria-label={todayBadge > 0 ? `${todayBadge} νέες ειδοποιήσεις` : 'Ειδοποιήσεις'} onClick={async () => {
+              changeTab('today')
+              if (isPushSupported() && profile) {
+                const subscribed = await checkPushSubscribed()
+                if (!subscribed) {
+                  await subscribeToPush(profile.id)
+                }
+              }
+            }}>
               <Bell size={18} aria-hidden="true" />
               {todayBadge > 0 && <span aria-hidden="true" />}
             </button>
