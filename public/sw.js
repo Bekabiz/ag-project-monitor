@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ag-project-shell-v1';
+const CACHE_NAME = 'ag-project-shell-v2';
 const APP_SHELL = ['/', '/manifest.json', '/favicon.svg'];
 
 self.addEventListener('install', event => {
@@ -14,6 +14,7 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('push', event => {
+  console.log('[SW] Push received', event.data ? event.data.text() : '(no data)');
   const data = event.data ? event.data.json() : {};
   const title = data.title || 'AG Monitor';
   const options = {
