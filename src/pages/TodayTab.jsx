@@ -71,12 +71,12 @@ export default function TodayTab({ profile, onBadgeCount }) {
   useEffect(() => {
     const interval = setInterval(() => {
       // Skip refresh if user is creating a task, recording voice, or has a modal open
-      if (showTaskModal || recording || taskSaving) return
+      if (showTaskModal || isRecording || taskSaving) return
       // Silent refresh — no loading spinners, no UI flash
       silentRefresh()
     }, 15000)
     return () => clearInterval(interval)
-  }, [selectedDate, showTaskModal, recording, taskSaving])
+  }, [selectedDate, showTaskModal, isRecording, taskSaving])
 
   async function silentRefresh() {
     try {
