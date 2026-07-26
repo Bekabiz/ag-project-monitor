@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ag-project-shell-v2';
+const CACHE_NAME = 'ag-project-shell-v3';
 const APP_SHELL = ['/', '/manifest.json', '/favicon.svg'];
 
 self.addEventListener('install', event => {
@@ -21,7 +21,9 @@ self.addEventListener('push', event => {
     body: data.body || '',
     icon: '/icon-192.png',
     badge: '/icon-192.png',
-    tag: data.tag || 'ag-notification',
+    tag: (data.tag || 'ag-notification') + '-' + Date.now(),
+    renotify: true,
+    requireInteraction: false,
     data: { url: data.url || '/' }
   };
   event.waitUntil(self.registration.showNotification(title, options));
