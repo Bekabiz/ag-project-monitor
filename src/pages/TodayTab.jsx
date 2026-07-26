@@ -425,7 +425,10 @@ export default function TodayTab({ profile, onBadgeCount }) {
             url: '/',
             tag: 'task-new'
           })
-        }).catch(() => {}) // fire and forget
+        })
+          .then(r => r.json())
+          .then(data => console.log('[Notify] Sent to', person.name, '→', data))
+          .catch(err => console.error('[Notify] Failed for', person.name, err))
       }
     } catch (err) {
       console.error('Save task error:', err)
