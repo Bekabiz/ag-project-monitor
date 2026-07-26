@@ -1,16 +1,5 @@
-let vapidPublicKey = null
-
-async function getVapidKey() {
-  if (vapidPublicKey) return vapidPublicKey
-  try {
-    const res = await fetch('/api/notify')
-    const data = await res.json()
-    vapidPublicKey = data.publicKey
-    return vapidPublicKey
-  } catch {
-    return null
-  }
-}
+// VAPID public key — safe to hardcode, not a secret
+const VAPID_PUBLIC_KEY = 'BIBWvlrZeBBrJgM0_om_KSsd8b9ZK8yF6d1giDWW91CddeNzBZ4PNRlUASw7nNYtKdov1zfKGCbrWznDfG90Xss'
 
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4)
@@ -36,7 +25,7 @@ export async function subscribeToPush(userId) {
   const permission = await Notification.requestPermission()
   if (permission !== 'granted') return { ok: false, reason: 'denied' }
 
-  const publicKey = await getVapidKey()
+  const publicKey = VAPID_PUBLIC_KEY
   if (!publicKey) return { ok: false, reason: 'no_vapid_key' }
 
   try {

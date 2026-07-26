@@ -67,11 +67,41 @@ export default function TodayTab({ profile, onBadgeCount }) {
 
   useEffect(() => { loadData() }, [selectedDate])
 
-  // Auto-refresh every 10 seconds for real-time updates
+  // Auto-refresh every 15 seconds — only when not interacting
   useEffect(() => {
-    const interval = setInterval(() => { loadData() }, 10000)
+    const interval = setInterval(() => {
+      // Skip refresh if user is creating a task, recording voice, or has a modal open
+      if (showTaskModal || recording || taskSaving) return
+      // Silent refresh — no loading spinners, no UI flash
+      silentRefresh()
+    }, 15000)
     return () => clearInterval(interval)
-  }, [selectedDate])
+  }, [selectedDate, showTaskModal, recording, taskSaving])
+
+  async function silentRefresh() {
+    try {
+      const today = selectedDate
+      const startOfDay = new Date(today); startOfDay.setHours(0, 0, 0, 0)
+      const endOfDay = new Date(today); endOfDay.setHours(23, 59, 59, 999)
+
+      // Refresh tasks silently
+      const tasks = await dbRead(supabase
+        .from('steps')
+        .select('*, projects(name)')
+        .eq('assigned_to', profile.id)
+        .neq('status', 'done')
+        .order('is_urgent', { ascending: false })
+        .order('due_date', { ascending: true, nullsFirst: false }))
+      if (tasks) setAssignedTasks(tasks)
+
+      // Refresh announcements
+      const ann = await dbRead(supabase
+        .from('announcements').select('*').eq('is_active', true).order('created_at', { ascending: false }))
+      if (ann) setAnnouncements(ann)
+    } catch (err) {
+      // Silent — never show errors for background refresh
+    }
+  }
 
   useEffect(() => {
     if (isPushSupported()) checkPushSubscribed().then(setPushEnabled)
