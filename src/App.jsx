@@ -66,14 +66,10 @@ export default function App() {
     }
     const timer = setTimeout(async () => {
       try {
-        console.log('[Push] Checking subscription...')
-        const subscribed = await checkPushSubscribed()
-        console.log('[Push] Already subscribed?', subscribed)
-        if (!subscribed) {
-          console.log('[Push] Requesting permission...')
-          const result = await subscribeToPush(profile.id)
-          console.log('[Push] Result:', result)
-        }
+        // Always re-save to server — browser may be subscribed but DB row missing
+        console.log('[Push] Syncing subscription to server...')
+        const result = await subscribeToPush(profile.id)
+        console.log('[Push] Result:', result)
       } catch (err) {
         console.error('[Push] Error:', err)
       }

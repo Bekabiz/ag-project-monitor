@@ -45,8 +45,9 @@ export async function subscribeToPush(userId) {
       body: JSON.stringify({ subscription: subscription.toJSON(), userId })
     })
 
-    if (!res.ok) return { ok: false, reason: 'server_error' }
-    return { ok: true }
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) return { ok: false, reason: 'server_error', status: res.status, detail: data }
+    return { ok: true, saved: true }
   } catch (err) {
     console.error('Push subscribe error:', err)
     return { ok: false, reason: err.message }
