@@ -50,6 +50,37 @@ export default function App() {
     return () => subscription.unsubscribe()
   }, [])
 
+  // Push notification auto-subscribe — runs whenever profile is available
+  useEffect(() => {
+    if (!profile) return
+    console.log('[Push] Profile loaded, checking push support...')
+    console.log('[Push] Support:', {
+      sw: 'serviceWorker' in navigator,
+      push: 'PushManager' in window,
+      notif: 'Notification' in window,
+      perm: 'Notification' in window ? Notification.permission : 'N/A'
+    })
+    if (!isPushSupported()) {
+      console.log('[Push] Not supported')
+      return
+    }
+    const timer = setTimeout(async () => {
+      try {
+        console.log('[Push] Checking subscription...')
+        const subscribed = await checkPushSubscribed()
+        console.log('[Push] Already subscribed?', subscribed)
+        if (!subscribed) {
+          console.log('[Push] Requesting permission...')
+          const result = await subscribeToPush(profile.id)
+          console.log('[Push] Result:', result)
+        }
+      } catch (err) {
+        console.error('[Push] Error:', err)
+      }
+    }, 3000)
+    return () => clearTimeout(timer)
+  }, [profile?.id])
+
   // Browser back navigates within the app instead of closing the PWA.
   useEffect(() => {
     if (!window.history.state?.agTab) {
@@ -105,31 +136,6 @@ export default function App() {
     }
     setProfile(data)
     setLoading(false)
-
-    // Auto-subscribe to push notifications (delay to let service worker register first)
-    console.log('[Push] Checking support...', {
-      serviceWorker: 'serviceWorker' in navigator,
-      PushManager: 'PushManager' in window,
-      Notification: 'Notification' in window,
-      permission: 'Notification' in window ? Notification.permission : 'N/A'
-    })
-    if (isPushSupported()) {
-      setTimeout(async () => {
-        try {
-          console.log('[Push] Attempting subscribe for user:', data.id)
-          const subscribed = await checkPushSubscribed()
-          console.log('[Push] Already subscribed?', subscribed)
-          if (!subscribed) {
-            const result = await subscribeToPush(data.id)
-            console.log('[Push] Subscribe result:', result)
-          }
-        } catch (err) {
-          console.error('[Push] Auto-subscribe error:', err)
-        }
-      }, 3000)
-    } else {
-      console.log('[Push] Not supported in this browser')
-    }
   }
 
   async function handleLogout() {
