@@ -106,13 +106,19 @@ export default function App() {
     setProfile(data)
     setLoading(false)
 
-    // Auto-subscribe to push notifications on login
+    // Auto-subscribe to push notifications (delay to let service worker register first)
     if (isPushSupported()) {
-      checkPushSubscribed().then(subscribed => {
-        if (!subscribed) {
-          subscribeToPush(data.id).catch(() => {})
+      setTimeout(async () => {
+        try {
+          const subscribed = await checkPushSubscribed()
+          if (!subscribed) {
+            const result = await subscribeToPush(data.id)
+            console.log('Push subscribe result:', result)
+          }
+        } catch (err) {
+          console.log('Push auto-subscribe skipped:', err.message)
         }
-      })
+      }, 3000)
     }
   }
 

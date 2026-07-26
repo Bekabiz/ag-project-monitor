@@ -4,7 +4,7 @@ function localDateValue(date = new Date()) {
   const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
   return local.toISOString().split('T')[0]
 }
-import { Bell, Plus, ClipboardCheck, MessageCircle, AlertTriangle, Paperclip, ChevronDown, Send, Mic, Sparkles, Circle, Play, Pause, Check, CheckCircle2, User, Users, RefreshCw, FileText, CalendarDays, Zap } from 'lucide-react'
+import { Megaphone, Plus, ClipboardCheck, MessageCircle, AlertTriangle, Paperclip, ChevronDown, Send, Mic, Sparkles, Circle, Play, Pause, Check, CheckCircle2, User, Users, RefreshCw, FileText, CalendarDays, Zap } from 'lucide-react'
 import { db, dbRead, supabase } from '../lib/db'
 import { getDaysInfo, formatDueTime, getOverdueCount } from '../lib/dates'
 import { extractText } from '../lib/voice'
@@ -641,7 +641,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
           </div>
           {profile?.role === 'owner' && (
             <button type="button" className="today-secondary-action" onClick={() => setShowAnnouncementModal(true)}>
-              <Bell size={16} strokeWidth={1.5} aria-hidden="true" />
+              <Megaphone size={16} strokeWidth={1.5} aria-hidden="true" />
               <span>Νέα ανακοίνωση</span>
             </button>
           )}
@@ -676,7 +676,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
           {announcements.length > 0 && (
             <section className="today-panel today-announcements-panel">
               <div className="today-panel-heading">
-                <div><span className="today-panel-icon is-warning" aria-hidden="true"><Bell size={17} strokeWidth={1.5} /></span><div><h3>Ανακοινώσεις</h3><p>Σημαντικά μηνύματα προς την ομάδα</p></div></div>
+                <div><span className="today-panel-icon is-warning" aria-hidden="true"><Megaphone size={17} strokeWidth={1.5} /></span><div><h3>Ανακοινώσεις</h3><p>Σημαντικά μηνύματα προς την ομάδα</p></div></div>
                 <span className="today-panel-count">{announcements.length}</span>
               </div>
               <div className="today-announcement-list">
@@ -875,7 +875,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
         onClose={() => setShowAnnouncementModal(false)}
         title="Νέα ανακοίνωση"
         description="Η ανακοίνωση θα εμφανιστεί στην κορυφή της σημερινής σελίδας για όλη την ομάδα."
-        icon={Bell}
+        icon={Megaphone}
         size="md"
         actions={<><button type="button" className="action-btn" onClick={() => setShowAnnouncementModal(false)}>Ακύρωση</button><button type="button" className="action-btn primary" onClick={saveAnnouncement} disabled={!annText.trim() || annSaving}>{annSaving ? <ButtonSpinner label="Δημοσίευση…" /> : 'Δημοσίευση'}</button></>}
       >
