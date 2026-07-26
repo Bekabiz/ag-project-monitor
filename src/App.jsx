@@ -107,18 +107,28 @@ export default function App() {
     setLoading(false)
 
     // Auto-subscribe to push notifications (delay to let service worker register first)
+    console.log('[Push] Checking support...', {
+      serviceWorker: 'serviceWorker' in navigator,
+      PushManager: 'PushManager' in window,
+      Notification: 'Notification' in window,
+      permission: 'Notification' in window ? Notification.permission : 'N/A'
+    })
     if (isPushSupported()) {
       setTimeout(async () => {
         try {
+          console.log('[Push] Attempting subscribe for user:', data.id)
           const subscribed = await checkPushSubscribed()
+          console.log('[Push] Already subscribed?', subscribed)
           if (!subscribed) {
             const result = await subscribeToPush(data.id)
-            console.log('Push subscribe result:', result)
+            console.log('[Push] Subscribe result:', result)
           }
         } catch (err) {
-          console.log('Push auto-subscribe skipped:', err.message)
+          console.error('[Push] Auto-subscribe error:', err)
         }
       }, 3000)
+    } else {
+      console.log('[Push] Not supported in this browser')
     }
   }
 
