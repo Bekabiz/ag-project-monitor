@@ -401,6 +401,21 @@ export default function TodayTab({ profile, onBadgeCount }) {
 
       setShowTaskModal(false)
       await loadData()
+
+      // Send push notification to assigned people
+      for (const person of assigneeList) {
+        fetch('/api/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: person.id,
+            title: 'Νέα εργασία',
+            body: taskTitle.trim(),
+            url: '/',
+            tag: 'task-new'
+          })
+        }).catch(() => {}) // fire and forget
+      }
     } catch (err) {
       console.error('Save task error:', err)
       showToast('Σφάλμα αποθήκευσης εργασίας: ' + err.message, true)
@@ -414,6 +429,24 @@ export default function TodayTab({ profile, onBadgeCount }) {
     try {
       await db(supabase.from('steps').update({ status: newStatus, updated_by: profile.id }).eq('id', step.id))
       await loadData()
+
+      // Notify owner when team completes a task
+      if (newStatus === 'done' && profile.role !== 'owner') {
+        const owners = await dbRead(supabase.from('profiles').select('id').eq('role', 'owner'))
+        for (const owner of (owners || [])) {
+          fetch('/api/notify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: owner.id,
+              title: 'Εργασία ολοκληρώθηκε',
+              body: `${profile.full_name}: ${step.title}`,
+              url: '/',
+              tag: 'task-done'
+            })
+          }).catch(() => {})
+        }
+      }
     } catch (err) {
       showToast('Σφάλμα ενημέρωσης κατάστασης', true)
     }
