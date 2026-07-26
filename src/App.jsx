@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from './lib/supabase'
-import { BarChart3, Bell, ChevronDown, FolderOpen, Home, LogOut, Menu, Mic, X } from 'lucide-react'
+import { BarChart3, Bell, ChevronDown, FolderOpen, Home, LogOut, Menu, Mic, RefreshCw, X } from 'lucide-react'
 import Login from './pages/Login'
 import TodayTab from './pages/TodayTab'
 import InputTab from './pages/InputTab'
@@ -274,6 +274,18 @@ export default function App() {
               {profileOpen && (
                 <div className="profile-dropdown" role="menu">
                   <div><strong>{profile.full_name}</strong><small>{session.user?.email}</small></div>
+                  <button type="button" role="menuitem" onClick={async () => {
+                    setProfileOpen(false)
+                    if ('caches' in window) {
+                      const names = await caches.keys()
+                      for (const name of names) await caches.delete(name)
+                    }
+                    if (navigator.serviceWorker) {
+                      const regs = await navigator.serviceWorker.getRegistrations()
+                      for (const reg of regs) await reg.unregister()
+                    }
+                    window.location.reload()
+                  }}><RefreshCw size={16} aria-hidden="true" /> Εκκαθάριση cache</button>
                   <button type="button" role="menuitem" onClick={() => { setProfileOpen(false); setLogoutOpen(true) }}><LogOut size={16} aria-hidden="true" /> Αποσύνδεση</button>
                 </div>
               )}

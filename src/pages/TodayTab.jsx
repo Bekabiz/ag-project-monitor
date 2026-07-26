@@ -70,38 +70,11 @@ export default function TodayTab({ profile, onBadgeCount }) {
   // Auto-refresh every 15 seconds — only when not interacting
   useEffect(() => {
     const interval = setInterval(() => {
-      // Skip refresh if user is creating a task, recording voice, or has a modal open
       if (showTaskModal || isRecording || taskSaving) return
-      // Silent refresh — no loading spinners, no UI flash
-      silentRefresh()
+      loadData(true) // true = silent mode, no loading spinner
     }, 15000)
     return () => clearInterval(interval)
   }, [selectedDate, showTaskModal, isRecording, taskSaving])
-
-  async function silentRefresh() {
-    try {
-      const today = selectedDate
-      const startOfDay = new Date(today); startOfDay.setHours(0, 0, 0, 0)
-      const endOfDay = new Date(today); endOfDay.setHours(23, 59, 59, 999)
-
-      // Refresh tasks silently
-      const tasks = await dbRead(supabase
-        .from('steps')
-        .select('*, projects(name)')
-        .eq('assigned_to', profile.id)
-        .neq('status', 'done')
-        .order('is_urgent', { ascending: false })
-        .order('due_date', { ascending: true, nullsFirst: false }))
-      if (tasks) setAssignedTasks(tasks)
-
-      // Refresh announcements
-      const ann = await dbRead(supabase
-        .from('announcements').select('*').eq('is_active', true).order('created_at', { ascending: false }))
-      if (ann) setAnnouncements(ann)
-    } catch (err) {
-      // Silent — never show errors for background refresh
-    }
-  }
 
   useEffect(() => {
     if (isPushSupported()) checkPushSubscribed().then(setPushEnabled)
@@ -125,8 +98,8 @@ export default function TodayTab({ profile, onBadgeCount }) {
     setTimeout(() => setToast(null), 2500)
   }
 
-  async function loadData() {
-    setLoading(true)
+  async function loadData(silent = false) {
+    if (!silent) setLoading(true)
     try {
       setLoadError(false)
     const today = new Date(`${selectedDate}T00:00:00`)
@@ -224,10 +197,12 @@ export default function TodayTab({ profile, onBadgeCount }) {
     localStorage.setItem('ag_last_seen', new Date().toISOString())
     } catch (err) {
       console.error('Load error:', err)
-      setLoadError(true)
-      showToast('Σφάλμα φόρτωσης', true)
+      if (!silent) {
+        setLoadError(true)
+        showToast('Σφάλμα φόρτωσης', true)
+      }
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }
 
