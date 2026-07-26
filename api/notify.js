@@ -38,22 +38,34 @@ async function handleSubscribe(req, res) {
     )
     const rows = await existing.json()
 
+    if (!Array.isArray(rows)) {
+      return res.status(500).json({ error: 'Table query failed', supabaseError: rows })
+    }
+
     if (rows.length > 0) {
-      await fetch(
+      const patchRes = await fetch(
         `${supabaseUrl}/rest/v1/push_subscriptions?id=eq.${rows[0].id}`,
         { method: 'PATCH', headers: { ...headers, 'Prefer': 'return=minimal' }, body: JSON.stringify({ subscription: JSON.stringify(subscription), updated_at: new Date().toISOString() }) }
       )
+      if (!patchRes.ok) {
+        const errBody = await patchRes.text()
+        return res.status(500).json({ error: 'Update failed', status: patchRes.status, detail: errBody })
+      }
     } else {
-      await fetch(
+      const postRes = await fetch(
         `${supabaseUrl}/rest/v1/push_subscriptions`,
         { method: 'POST', headers: { ...headers, 'Prefer': 'return=minimal' }, body: JSON.stringify({ user_id: userId, endpoint: subscription.endpoint, subscription: JSON.stringify(subscription) }) }
       )
+      if (!postRes.ok) {
+        const errBody = await postRes.text()
+        return res.status(500).json({ error: 'Insert failed', status: postRes.status, detail: errBody })
+      }
     }
 
     return res.status(200).json({ ok: true })
   } catch (err) {
     console.error('Subscribe error:', err)
-    return res.status(500).json({ error: 'Failed to save subscription' })
+    return res.status(500).json({ error: 'Failed to save subscription', message: err.message, stack: err.stack?.split('\n')[0] })
   }
 }
 
