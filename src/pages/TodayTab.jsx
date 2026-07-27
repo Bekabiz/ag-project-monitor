@@ -256,7 +256,15 @@ export default function TodayTab({ profile, onBadgeCount }) {
         // Use the SAME extraction pipeline as text input (one brain, two mouths)
         const extracted = await extractText(data.transcript, projects.map(p => p.name))
         if (extracted) {
-          setTaskTitle(extracted.summary || data.transcript)
+          // Never use extracted.summary here — it is defined as a 1-2 sentence
+          // description of an update, and when the AI has nothing to summarise
+          // it returns commentary ("Δεν υπάρχει αντιστοιχία με ενεργό έργο")
+          // which then lands in the title field. entries[0].title is the field
+          // meant for this; the transcript is the safe fallback because the
+          // user literally spoke the title.
+          const aiTitle = extracted.entries?.[0]?.title?.trim()
+          const spoken = data.transcript.trim()
+          setTaskTitle(aiTitle && aiTitle.length <= spoken.length ? aiTitle : spoken)
           if (extracted.project_name) {
             const matchedProj = projects.find(p =>
               p.name.toLowerCase().includes(extracted.project_name.toLowerCase()) ||

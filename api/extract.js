@@ -23,6 +23,10 @@ Rules:
 - deadline_description must be SPECIFIC and descriptive in Greek
 - budget_change is a number (positive = increase, negative = decrease, 0 = no change)
 - summary should be 1-2 sentences in Greek describing the update
+- NEVER write commentary, apologies, or explanations in summary or title. These
+  fields describe what the user said, nothing else. If no project matches, set
+  project_name to null and still summarise the content normally — do not write
+  a sentence saying nothing matched.
 - action_items should be specific actionable tasks in Greek
 - people should be first names only
 
