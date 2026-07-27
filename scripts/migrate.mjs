@@ -204,13 +204,19 @@ async function verify() {
     console.log(`  ${ok ? 'ok  ' : 'DIFF'} ${table.padEnd(18)} ${src ?? '-'} → ${tgt ?? '-'}`)
   }
 
-  const { count: stale } = await target
+  const staleRes = await target
     .from('entries')
     .select('*', { count: 'exact', head: true })
     .like('file_url', `%${sourceRef}%`)
 
-  console.log(`  ${stale ? 'DIFF' : 'ok  '} ${'stale urls'.padEnd(18)} ${stale ?? 0}`)
-  if (stale) mismatches++
+  if (staleRes.error) {
+    console.log(`  FAIL ${'stale urls'.padEnd(18)} ${staleRes.error.message}`)
+    mismatches++
+  } else {
+    const stale = staleRes.count ?? 0
+    console.log(`  ${stale ? 'DIFF' : 'ok  '} ${'stale urls'.padEnd(18)} ${stale}`)
+    if (stale) mismatches++
+  }
 
   return mismatches
 }
