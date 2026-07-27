@@ -23,6 +23,15 @@ Extract the complete building structure from this document. Return a JSON object
 For each room include: name, sqm if mentioned, floor.
 For each system include: name, type, description.
 
+LANGUAGE — this matters:
+Room names, floor names, system names and exterior area names MUST be written
+in Greek, exactly as the source document words them. Never translate them into
+English. If the document says "Κουζίνα", return "Κουζίνα" — not "Kitchen". If
+it says "Ισόγειο", return "Ισόγειο" — not "Ground floor". The office works in
+Greek and these names are later matched against Greek voice notes, so an
+English name silently breaks that matching.
+Only building_type stays as the English enum value listed above.
+
 Return ONLY valid JSON. No markdown fences. Exact format:
 {
   "building_type": "house",
@@ -41,9 +50,9 @@ Return ONLY valid JSON. No markdown fences. Exact format:
       "sqm": number,
       "floors": [
         {
-          "name": "Ground floor",
+          "name": "Ισόγειο",
           "rooms": [
-            {"name": "Kitchen", "sqm": number or null},
+            {"name": "Κουζίνα", "sqm": number or null},
             {"name": "Bathroom 1", "sqm": number or null}
           ]
         }
