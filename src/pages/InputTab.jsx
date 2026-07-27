@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Mic, Camera, FileUp, Check, RotateCcw, FolderPlus, Search, Sparkles, LockKeyhole, Users, Send, RefreshCw, FileText, ChevronRight, Link2, ExternalLink } from 'lucide-react'
+import { Mic, Camera, FileUp, Check, RotateCcw, FolderPlus, Search, Sparkles, LockKeyhole, Users, Send, RefreshCw, FileText, ChevronRight, Link2, ExternalLink, X } from 'lucide-react'
 import { db, dbRead, supabase } from '../lib/db'
 import { safeFileName, safeExtension } from '../lib/files'
 import { ButtonSpinner, EmptyState, LoadingState, ModalShell } from '../components/ui'
@@ -21,6 +21,8 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
   const [docVersion, setDocVersion] = useState('')
   const [docNotes, setDocNotes] = useState('')
   const [docFile, setDocFile] = useState(null)
+  const [photoFiles, setPhotoFiles] = useState([])
+  const [photoNote, setPhotoNote] = useState('')
   const [linkUrl, setLinkUrl] = useState('')
   const [linkTitle, setLinkTitle] = useState('')
   const [teamVisible, setTeamVisible] = useState(false) // false = private (owner only), true = team can see
@@ -310,12 +312,25 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
   }
 
   // PHOTO UPLOAD - supports multiple
-  async function handlePhotoUpload(e) {
+  // PHOTO UPLOAD
+  // Picking only attaches, so the person sees what they chose and can remove
+  // one before anything is stored — same contract as documents.
+  function handlePhotoPick(e) {
     const files = Array.from(e.target.files || [])
-    if (!files.length || !selected) return
+    e.target.value = ''
+    if (!files.length) return
+    setPhotoFiles(prev => [...prev, ...files])
+  }
+
+  function removePhoto(index) {
+    setPhotoFiles(prev => prev.filter((_, i) => i !== index))
+  }
+
+  async function handlePhotoSave() {
+    if (!photoFiles.length || !selected) return
     setSending(true)
     try {
-      for (const file of files) {
+      for (const file of photoFiles) {
         const compressed = file.size > 1500000 ? await compressImage(file) : file
         const fileName = `photo_${Date.now()}_${Math.random().toString(36).slice(2, 6)}.jpg`
         const path = `${selected.id}/${fileName}`
@@ -330,15 +345,18 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
           file_url: urlData.publicUrl,
           file_name: fileName,
           file_size: compressed.size,
+          doc_notes: photoNote.trim() || null,
           is_team_visible: profile?.role === 'owner' ? teamVisible : true
         }))
       }
-      showToast(`${files.length} φωτογραφία${files.length > 1 ? 'ες' : ''} αποθηκεύτηκ${files.length > 1 ? 'αν' : 'ε'}`)
+      const n = photoFiles.length
+      showToast(`${n} φωτογραφία${n > 1 ? 'ες' : ''} αποθηκεύτηκ${n > 1 ? 'αν' : 'ε'}`)
+      setPhotoFiles([]); setPhotoNote('')
+      setShowFileModal(null)
     } catch (err) {
       showToast('Σφάλμα: ' + err.message, true)
     }
     setSending(false)
-    setShowFileModal(null)
   }
 
   // DOCUMENT UPLOAD
@@ -651,20 +669,44 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
 
       <ModalShell
         open={showFileModal === 'photo'}
-        onClose={() => setShowFileModal(null)}
+        onClose={() => { setShowFileModal(null); setPhotoFiles([]); setPhotoNote('') }}
         title="Προσθήκη φωτογραφιών"
         description={`Οι φωτογραφίες θα αποθηκευτούν στο έργο «${selected?.name || ''}».`}
         icon={Camera}
-        size="sm"
-        actions={<button type="button" className="action-btn" onClick={() => setShowFileModal(null)}>Ακύρωση</button>}
+        size="md"
+        actions={<>
+          <button type="button" className="action-btn" onClick={() => { setShowFileModal(null); setPhotoFiles([]); setPhotoNote('') }}>Ακύρωση</button>
+          <button type="button" className="action-btn primary" onClick={handlePhotoSave} disabled={!photoFiles.length || sending}>
+            {sending ? <ButtonSpinner label="Μεταφόρτωση…" /> : `Αποθήκευση${photoFiles.length ? ` (${photoFiles.length})` : ''}`}
+          </button>
+        </>}
       >
-        <label className="input-file-dropzone">
-          <span aria-hidden="true"><Camera size={24} strokeWidth={1.5} /></span>
-          <strong>Λήψη ή επιλογή φωτογραφιών</strong>
-          <small>Μπορείτε να επιλέξετε πολλές εικόνες μαζί.</small>
-          <input type="file" accept="image/*" capture="environment" multiple onChange={handlePhotoUpload} />
-        </label>
-        {sending && <div className="input-upload-progress"><ButtonSpinner label="Μεταφόρτωση φωτογραφιών…" /></div>}
+        <div className="input-photo-stage">
+          {photoFiles.length > 0 && (
+            <div className="input-photo-thumbs">
+              {photoFiles.map((file, i) => (
+                <div key={`${file.name}-${i}`} className="input-photo-thumb">
+                  <img src={URL.createObjectURL(file)} alt={file.name} />
+                  <button type="button" onClick={() => removePhoto(i)} aria-label={`Αφαίρεση ${file.name}`}>
+                    <X size={14} strokeWidth={2} aria-hidden="true" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <label className="input-file-dropzone">
+            <span aria-hidden="true"><Camera size={24} strokeWidth={1.5} /></span>
+            <strong>{photoFiles.length ? 'Προσθήκη κι άλλων' : 'Λήψη ή επιλογή φωτογραφιών'}</strong>
+            <small>Μπορείτε να επιλέξετε πολλές εικόνες μαζί.</small>
+            <input type="file" accept="image/*" capture="environment" multiple onChange={handlePhotoPick} />
+          </label>
+
+          <div className="input-photo-note">
+            <label htmlFor="photo-note">Σημείωση</label>
+            <textarea id="photo-note" value={photoNote} onChange={e => setPhotoNote(e.target.value)} placeholder="Προαιρετικά: τι δείχνουν οι φωτογραφίες…" rows={2} />
+          </div>
+        </div>
       </ModalShell>
 
       <ModalShell

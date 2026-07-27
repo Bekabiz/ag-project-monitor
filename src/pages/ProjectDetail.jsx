@@ -14,6 +14,20 @@ const CAT_CONFIG = {
   note: { label: 'Σημειώσεις', icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z', color: 'var(--cat-note)', bg: 'var(--cat-note-wash)' }
 }
 
+/**
+ * Browsers render PDFs and images but not Word, Excel or DWG — those download.
+ * Microsoft's public viewer renders Office formats inline, so the person can
+ * look before deciding to download. Anything else opens directly.
+ */
+function viewableUrl(url, name = '') {
+  const ext = String(name || url).split('.').pop()?.toLowerCase() || ''
+  const office = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx']
+  if (office.includes(ext)) {
+    return `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`
+  }
+  return url
+}
+
 function CatIcon({ path, color, size = 18 }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><path d={path}/></svg>
 }
@@ -613,7 +627,7 @@ export default function ProjectDetail({ project, profile, onBack, onAddUpdate })
               {fileFolder === 'documents' && (
                 documents.length === 0
                   ? <EmptyState icon={FileText} title="Δεν υπάρχουν έγγραφα" description="Τα σχέδια, οι άδειες και τα έγγραφα του έργου θα εμφανιστούν εδώ." actionLabel={onAddUpdate ? 'Προσθήκη εγγράφου' : undefined} onAction={onAddUpdate} />
-                  : <div className="project-document-list">{documents.map(doc => <a key={doc.id} className="project-document-row" href={doc.file_url} target="_blank" rel="noreferrer"><span aria-hidden="true"><FileText size={18} strokeWidth={1.5} /></span><div><strong>{doc.file_name || 'Έγγραφο'}</strong><small>{formatDate(doc.created_at)}{doc.doc_version ? ` · ${doc.doc_version}` : ''}{doc.file_size ? ` · ${(doc.file_size / 1024).toFixed(0)} KB` : ''}</small>{doc.doc_notes && <p>{doc.doc_notes}</p>}</div><ChevronRight size={16} strokeWidth={1.5} aria-hidden="true" /></a>)}</div>
+                  : <div className="project-document-list">{documents.map(doc => <a key={doc.id} className="project-document-row" href={viewableUrl(doc.file_url, doc.file_name)} target="_blank" rel="noreferrer"><span aria-hidden="true"><FileText size={18} strokeWidth={1.5} /></span><div><strong>{doc.file_name || 'Έγγραφο'}</strong><small>{formatDate(doc.created_at)}{doc.doc_version ? ` · ${doc.doc_version}` : ''}{doc.file_size ? ` · ${(doc.file_size / 1024).toFixed(0)} KB` : ''}</small>{doc.doc_notes && <p>{doc.doc_notes}</p>}</div><ChevronRight size={16} strokeWidth={1.5} aria-hidden="true" /></a>)}</div>
               )}
             </>
           )}
