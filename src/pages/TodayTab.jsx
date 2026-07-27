@@ -955,9 +955,11 @@ export default function TodayTab({ profile, onBadgeCount }) {
             <label htmlFor="task-description">Τι πρέπει να γίνει; <span>*</span></label>
             <div className="today-update-input-wrap">
               <textarea id="task-description" placeholder="π.χ. Έλεγχος άδειας για το έργο Κατάκολο μέχρι την Παρασκευή" value={taskDesc} onChange={event => setTaskDesc(event.target.value)} rows={3} autoFocus />
-              <button type="button" className={`today-voice-button ${isRecording && voiceTarget === 'task' ? 'is-recording' : ''}`} onClick={isRecording && voiceTarget === 'task' ? stopRecording : () => startRecording('task')} disabled={isTranscribing} aria-label={isRecording ? 'Διακοπή εγγραφής' : 'Υπαγόρευση εργασίας'}>
-                {isTranscribing && voiceTarget === 'task' ? <span className="spinner" /> : <Mic size={18} strokeWidth={1.5} aria-hidden="true" />}
-              </button>
+              {profile?.role === 'owner' && (
+                <button type="button" className={`today-voice-button ${isRecording && voiceTarget === 'task' ? 'is-recording' : ''}`} onClick={isRecording && voiceTarget === 'task' ? stopRecording : () => startRecording('task')} disabled={isTranscribing} aria-label={isRecording ? 'Διακοπή εγγραφής' : 'Υπαγόρευση εργασίας'}>
+                  {isTranscribing && voiceTarget === 'task' ? <span className="spinner" /> : <Mic size={18} strokeWidth={1.5} aria-hidden="true" />}
+                </button>
+              )}
             </div>
           </div>
 

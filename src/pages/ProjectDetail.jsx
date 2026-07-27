@@ -338,6 +338,8 @@ export default function ProjectDetail({ project, profile, onBack, onAddUpdate })
   })
 
   const photos = entries.filter(e => e.entry_type === 'photo')
+  // Documents save without a category, so they need their own row in Memory.
+  const documents = entries.filter(e => e.entry_type === 'document')
   const problems = entries.filter(e => e.category === 'problem')
   const openProblems = problems.filter(e => e.entry_status === 'open')
   const decisions = entries.filter(e => e.category === 'decision')
@@ -348,11 +350,14 @@ export default function ProjectDetail({ project, profile, onBack, onAddUpdate })
   const areaNames = areas.map(a => a.area_name)
   const filterTags = [...new Set([...areaNames, ...allTags])].slice(0, 15)
 
-  // Category counts
+  // Category counts. Documents carry no category — they are a kind of file, not
+  // a kind of information — so they get their own bucket rather than being
+  // silently invisible in Memory.
   const catCounts = {}
   Object.keys(CAT_CONFIG).forEach(cat => {
-    catCounts[cat] = entries.filter(e => e.category === cat).length
+    catCounts[cat] = entries.filter(e => e.category === cat && e.entry_type !== 'document').length
   })
+  catCounts.document = documents.length
 
   function formatDate(iso) {
     return new Date(iso).toLocaleDateString('el-GR', { day: 'numeric', month: 'short' })
@@ -544,12 +549,22 @@ export default function ProjectDetail({ project, profile, onBack, onAddUpdate })
                     return <button type="button" key={key} className="project-category-card" onClick={() => setCatFilter(key)}><span style={{ '--category-bg': config.bg }} aria-hidden="true"><CatIcon path={config.icon} color={config.color} size={19} /></span><div><strong>{config.label}</strong><small>{openCount > 0 ? `${openCount} ανοιχτά` : `${count} καταχωρήσεις`}</small></div><em>{count}</em><ChevronRight size={16} strokeWidth={1.5} aria-hidden="true" /></button>
                   })}
                   {photos.length > 0 && <button type="button" className="project-category-card" onClick={() => setTab('photos')}><span className="is-photo" aria-hidden="true"><Camera size={19} strokeWidth={1.5} /></span><div><strong>Φωτογραφίες</strong><small>{photos.length} αρχεία εικόνας</small></div><em>{photos.length}</em><ChevronRight size={16} strokeWidth={1.5} aria-hidden="true" /></button>}
+                  {documents.length > 0 && <button type="button" className="project-category-card" onClick={() => setCatFilter('__documents')}><span className="is-photo" aria-hidden="true"><FileText size={19} strokeWidth={1.5} /></span><div><strong>Έγγραφα και σχέδια</strong><small>{documents.length} αρχεία</small></div><em>{documents.length}</em><ChevronRight size={16} strokeWidth={1.5} aria-hidden="true" /></button>}
                 </div>
               ) : (
                 <div className="project-category-detail">
                   <button type="button" className="project-category-back" onClick={() => setCatFilter(null)}><ArrowLeft size={15} strokeWidth={1.5} aria-hidden="true" />Πίσω στις κατηγορίες</button>
-                  <div className="project-category-detail-heading"><span style={{ '--category-bg': CAT_CONFIG[catFilter].bg }} aria-hidden="true"><CatIcon path={CAT_CONFIG[catFilter].icon} color={CAT_CONFIG[catFilter].color} size={19} /></span><div><h3>{CAT_CONFIG[catFilter].label}</h3><p>{filteredEntries.filter(entry => entry.category === catFilter).length} καταχωρήσεις</p></div></div>
-                  <div className="project-entry-grid">{filteredEntries.filter(entry => entry.category === catFilter).map(entry => renderEntry(entry, { detailed: true }))}</div>
+                  {catFilter === '__documents' ? (
+                    <>
+                      <div className="project-category-detail-heading"><span className="is-photo" aria-hidden="true"><FileText size={19} strokeWidth={1.5} /></span><div><h3>Έγγραφα και σχέδια</h3><p>{filteredEntries.filter(e => e.entry_type === 'document').length} αρχεία</p></div></div>
+                      <div className="project-entry-grid">{filteredEntries.filter(e => e.entry_type === 'document').map(entry => renderEntry(entry, { detailed: true }))}</div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="project-category-detail-heading"><span style={{ '--category-bg': CAT_CONFIG[catFilter].bg }} aria-hidden="true"><CatIcon path={CAT_CONFIG[catFilter].icon} color={CAT_CONFIG[catFilter].color} size={19} /></span><div><h3>{CAT_CONFIG[catFilter].label}</h3><p>{filteredEntries.filter(entry => entry.category === catFilter).length} καταχωρήσεις</p></div></div>
+                      <div className="project-entry-grid">{filteredEntries.filter(entry => entry.category === catFilter).map(entry => renderEntry(entry, { detailed: true }))}</div>
+                    </>
+                  )}
                 </div>
               )}
             </>
