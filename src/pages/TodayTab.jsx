@@ -40,8 +40,9 @@ export default function TodayTab({ profile, onBadgeCount }) {
 
   // New task modal
   const [showTaskModal, setShowTaskModal] = useState(false)
-  const [taskTitle, setTaskTitle] = useState('')
   const [taskDesc, setTaskDesc] = useState('')
+  // Short title for list display, derived from taskDesc rather than typed.
+  const [derivedTitle, setDerivedTitle] = useState('')
   const [taskProject, setTaskProject] = useState('')
   const [taskAssignees, setTaskAssignees] = useState([]) // multi-select
   const [taskDate, setTaskDate] = useState('')
@@ -253,18 +254,13 @@ export default function TodayTab({ profile, onBadgeCount }) {
       }
 
       if (target === 'task') {
-        // Use the SAME extraction pipeline as text input (one brain, two mouths)
+        // One field: what the person said IS the task. The short title for the
+        // list is derived on save, not asked for here.
+        setTaskDesc(prev => prev ? prev + ' ' + data.transcript : data.transcript)
+
+        // The AI's job here is only to pre-fill the structured fields.
         const extracted = await extractText(data.transcript, projects.map(p => p.name))
         if (extracted) {
-          // Never use extracted.summary here — it is defined as a 1-2 sentence
-          // description of an update, and when the AI has nothing to summarise
-          // it returns commentary ("Δεν υπάρχει αντιστοιχία με ενεργό έργο")
-          // which then lands in the title field. entries[0].title is the field
-          // meant for this; the transcript is the safe fallback because the
-          // user literally spoke the title.
-          const aiTitle = extracted.entries?.[0]?.title?.trim()
-          const spoken = data.transcript.trim()
-          setTaskTitle(aiTitle && aiTitle.length <= spoken.length ? aiTitle : spoken)
           if (extracted.project_name) {
             const matchedProj = projects.find(p =>
               p.name.toLowerCase().includes(extracted.project_name.toLowerCase()) ||
@@ -284,16 +280,10 @@ export default function TodayTab({ profile, onBadgeCount }) {
             if (matchedIds.length > 0) setTaskAssignees(matchedIds)
           }
           if (extracted.deadline_date) setTaskDate(extracted.deadline_date)
-          // A single action item is almost always a restatement of the task
-          // itself ("Έλεγχος προόδου έργου" -> "Ελέγξτε την πρόοδο του έργου"),
-          // which duplicates the title. Only fill the description when there
-          // is genuinely more than one distinct step.
-          if (extracted.action_items?.length > 1) setTaskDesc(extracted.action_items.join(', '))
-        } else {
-          setTaskTitle(prev => prev ? prev + ' ' + data.transcript : data.transcript)
+          // Remember the AI's short title so save doesn't have to ask again.
+          const aiTitle = extracted.entries?.[0]?.title?.trim()
+          if (aiTitle) setDerivedTitle(aiTitle)
         }
-      } else if (target === 'taskDesc') {
-        setTaskDesc(prev => prev ? prev + ' ' + data.transcript : data.transcript)
       } else if (target === 'announcement') {
         setAnnText(prev => prev ? prev + ' ' + data.transcript : data.transcript)
       } else if (target === 'update') {
@@ -339,7 +329,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
 
   // === TASK CREATION ===
   function openTaskModal() {
-    setTaskTitle(''); setTaskDesc(''); setTaskProject('')
+    setTaskDesc(''); setDerivedTitle(''); setTaskProject('')
     setTaskAssignees([]); setTaskDate(''); setTaskTime('17:00')
     setTaskFile(null); setTaskUrgent(false); setTaskAsap(false)
     setShowTaskModal(true)
@@ -357,9 +347,29 @@ export default function TodayTab({ profile, onBadgeCount }) {
   }
 
   async function handleSaveTask() {
-    if (!taskTitle.trim()) return
+    const spoken = taskDesc.trim()
+    if (!spoken) return
     setTaskSaving(true)
     try {
+      // The list needs a short title; the person only wrote one thing. Use the
+      // AI's title if voice already produced one, otherwise ask for it, and
+      // fall back to a trimmed first clause so a save never depends on the AI.
+      let title = derivedTitle.trim()
+      if (!title) {
+        try {
+          const extracted = await extractText(spoken, projects.map(p => p.name))
+          title = extracted?.entries?.[0]?.title?.trim() || ''
+        } catch { /* fall through to the local fallback */ }
+      }
+      if (!title || title.length > spoken.length) {
+        const firstClause = spoken.split(/[.,·\n]/)[0].trim()
+        title = firstClause.length > 4 && firstClause.length <= 70
+          ? firstClause
+          : spoken.slice(0, 70).trim()
+      }
+      // Only keep a description when it says more than the title already does.
+      const description = spoken === title ? null : spoken
+
       let fileUrl = null, fileName = null
       if (taskFile) {
         const ext = taskFile.name.split('.').pop()
@@ -405,8 +415,8 @@ export default function TodayTab({ profile, onBadgeCount }) {
       for (let i = 0; i < assigneeList.length; i++) {
         await db(supabase.from('steps').insert({
           project_id: projectId,
-          title: taskTitle.trim(),
-          description: taskDesc.trim() || null,
+          title: title,
+          description: description,
           assigned_to: assigneeList[i].id,
           assigned_to_name: assigneeList[i].name,
           created_by: profile.id,
@@ -433,7 +443,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
           body: JSON.stringify({
             userId: person.id,
             title: 'Νέα εργασία',
-            body: taskTitle.trim(),
+            body: title,
             url: '/',
             tag: 'task-new'
           })
@@ -909,23 +919,21 @@ export default function TodayTab({ profile, onBadgeCount }) {
         open={showTaskModal}
         onClose={() => setShowTaskModal(false)}
         title="Νέα εργασία"
-        description="Ορίστε τίτλο, υπεύθυνο και επιλέξτε ASAP ή συγκεκριμένη προθεσμία."
+        description="Πείτε ή γράψτε τι πρέπει να γίνει. Ο τίτλος δημιουργείται αυτόματα."
         icon={ClipboardCheck}
         size="lg"
-        actions={<><button type="button" className="action-btn" onClick={() => setShowTaskModal(false)}>Ακύρωση</button><button type="button" className="action-btn primary" onClick={handleSaveTask} disabled={!taskTitle.trim() || taskSaving}>{taskSaving ? <ButtonSpinner label="Αποθήκευση…" /> : 'Δημιουργία εργασίας'}</button></>}
+        actions={<><button type="button" className="action-btn" onClick={() => setShowTaskModal(false)}>Ακύρωση</button><button type="button" className="action-btn primary" onClick={handleSaveTask} disabled={!taskDesc.trim() || taskSaving}>{taskSaving ? <ButtonSpinner label="Αποθήκευση…" /> : 'Δημιουργία εργασίας'}</button></>}
       >
         <div className="today-task-form">
           <div className="today-form-field is-full">
-            <label htmlFor="task-title">Τίτλος εργασίας <span>*</span></label>
+            <label htmlFor="task-description">Τι πρέπει να γίνει; <span>*</span></label>
             <div className="today-update-input-wrap">
-              <input id="task-title" placeholder="π.χ. Επιβεβαίωση σχεδίων με τον μηχανικό" value={taskTitle} onChange={event => setTaskTitle(event.target.value)} autoFocus />
-              <button type="button" className={`today-voice-button ${isRecording && voiceTarget === 'task' ? 'is-recording' : ''}`} onClick={isRecording && voiceTarget === 'task' ? stopRecording : () => startRecording('task')} disabled={isTranscribing} aria-label={isRecording ? 'Διακοπή εγγραφής' : 'Υπαγόρευση τίτλου'}>
+              <textarea id="task-description" placeholder="π.χ. Έλεγχος άδειας για το έργο Κατάκολο μέχρι την Παρασκευή" value={taskDesc} onChange={event => setTaskDesc(event.target.value)} rows={3} autoFocus />
+              <button type="button" className={`today-voice-button ${isRecording && voiceTarget === 'task' ? 'is-recording' : ''}`} onClick={isRecording && voiceTarget === 'task' ? stopRecording : () => startRecording('task')} disabled={isTranscribing} aria-label={isRecording ? 'Διακοπή εγγραφής' : 'Υπαγόρευση εργασίας'}>
                 {isTranscribing && voiceTarget === 'task' ? <span className="spinner" /> : <Mic size={18} strokeWidth={1.5} aria-hidden="true" />}
               </button>
             </div>
           </div>
-
-          <div className="today-form-field is-full"><label htmlFor="task-description">Περιγραφή</label><div className="today-update-input-wrap"><textarea id="task-description" placeholder="Προσθέστε τις απαραίτητες λεπτομέρειες…" value={taskDesc} onChange={event => setTaskDesc(event.target.value)} rows={3} /><button type="button" className={`today-voice-button ${isRecording && voiceTarget === 'taskDesc' ? 'is-recording' : ''}`} onClick={isRecording && voiceTarget === 'taskDesc' ? stopRecording : () => startRecording('taskDesc')} disabled={isTranscribing} aria-label={isRecording ? 'Διακοπή εγγραφής' : 'Υπαγόρευση περιγραφής'}>{isTranscribing && voiceTarget === 'taskDesc' ? <span className="spinner" /> : <Mic size={17} strokeWidth={1.5} aria-hidden="true" />}</button></div></div>
 
           <div className="today-form-field is-full"><label htmlFor="task-project">Έργο ή τύπος εργασίας</label><select id="task-project" value={taskProject} onChange={event => { setTaskProject(event.target.value); if (event.target.value === 'personal' || event.target.value === 'staff') setTaskAssignees([]) }}><option value="">Επιλέξτε έργο</option><option value="personal">Για εμένα</option><option value="staff">Όλο το γραφείο</option>{projects.map(project => <option key={project.id} value={project.id}>{project.name}</option>)}</select></div>
 
