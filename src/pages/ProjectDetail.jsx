@@ -332,7 +332,9 @@ export default function ProjectDetail({ project, profile, onBack, onAddUpdate })
   }
   const filteredEntries = entries.filter(e => {
     if (areaFilter !== 'all' && !(e.tags || []).includes(areaFilter)) return false
-    if (catFilter && e.category !== catFilter) return false
+    // '__documents' is a pseudo-category — documents have no category at all,
+    // so comparing it against e.category would exclude every entry.
+    if (catFilter && catFilter !== '__documents' && e.category !== catFilter) return false
     if (!matchesMemorySearch(e)) return false
     return true
   })
