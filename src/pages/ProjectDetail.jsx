@@ -5,12 +5,12 @@ import StepsView from './StepsView'
 import { ButtonSpinner, EmptyState, InlineNotice, LoadingState, ModalShell } from '../components/ui'
 
 const CAT_CONFIG = {
-  problem: { label: 'Προβλήματα', icon: 'M12 9v2m0 4h.01M5.07 19H19a2 2 0 001.75-2.96L13.75 4a2 2 0 00-3.5 0L3.32 16.04A2 2 0 005.07 19z', color: 'var(--danger)', bg: 'var(--danger-wash)' },
-  decision: { label: 'Αποφάσεις', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', color: 'var(--ink)', bg: 'var(--veil)' },
-  material: { label: 'Υλικά', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', color: 'var(--ink)', bg: 'var(--mist)' },
-  work_update: { label: 'Ενημερώσεις εργασιών', icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4', color: 'var(--ink)', bg: 'var(--wash)' },
-  client_request: { label: 'Αιτήματα πελάτη', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z', color: 'var(--warn)', bg: 'var(--warn-wash)' },
-  note: { label: 'Σημειώσεις', icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z', color: 'var(--text-secondary)', bg: 'var(--info-wash)' }
+  problem: { label: 'Προβλήματα', icon: 'M12 9v2m0 4h.01M5.07 19H19a2 2 0 001.75-2.96L13.75 4a2 2 0 00-3.5 0L3.32 16.04A2 2 0 005.07 19z', color: 'var(--cat-problem)', bg: 'var(--cat-problem-wash)' },
+  decision: { label: 'Αποφάσεις', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', color: 'var(--cat-decision)', bg: 'var(--cat-decision-wash)' },
+  material: { label: 'Υλικά', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', color: 'var(--cat-material)', bg: 'var(--cat-material-wash)' },
+  work_update: { label: 'Ενημερώσεις εργασιών', icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4', color: 'var(--cat-work_update)', bg: 'var(--cat-work_update-wash)' },
+  client_request: { label: 'Αιτήματα πελάτη', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z', color: 'var(--cat-client_request)', bg: 'var(--cat-client_request-wash)' },
+  note: { label: 'Σημειώσεις', icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z', color: 'var(--cat-note)', bg: 'var(--cat-note-wash)' }
 }
 
 function CatIcon({ path, color, size = 18 }) {
