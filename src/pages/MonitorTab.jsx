@@ -39,6 +39,9 @@ export default function MonitorTab({ profile, onOpenToday }) {
   const [emailEntries, setEmailEntries] = useState([])
   const [emailSaving, setEmailSaving] = useState(null)
 
+  // Task awaiting a project choice before registering to memory
+  const [registerPicker, setRegisterPicker] = useState(null)
+
   function showToast(msg, isError) {
     setToast({ msg, isError })
     setTimeout(() => setToast(null), 2500)
@@ -187,8 +190,13 @@ export default function MonitorTab({ profile, onOpenToday }) {
     }
   }
 
-  async function registerToTimeline(task) {
-    if (!task.project_id) return
+  async function registerToTimeline(task, overrideProjectId) {
+    const projectId = overrideProjectId || task.project_id
+    // No project on the task — ask which one rather than failing silently.
+    if (!projectId) {
+      setRegisterPicker(task)
+      return
+    }
     try {
       const latestNote = taskNotes[task.id]?.[0]?.text || ''
       const fullText = `Η εργασία ολοκληρώθηκε: ${task.title}${latestNote ? '. Σημείωση: ' + latestNote : ''}`
@@ -198,7 +206,7 @@ export default function MonitorTab({ profile, onOpenToday }) {
       let title = task.title
       try {
         const projs = await dbRead(supabase.from('projects').select('name').eq('status', 'active'))
-        const areas = await dbRead(supabase.from('project_areas').select('area_name').eq('project_id', task.project_id))
+        const areas = await dbRead(supabase.from('project_areas').select('area_name').eq('project_id', projectId))
         const res = await fetch('/api/extract', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -219,12 +227,18 @@ export default function MonitorTab({ profile, onOpenToday }) {
       } catch (aiErr) { console.log('AI categorize skipped:', aiErr) }
 
       await db(supabase.from('entries').insert({
-        project_id: task.project_id, user_id: profile.id, entry_type: 'text',
+        project_id: projectId, user_id: profile.id, entry_type: 'text',
         raw_text: fullText, ai_summary: title, title: title,
         category: category, tags: tags.length > 0 ? tags : null,
         is_team_visible: true, submitter_name: task.assigned_to_name || profile.full_name
       }))
-      await db(supabase.from('steps').update({ registered_to_timeline: true }).eq('id', task.id))
+      // Attach the task to that project too, so it stops looking orphaned.
+      await db(supabase.from('steps').update({
+        registered_to_timeline: true,
+        ...(task.project_id ? {} : { project_id: projectId })
+      }).eq('id', task.id))
+      setRegisterPicker(null)
+      showToast('Καταχωρήθηκε στη μνήμη έργου')
       await loadData()
     } catch (err) {
       showToast('Σφάλμα καταχώρησης', true)
@@ -603,6 +617,30 @@ export default function MonitorTab({ profile, onOpenToday }) {
         actions={<><button type="button" className="action-btn" onClick={() => setRejectingTask(null)} disabled={rejectSaving}>Ακύρωση</button><button type="button" className="action-btn primary" onClick={confirmRejectTask} disabled={rejectSaving}>{rejectSaving ? <ButtonSpinner label="Αποθήκευση…" /> : 'Επιστροφή για διόρθωση'}</button></>}
       >
         <div className="management-plan-form"><div><label htmlFor="reject-comment">Σχόλιο προς το μέλος της ομάδας</label><textarea id="reject-comment" value={rejectComment} onChange={event => setRejectComment(event.target.value)} placeholder="Τι χρειάζεται να διορθωθεί;" rows={4} autoFocus /></div></div>
+      </ModalShell>
+
+      <ModalShell
+        open={Boolean(registerPicker)}
+        onClose={() => setRegisterPicker(null)}
+        title="Σε ποιο έργο;"
+        description={registerPicker ? `«${registerPicker.title}» δεν ανήκει σε έργο. Επιλέξτε πού θα καταχωρηθεί.` : ''}
+        icon={PlusCircle}
+        size="md"
+        actions={<button type="button" className="action-btn" onClick={() => setRegisterPicker(null)}>Ακύρωση</button>}
+      >
+        <div className="center-register-picker">
+          {projects.map(project => (
+            <button
+              key={project.id}
+              type="button"
+              className="center-register-picker-option"
+              onClick={() => registerToTimeline(registerPicker, project.id)}
+            >
+              <strong>{project.name}</strong>
+              {project.location && <small>{project.location}</small>}
+            </button>
+          ))}
+        </div>
       </ModalShell>
 
       {toast && <div className={`toast ${toast.isError ? 'toast-error' : 'toast-success'}`} role="status">{toast.msg}</div>}

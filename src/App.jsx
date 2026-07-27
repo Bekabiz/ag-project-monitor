@@ -210,7 +210,7 @@ export default function App() {
   }
 
   return (
-    <div className={`app app-shell ${selectedProject ? 'is-project-view' : ''} ${profile?.role !== 'owner' ? 'team-theme' : ''}`}>
+    <div translate="no" className={`app app-shell notranslate ${selectedProject ? 'is-project-view' : ''} ${profile?.role !== 'owner' ? 'team-theme' : ''}`}>
       <aside className={`desktop-sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`} aria-label="Κύρια πλοήγηση">
         <div className="sidebar-brand">
           <div className="ag-logo" aria-hidden="true">AG</div>
