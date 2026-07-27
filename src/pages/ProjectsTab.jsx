@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { AlertTriangle, ArrowRight, Building2, Clock3, FileText, MapPin, Pencil, Plus, RefreshCw, Search } from 'lucide-react'
+import { Building2, FileText, MapPin, Pencil, Plus, RefreshCw, Search } from 'lucide-react'
 import { db, dbRead, supabase } from '../lib/db'
 import { ButtonSpinner, EmptyState, InlineNotice, LoadingState, ModalShell } from '../components/ui'
 
@@ -208,45 +208,37 @@ export default function ProjectsTab({ profile, onSelectProject }) {
 
             return (
               <article key={project.id} className={`project-professional-card is-${health}`}>
-                <div className="project-card-accent" aria-hidden="true" />
-                <div className="project-card-header">
-                  <div className="project-card-icon" aria-hidden="true"><Building2 size={20} strokeWidth={1.5} /></div>
-                  <div className="project-health-label"><span className={`project-health-dot is-${health}`} /><span>{healthCopy.label}</span></div>
-                  {profile?.role === 'owner' && (
-                    <button type="button" className="project-card-edit" onClick={event => openEditModal(event, project)} aria-label={`Επεξεργασία έργου ${project.name}`}>
-                      <Pencil size={16} strokeWidth={1.5} aria-hidden="true" />
-                    </button>
-                  )}
-                </div>
-
                 <button type="button" className="project-card-main" onClick={() => onSelectProject(project)}>
                   <span className="project-card-title">{project.name}</span>
                   <span className="project-card-location"><MapPin size={14} strokeWidth={1.5} aria-hidden="true" />{project.location || 'Δεν έχει οριστεί τοποθεσία'}</span>
-                  {project.description && <span className="project-card-description">{project.description}</span>}
 
-                  {(projectStats.overdueCount > 0 || health === 'yellow') && (
-                    <span className={`project-card-alert is-${health}`}>
-                      {health === 'red' ? <AlertTriangle size={14} strokeWidth={1.5} aria-hidden="true" /> : <Clock3 size={14} strokeWidth={1.5} aria-hidden="true" />}
-                      {health === 'red'
-                        ? `${projectStats.overdueCount} εκπρόθεσμ${projectStats.overdueCount === 1 ? 'η εκκρεμότητα' : 'ες εκκρεμότητες'}`
-                        : projectStats.daysSinceUpdate === null
-                          ? 'Δεν υπάρχουν ακόμη ενημερώσεις'
-                          : projectStats.daysSinceUpdate > 30
-                            ? 'Πάνω από 30 ημέρες χωρίς ενημέρωση'
-                            : `${projectStats.daysSinceUpdate} ημέρες χωρίς ενημέρωση`}
-                    </span>
-                  )}
+                  {/* One status line only. The old card stated the same fact as a
+                      header badge, a pill and a footer sentence. */}
+                  <span className={`project-card-status is-${health}`}>
+                    <span className={`project-health-dot is-${health}`} aria-hidden="true" />
+                    {projectStats.overdueCount > 0
+                      ? `${projectStats.overdueCount} εκπρόθεσμ${projectStats.overdueCount === 1 ? 'η εκκρεμότητα' : 'ες εκκρεμότητες'}`
+                      : projectStats.daysSinceUpdate === null
+                        ? 'Καμία καταχώρηση ακόμη'
+                        : projectStats.daysSinceUpdate > 30
+                          ? 'Πάνω από 30 ημέρες χωρίς ενημέρωση'
+                          : projectStats.daysSinceUpdate > 0
+                            ? `${projectStats.daysSinceUpdate} ημέρες χωρίς ενημέρωση`
+                            : 'Ενημερωμένο'}
+                  </span>
 
                   <span className="project-card-metrics">
-                    <span><FileText size={14} strokeWidth={1.5} aria-hidden="true" /><strong>{projectStats.totalEntries || 0}</strong><small>Καταχωρήσεις</small></span>
-                    <span><Clock3 size={14} strokeWidth={1.5} aria-hidden="true" /><strong>{formatDate(projectStats.lastUpdate)}</strong><small>Τελευταία ενημέρωση</small></span>
-                  </span>
-
-                  <span className="project-card-footer">
-                    <span>{healthCopy.description}</span>
-                    <span>Άνοιγμα έργου <ArrowRight size={15} strokeWidth={1.5} aria-hidden="true" /></span>
+                    <FileText size={14} strokeWidth={1.5} aria-hidden="true" />
+                    <strong>{projectStats.totalEntries || 0}</strong> καταχωρήσεις
+                    {projectStats.lastUpdate && <><span aria-hidden="true">·</span>{formatDate(projectStats.lastUpdate)}</>}
                   </span>
                 </button>
+
+                {profile?.role === 'owner' && (
+                  <button type="button" className="project-card-edit" onClick={event => openEditModal(event, project)} aria-label={`Επεξεργασία έργου ${project.name}`}>
+                    <Pencil size={16} strokeWidth={1.5} aria-hidden="true" />
+                  </button>
+                )}
               </article>
             )
           })}
