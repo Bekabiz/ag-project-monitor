@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { AlertTriangle, ArrowLeft, Building2, CalendarDays, Camera, CheckCircle2, ChevronRight, ClipboardCheck, Clock3, FileDown, FileText, FolderTree, Image, LayoutDashboard, ListTree, MapPin, Mic, Plus, RefreshCw, Search, Sparkles, Trash2, X } from 'lucide-react'
 import { db, dbRead, supabase } from '../lib/db'
+import { safeExtension } from '../lib/files'
 import StepsView from './StepsView'
 import { ButtonSpinner, EmptyState, InlineNotice, LoadingState, ModalShell } from '../components/ui'
 
@@ -123,7 +124,7 @@ export default function ProjectDetail({ project, profile, onBack, onAddUpdate })
         textContent = await file.text()
       } else {
         // PDF or Word: upload to Supabase, send URL to API for processing
-        const ext = file.name.split('.').pop()
+        const ext = safeExtension(file.name) || 'bin'
         const path = `tech-descriptions/${project.id}.${ext}`
         const { error: upErr } = await supabase.storage.from('files').upload(path, file, { upsert: true })
         if (upErr) throw upErr

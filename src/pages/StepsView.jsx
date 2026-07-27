@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { AlertTriangle, Plus, Paperclip, ChevronDown, Send, Mic, Circle, Play, Pause, Check, CheckCircle2, ClipboardCheck, Clock3, FileText, Pencil, RefreshCw, Search, UserRound, Zap, CalendarDays } from 'lucide-react'
 import { db, dbRead, supabase } from '../lib/db'
+import { safeExtension } from '../lib/files'
 import { getDaysInfo, formatDueTime, getStepCardClass } from '../lib/dates'
 import { useVoiceRecorder } from '../lib/voice'
 import { sortProfiles } from '../lib/people'
@@ -135,7 +136,7 @@ export default function StepsView({ project, profile }) {
       let fileUrl = editStep?.file_url || null
       let fileName = editStep?.file_name || null
       if (stepFile) {
-        const ext = stepFile.name.split('.').pop()
+        const ext = safeExtension(stepFile.name) || 'bin'
         const path = `task-files/${Date.now()}.${ext}`
         const { error: upErr } = await supabase.storage.from('files').upload(path, stepFile)
         if (upErr) throw new Error('Σφάλμα μεταφόρτωσης')

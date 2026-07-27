@@ -6,6 +6,7 @@ function localDateValue(date = new Date()) {
 }
 import { Megaphone, Plus, ClipboardCheck, MessageCircle, AlertTriangle, Paperclip, ChevronDown, Send, Mic, Sparkles, Circle, Play, Pause, Check, CheckCircle2, User, Users, RefreshCw, FileText, CalendarDays, Zap } from 'lucide-react'
 import { db, dbRead, supabase } from '../lib/db'
+import { safeExtension } from '../lib/files'
 import { getDaysInfo, formatDueTime, getOverdueCount } from '../lib/dates'
 import { extractText } from '../lib/voice'
 import { sortProfiles } from '../lib/people'
@@ -397,7 +398,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
 
       let fileUrl = null, fileName = null
       if (taskFile) {
-        const ext = taskFile.name.split('.').pop()
+        const ext = safeExtension(taskFile.name) || 'bin'
         const path = `task-files/${Date.now()}.${ext}`
         const { error: upErr } = await supabase.storage.from('files').upload(path, taskFile)
         if (upErr) throw new Error('Σφάλμα μεταφόρτωσης αρχείου')
@@ -534,7 +535,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
     try {
       let fileUrl = null
       if (updateFile) {
-        const ext = updateFile.name.split('.').pop()
+        const ext = safeExtension(updateFile.name) || 'bin'
         const path = `general/${Date.now()}.${ext}`
         const { error: upErr } = await supabase.storage.from('files').upload(path, updateFile)
         if (upErr) throw new Error('Σφάλμα μεταφόρτωσης')

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Mic, Camera, FileUp, Check, RotateCcw, FolderPlus, Search, Sparkles, LockKeyhole, Users, Send, RefreshCw, FileText, ChevronRight, Link2, ExternalLink } from 'lucide-react'
 import { db, dbRead, supabase } from '../lib/db'
+import { safeFileName, safeExtension } from '../lib/files'
 import { ButtonSpinner, EmptyState, LoadingState, ModalShell } from '../components/ui'
 
 export default function InputTab({ profile, initialProject, onOpenProjects }) {
@@ -346,7 +347,7 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
     setSending(true)
     try {
       const fileName = file.name
-      const path = `${selected.id}/${Date.now()}_${fileName}`
+      const path = `${selected.id}/${safeFileName(fileName)}`
       const { error: upErr } = await supabase.storage.from('files').upload(path, file)
       if (upErr) throw upErr
       const { data: urlData } = supabase.storage.from('files').getPublicUrl(path)
