@@ -1802,3 +1802,18 @@ button.today-person-summary:hover { background: var(--canvas); }
 @media (max-width: 560px) {
   .area-editor-add { grid-template-columns: 1fr; }
 }
+
+/* Attached-but-not-yet-saved file in the document modal */
+.input-file-attached {
+  display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center;
+  padding: 14px 16px; border: 1px solid var(--hairline); border-radius: var(--radius-sm);
+  background: var(--wash); color: var(--text-primary);
+}
+.input-file-attached strong { display: block; font-size: 15px; font-weight: 600; word-break: break-all; }
+.input-file-attached small { color: var(--text-muted); font-size: 12px; }
+.input-file-attached button {
+  display: grid; place-items: center; width: 36px; height: 36px;
+  border: 0; border-radius: var(--radius-sm); background: transparent;
+  color: var(--text-muted); cursor: pointer;
+}
+.input-file-attached button:hover { background: var(--paper); color: var(--ink); }

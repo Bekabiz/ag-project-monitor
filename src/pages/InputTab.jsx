@@ -20,6 +20,7 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
   const [docName, setDocName] = useState('')
   const [docVersion, setDocVersion] = useState('')
   const [docNotes, setDocNotes] = useState('')
+  const [docFile, setDocFile] = useState(null)
   const [linkUrl, setLinkUrl] = useState('')
   const [linkTitle, setLinkTitle] = useState('')
   const [teamVisible, setTeamVisible] = useState(false) // false = private (owner only), true = team can see
@@ -341,14 +342,23 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
   }
 
   // DOCUMENT UPLOAD
-  async function handleDocUpload(e) {
+  // Picking a file only attaches it. Nothing is uploaded until the person has
+  // filled in the name, version and notes and pressed save — otherwise those
+  // fields are always empty at the moment of upload.
+  function handleDocPick(e) {
     const file = e.target.files?.[0]
-    if (!file || !selected) return
+    if (!file) return
+    setDocFile(file)
+    if (!docName) setDocName(file.name.replace(/\.[^.]+$/, ''))
+    e.target.value = '' // allow re-picking the same file
+  }
+
+  async function handleDocSave() {
+    if (!docFile || !selected) return
     setSending(true)
     try {
-      const fileName = file.name
-      const path = `${selected.id}/${safeFileName(fileName)}`
-      const { error: upErr } = await supabase.storage.from('files').upload(path, file)
+      const path = `${selected.id}/${safeFileName(docFile.name)}`
+      const { error: upErr } = await supabase.storage.from('files').upload(path, docFile)
       if (upErr) throw upErr
       const { data: urlData } = supabase.storage.from('files').getPublicUrl(path)
 
@@ -357,19 +367,19 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
         user_id: profile.id,
         entry_type: 'document',
         file_url: urlData.publicUrl,
-        file_name: docName || fileName,
-        file_size: file.size,
-        doc_version: docVersion || null,
-        doc_notes: docNotes || null,
+        file_name: docName.trim() || docFile.name,
+        file_size: docFile.size,
+        doc_version: docVersion.trim() || null,
+        doc_notes: docNotes.trim() || null,
         is_team_visible: profile?.role === 'owner' ? teamVisible : true
       }))
-      setDocName(''); setDocVersion(''); setDocNotes('')
-      showToast('Αρχείο αποθηκεύτηκε')
+      setDocName(''); setDocVersion(''); setDocNotes(''); setDocFile(null)
+      showToast('Το έγγραφο αποθηκεύτηκε')
+      setShowFileModal(null)
     } catch (err) {
       showToast('Σφάλμα: ' + err.message, true)
     }
     setSending(false)
-    setShowFileModal(null)
   }
 
   // FILE LINK (external URL — OneDrive, Google Drive, etc.)
@@ -664,15 +674,29 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
         description={`Το αρχείο θα συνδεθεί με το έργο «${selected?.name || ''}».`}
         icon={FileUp}
         size="md"
-        actions={<button type="button" className="action-btn" onClick={() => setShowFileModal(null)}>Ακύρωση</button>}
+        actions={<>
+          <button type="button" className="action-btn" onClick={() => { setShowFileModal(null); setDocFile(null) }}>Ακύρωση</button>
+          <button type="button" className="action-btn primary" onClick={handleDocSave} disabled={!docFile || sending}>
+            {sending ? <ButtonSpinner label="Μεταφόρτωση…" /> : 'Αποθήκευση'}
+          </button>
+        </>}
       >
         <div className="input-document-form">
+          {docFile ? (
+            <div className="input-file-attached is-full">
+              <FileText size={18} strokeWidth={1.5} aria-hidden="true" />
+              <div><strong>{docFile.name}</strong><small>{(docFile.size / 1024).toFixed(0)} KB</small></div>
+              <button type="button" onClick={() => setDocFile(null)} aria-label="Αφαίρεση αρχείου">
+                <RotateCcw size={15} strokeWidth={1.5} aria-hidden="true" />
+              </button>
+            </div>
+          ) : (
+            <label className="input-file-dropzone is-full"><span aria-hidden="true"><FileUp size={24} strokeWidth={1.5} /></span><strong>Επιλογή αρχείου</strong><small>PDF, DWG, Word ή Excel</small><input type="file" accept=".pdf,.dwg,.doc,.docx,.xls,.xlsx" onChange={handleDocPick} /></label>
+          )}
           <div><label htmlFor="document-name">Όνομα εγγράφου</label><input id="document-name" value={docName} onChange={event => setDocName(event.target.value)} placeholder="π.χ. Αρχιτεκτονικό σχέδιο ισογείου" /></div>
           <div><label htmlFor="document-version">Έκδοση</label><input id="document-version" value={docVersion} onChange={event => setDocVersion(event.target.value)} placeholder="π.χ. v3" /></div>
           <div className="is-full"><label htmlFor="document-notes">Σημειώσεις</label><textarea id="document-notes" value={docNotes} onChange={event => setDocNotes(event.target.value)} placeholder="Προαιρετική σύντομη περιγραφή…" rows={3} /></div>
-          <label className="input-file-dropzone is-full"><span aria-hidden="true"><FileUp size={24} strokeWidth={1.5} /></span><strong>Επιλογή αρχείου</strong><small>PDF, DWG, Word ή Excel</small><input type="file" accept=".pdf,.dwg,.doc,.docx,.xls,.xlsx" onChange={handleDocUpload} /></label>
         </div>
-        {sending && <div className="input-upload-progress"><ButtonSpinner label="Μεταφόρτωση αρχείου…" /></div>}
       </ModalShell>
 
       <ModalShell
