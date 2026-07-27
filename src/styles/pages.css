@@ -1731,3 +1731,15 @@ button.today-person-summary:hover { background: var(--wash); }
   .app-workspace { margin-left: 0; }
   .project-report-sheet { border: 0; }
 }
+
+/* Project picker shown when registering a task that has no project */
+.center-register-picker { display: grid; gap: 8px; }
+.center-register-picker-option {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  width: 100%; padding: 14px 16px; text-align: left; cursor: pointer;
+  background: var(--paper); border: 1px solid var(--border); border-radius: 10px;
+  transition: border-color .15s ease, background .15s ease;
+}
+.center-register-picker-option:hover { border-color: var(--ink); background: var(--wash); }
+.center-register-picker-option strong { font-size: 15px; font-weight: 600; }
+.center-register-picker-option small { font-size: 13px; color: var(--text-secondary); }
