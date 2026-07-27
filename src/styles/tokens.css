@@ -1,99 +1,170 @@
 /* ==========================================================================
-   AG Project Monitor — Monochrome Clinical (shadcn/ui derived)
-   Black ink, white paper, warm gray surfaces. Color appears ONLY in status
-   pills. Design tokens: the ONLY place colors, radii and spacing live.
+   AG Project Monitor — Design tokens (single source of truth)
+
+   Direction: quiet archive. Monochrome surfaces separated by background
+   shifts and hairlines — no shadows (one exception: modals). One accent,
+   reserved for primary actions. Semantic colour for categories and status,
+   derived from a muted product-finish family. App-scale type, 4px spacing.
+
+   Every colour, size, radius and duration in the app must resolve to a
+   token defined here. Legacy names are aliased at the bottom during the
+   page-by-page migration and removed as they fall out of use.
    ========================================================================== */
 
 :root {
   color-scheme: light;
 
-  /* Ink & text */
-  --ink:            #0a0a0a;  /* primary text, headings, filled buttons, icon strokes */
-  --ink-deep:       #171717;  /* sidebar bg, filled button bg */
-  --text-primary:   #171717;
+  /* --- Surfaces ------------------------------------------------------- */
+  --paper:         #ffffff;  /* cards, primary surface */
+  --canvas:        #f5f5f7;  /* alternating bands, page background */
+  --wash:          #e8e8ed;  /* hover, pressed, subtle fills */
+  --elevated:      #fafafc;  /* sticky nav, floating panels */
+  --hairline:      #d6d6d6;  /* borders — used sparingly */
+  --hairline-soft: #e5e5e7;
+
+  /* --- Text ------------------------------------------------------------
+     Ratios (WCAG): ink/paper 16.8, ink/canvas 15.5, ink/wash 13.8;
+     secondary/paper 7.8, /canvas 7.2, /wash 6.4; muted/paper 5.1,
+     /canvas 4.7. NOTE: muted on --wash is 4.15 — never pair them. */
+  --ink:            #1d1d1f;
+  --text-primary:   #1d1d1f;
   --text-secondary: #525252;
-  --text-muted:     #737373;
+  --text-muted:     #6e6e73;  /* paper / canvas / elevated only */
+  --text-inverse:   #ffffff;
 
-  /* Surfaces — three-tone stack: canvas → surface → paper */
-  --paper:          #ffffff;  /* cards, modals, primary surfaces */
-  --wash:           #f5f5f5;  /* page-level tinted panels, secondary surfaces */
-  --veil:           #ececec;  /* selected states, active chips */
-  --mist:           #e9e9e9;  /* heavier panels */
-  --slate:          #fafafa;  /* subtle variant: photos, files, AI cards */
+  /* --- Accent — exactly one --------------------------------------------
+     Filled primary buttons and active nav only. Never decorative, never
+     body text. One filled accent button per screen maximum.
+     white/accent 4.7; link/paper 5.6; link/accent-wash 4.9. */
+  --accent:       #0071e3;
+  --accent-hover: #0077ed;
+  --accent-link:  #0066cc;   /* inline text links, text on accent-wash */
+  --accent-wash:  #e8f2fd;
 
-  /* Functional (muted, status-only — never decorative) */
-  --danger:         #991b1b;
-  --danger-wash:    #fef2f2;
-  --warn:           #92400e;
-  --warn-wash:      #fffbeb;
-  --success:        #166534;
-  --success-wash:   #f0fdf4;
-  --info:           #1e40af;
-  --info-wash:      #eff6ff;
-  --ok:             var(--success);
-  --ok-wash:        var(--success-wash);
+  /* --- Semantic categories ----------------------------------------------
+     Wash = swatch, fg = derived darker foreground. Every fg ≥ 4.5:1 on
+     both paper and its own wash (ratios noted paper/wash). */
+  --cat-problem:             #a03c00;  /* 6.7 / 5.3  (Ember) */
+  --cat-problem-wash:        #f5e0d4;
+  --cat-decision:            #4b5670;  /* 7.3 / 6.5  (Indigo) */
+  --cat-decision-wash:       #eef1f6;
+  --cat-material:            #7a5c15;  /* 6.2 / 5.0  (Starlight) */
+  --cat-material-wash:       #f0e4d3;
+  --cat-client_request:      #8f3e3e;  /* 7.2 / 5.7  (Blush) */
+  --cat-client_request-wash: #f2e2e2;
+  --cat-work_update:         #33607d;  /* 6.8 / 5.7  (Sky) */
+  --cat-work_update-wash:    #e3edf2;
+  --cat-note:                #55585d;  /* 7.1 / 5.9  (Silver) */
+  --cat-note-wash:           #e9eaeb;
 
-  /* Lines */
-  --border:         #e5e5e5;
-  --border-strong:  #d4d4d4;
+  /* --- Status — distinct from categories --------------------------------
+     danger = overdue, urgent · warn = waiting, due soon ·
+     success = done, approved · neutral = not started.
+     Every fg ≥ 4.5:1 on paper and its wash (ratios paper/wash). */
+  --danger:        #a3231c;  /* 7.5 / 6.4 */
+  --danger-wash:   #fbe9e7;
+  --warn:          #8a4d0f;  /* 6.7 / 5.7 */
+  --warn-wash:     #f7ecd9;
+  --success:       #28703a;  /* 6.1 / 5.2 */
+  --success-wash:  #e5f0e6;
+  --neutral:       #5d5d63;  /* 6.5 / 5.6 */
+  --neutral-wash:  #ececef;
 
-  /* Shape & rhythm */
-  --radius-sm: 10px;      /* inputs, nested elements */
-  --radius:    18px;      /* buttons, interactive — pill geometry */
-  --radius-card: 24px;    /* cards, panels, modals */
-  --radius-pill: 999px;
-  --space-unit: 7px;
+  /* --- Type ------------------------------------------------------------
+     One family. Inter: verified native Greek + Greek Extended coverage,
+     tabular figures for the ledger, neutral precision. App scale — body
+     never below 16px on phone. Usage: size / line-height / tracking / wt */
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
-  /* Elevation — the ONLY shadow in the system (cards) */
-  --shadow-card: 0 0 0 1px rgba(0, 0, 0, .04), 0 1px 3px rgba(0, 0, 0, .07), 0 1px 2px -1px rgba(0, 0, 0, .07);
+  --fs-display: 32px; --lh-display: 1.1;  --ls-display: -0.02em; /* w600 */
+  --fs-h1:      28px; --lh-h1:      1.15; --ls-h1:      -0.02em; /* w600 */
+  --fs-h2:      22px; --lh-h2:      1.25; --ls-h2:      -0.01em; /* w600 */
+  --fs-h3:      18px; --lh-h3:      1.3;  --ls-h3:      -0.01em; /* w600 */
+  --fs-body:    16px; --lh-body:    1.5;  /* w400 */
+  --fs-body-sm: 15px; --lh-body-sm: 1.5;  /* w400 */
+  --fs-caption: 13px; --lh-caption: 1.4;  /* w400 */
+  --fs-micro:   12px; --lh-micro:   1.35; --ls-micro: 0.01em;    /* w500 */
 
-  /* Type — ONE family */
-  --font-display: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-body:    'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* --- Spacing — 4px base. Nothing outside this scale. ----------------- */
+  --sp-1:  4px;
+  --sp-2:  8px;
+  --sp-3:  12px;
+  --sp-4:  16px;
+  --sp-5:  20px;
+  --sp-6:  24px;
+  --sp-7:  32px;
+  --sp-8:  40px;
+  --sp-9:  48px;
+  --sp-10: 64px;
 
-  /* Layout constants */
+  /* --- Radius — three values only -------------------------------------- */
+  --radius-sm:   10px;   /* inputs, small controls */
+  --radius-card: 20px;   /* cards, panels, modals */
+  --radius-pill: 999px;  /* buttons, chips, badges */
+
+  /* --- Elevation — modals only; every other surface is flat ------------ */
+  --shadow-modal: 0 24px 60px rgba(0, 0, 0, .18);
+
+  /* --- Layout & motion -------------------------------------------------- */
   --sidebar-width: 248px;
   --header-height: 76px;
-  --scrim: rgba(0, 0, 0, .4);
+  --scrim: rgba(29, 29, 31, .4);
   --transition: 160ms ease-out;
 
-  /* Legacy aliases still referenced by shared JS helpers (lib/dates.js) */
-  --green: var(--success);
-  --blue: var(--info);
-  --yellow: var(--warn);
-  --text3: var(--text-muted);
+  /* =====================================================================
+     Legacy aliases — consumed by CSS not yet migrated (steps 2–8) and by
+     shared JS helpers (lib/dates.js). Remove as migration completes.
+     ===================================================================== */
+  --ink-deep:      #2c2c2e;               /* old: dark fills + hover */
+  --veil:          var(--wash);           /* old: selected states */
+  --mist:          var(--wash);
+  --slate:         var(--elevated);
+  --border:        var(--hairline-soft);
+  --border-strong: var(--hairline);
+  --info:          var(--cat-work_update);
+  --info-wash:     var(--cat-work_update-wash);
+  --ok:            var(--success);
+  --ok-wash:       var(--success-wash);
+  --radius:        var(--radius-card);    /* old 18px button/panel radius */
+  --shadow-card:   none;                  /* cards are flat now */
+  --font-display:  var(--font-sans);
+  --font-body:     var(--font-sans);
+  --green:         var(--success);        /* lib/dates.js getStatusColor */
+  --blue:          var(--cat-work_update);
+  --yellow:        var(--warn);
+  --text3:         var(--text-muted);
 }
 
-/* Base reset */
+/* --- Base reset ---------------------------------------------------------- */
 *, *::before, *::after { box-sizing: border-box; }
-html { background: var(--paper); scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+html { background: var(--canvas); scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 body {
   margin: 0;
   min-width: 320px;
-  background: var(--paper);
+  background: var(--canvas);
   color: var(--text-primary);
-  font-family: var(--font-body);
-  font-size: 14px;
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
   font-weight: 400;
-  line-height: 1.5;
+  line-height: var(--lh-body);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 h1, h2, h3, h4, h5, h6, p, figure { margin: 0; }
-button, input, textarea, select { font-family: var(--font-body); font-size: 14px; color: var(--text-primary); }
+button, input, textarea, select { font-family: var(--font-sans); font-size: var(--fs-body-sm); color: var(--text-primary); }
 button { cursor: pointer; }
 img, svg, video { max-width: 100%; display: block; }
 strong { font-weight: 600; }
-a { color: var(--ink); }
+a { color: var(--accent-link); }
 
 /* Numbers are always tabular */
 strong, time, .tabular { font-variant-numeric: tabular-nums; }
 
 button, a, input, textarea, select { -webkit-tap-highlight-color: transparent; }
 button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible,
-select:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+select:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 button:disabled, input:disabled, textarea:disabled, select:disabled { cursor: not-allowed; opacity: .55; }
-::selection { background: var(--veil); color: var(--ink-deep); }
+::selection { background: var(--accent-wash); color: var(--ink); }
 ::placeholder { color: var(--text-muted); }
 
 .sr-only {
@@ -107,142 +178,18 @@ button:disabled, input:disabled, textarea:disabled, select:disabled { cursor: no
 @keyframes paper-fade { from { opacity: 0; } }
 @keyframes paper-spin { to { transform: rotate(360deg); } }
 @keyframes paper-pulse { 50% { opacity: .45; } }
-@keyframes record-pulse { 50% { outline: 6px solid rgba(153, 27, 27, .2); outline-offset: 0; } }
+@keyframes record-pulse { 50% { outline: 6px solid rgba(163, 35, 28, .2); outline-offset: 0; } }
 
-/* --- Team theme: green accents for non-owner users ---
-   George (owner) keeps monochrome. Team gets teal-green on ALL interactive
-   elements: backgrounds, borders, active states, focus rings.
-   Text color (var(--ink) used as color:) is NOT overridden — stays dark. */
-
-/* --- Sidebar --- */
-.team-theme .desktop-sidebar { background: #115e59; }
-.team-theme .sidebar-item:hover { background: rgba(255, 255, 255, .1); }
-.team-theme .sidebar-item.active { background: rgba(255, 255, 255, .18); }
-
-/* --- Global: focus rings & input focus --- */
-.team-theme button:focus-visible,
-.team-theme a:focus-visible,
-.team-theme input:focus-visible,
-.team-theme textarea:focus-visible,
-.team-theme select:focus-visible,
-.team-theme [tabindex]:focus-visible { outline-color: #0f766e; }
-.team-theme input:focus,
-.team-theme textarea:focus,
-.team-theme select:focus { border-color: #0f766e; }
-
-/* --- Global: checkboxes & radios --- */
-.team-theme input[type="checkbox"],
-.team-theme input[type="radio"] { border-color: #0f766e; }
-.team-theme input[type="checkbox"]:checked,
-.team-theme input[type="radio"]:checked { background: #ccfbf1; }
-.team-theme input[type="checkbox"]:checked::before { border-color: #0f766e; }
-.team-theme input[type="radio"]:checked::before { background: #0f766e; }
-
-/* --- Spinner --- */
-.team-theme .spinner { border-top-color: #0f766e; }
-
-/* --- Buttons: primary (filled) --- */
-.team-theme .action-btn.primary,
-.team-theme .ui-button-primary { border-color: #0f766e; background: #0f766e; color: #fff; }
-.team-theme .action-btn.primary:hover:not(:disabled),
-.team-theme .ui-button-primary:hover:not(:disabled) { background: #115e59; border-color: #115e59; color: #fff; }
-
-/* --- Layout: header quick action --- */
-.team-theme .header-quick-action { border-color: #0f766e; background: #0f766e; color: #fff; }
-.team-theme .header-quick-action:hover { background: #115e59; border-color: #115e59; }
-
-/* --- Layout: mobile tab bar --- */
-.team-theme .mobile-tab-bar .tab.active { color: #0f766e; background: #f0fdfa; }
-
-/* --- Layout: login form submit --- */
-.team-theme .login-form button[type="submit"] { border-color: #0f766e; background: #0f766e; }
-.team-theme .login-form button[type="submit"]:hover:not(:disabled) { background: #115e59; }
-
-/* --- Layout: search boxes focus-within --- */
-.team-theme .projects-search:focus-within,
-.team-theme .project-memory-search:focus-within,
-.team-theme .project-task-search:focus-within,
-.team-theme .input-project-search:focus-within,
-.team-theme .management-search-box:focus-within { border-color: #0f766e; }
-
-/* --- Layout: avatars with ink border --- */
-.team-theme .profile-avatar,
-.team-theme .today-person-avatar,
-.team-theme .project-hero-icon,
-.team-theme .input-project-option-icon,
-.team-theme .input-selected-project-icon,
-.team-theme .input-ai-mark,
-.team-theme .project-assignee-avatar,
-.team-theme .management-person-avatar { border-color: #0f766e; }
-
-/* --- Layout: boot screen logo --- */
-.team-theme .ag-logo-large { border-color: #0f766e; }
-
-/* --- Components: toast dot --- */
-.team-theme .toast::before { background: #0f766e; }
-
-/* --- Pages: Today --- */
-.team-theme .today-primary-action { border-color: #0f766e; background: #0f766e; color: #fff; }
-.team-theme .today-primary-action:hover { background: #115e59; }
-.team-theme .today-voice-button { border-color: #0f766e; background: #0f766e; }
-.team-theme .today-voice-button:hover:not(:disabled) { background: #115e59; }
-.team-theme .today-note-composer button { border-color: #0f766e; background: #0f766e; }
-.team-theme .today-note-composer button:hover:not(:disabled) { background: #115e59; }
-.team-theme .today-status-button.is-active { border-color: #0f766e; color: #0f766e; }
-.team-theme .today-assignee-option.is-selected { border-color: #0f766e; }
-.team-theme .today-activity-dot { background: #0f766e; }
-.team-theme .today-open-composer:hover { border-color: #0f766e; }
-
-/* --- Pages: Projects --- */
-.team-theme .projects-add-button { border-color: #0f766e; background: #0f766e; color: #fff; }
-.team-theme .projects-add-button:hover { background: #115e59; }
-
-/* --- Pages: Project Detail --- */
-.team-theme .project-add-update-button { border-color: #0f766e; background: #0f766e; color: #fff; }
-.team-theme .project-add-update-button:hover { background: #115e59; }
-.team-theme .project-hero-icon { border-color: #0f766e; }
-.team-theme .project-health-badge > span { background: #0f766e; }
-.team-theme .project-memory-header > button { border-color: #0f766e; background: #0f766e; color: #fff; }
-.team-theme .project-memory-header > button:hover { background: #115e59; }
-.team-theme .project-task-add { border-color: #0f766e; background: #0f766e; color: #fff; }
-.team-theme .project-task-add:hover { background: #115e59; }
-.team-theme .project-progress-track span { background: #0f766e; }
-.team-theme .project-task-status.status-done { color: #0f766e; }
-.team-theme .project-task-status.status-in_progress { color: #0f766e; }
-.team-theme .project-task-status-options button.is-active { border-color: #0f766e; color: #0f766e; }
-.team-theme .project-task-note-composer button { border-color: #0f766e; background: #0f766e; }
-.team-theme .project-task-note-composer button:hover:not(:disabled) { background: #115e59; }
-.team-theme .project-task-title-input button { border-color: #0f766e; background: #0f766e; }
-.team-theme .project-filter-chips button.is-active,
-.team-theme .project-task-filters button.is-active { border-color: #0f766e; color: #0f766e; }
-.team-theme .project-assignee-selector label.is-selected { border-color: #0f766e; }
-.team-theme .input-project-option.is-selected { border-color: #0f766e; }
-.team-theme .project-deadline-list article.is-completed > button { border-color: #0f766e; }
-.team-theme .project-timeline-marker { background: #0f766e; }
-
-/* --- Pages: Input --- */
-.team-theme .input-submit-button { border-color: #0f766e; background: #0f766e; color: #fff; }
-.team-theme .input-submit-button:hover:not(:disabled) { background: #115e59; }
-.team-theme .input-file-dropzone:hover { border-color: #0f766e; }
-
-/* --- Pages: Management Center --- */
-.team-theme .center-task-status-icon.is-done { border-color: #0f766e; }
-.team-theme .center-task-status-icon.status-in_progress > span { background: #0f766e; }
-.team-theme .center-register-button { border-color: #0f766e; background: #0f766e; color: #fff; }
-.team-theme .center-register-button:hover { background: #115e59; }
-.team-theme .center-approve-button { border-color: #0f766e; background: #0f766e; color: #fff; }
-.team-theme .center-approve-button:hover { background: #115e59; }
-.team-theme .center-reply-composer button { border-color: #0f766e; background: #0f766e; }
-.team-theme .management-search-box button { border-color: #0f766e; background: #0f766e; }
-.team-theme .management-plan-text-wrap button { border-color: #0f766e; background: #0f766e; }
-.team-theme .management-plan-list article.is-today { border-color: #0f766e; }
-.team-theme .management-filter-chips button.is-active { border-color: #0f766e; color: #0f766e; }
-
-/* --- Segmented controls: active state border --- */
-.team-theme .task-timing-choice > button.is-active { border-color: #0f766e; color: #0f766e; }
-
-/* --- Login page elements --- */
-.team-theme .login-logo { border-color: #0f766e; }
+/* --- Team theme -----------------------------------------------------------
+   Non-owner users get a teal accent instead of blue. Expressed purely as
+   token overrides — every component that uses --accent follows.
+   white/accent 5.5; link/paper 6.6; link/accent-wash 6.7. */
+.team-theme {
+  --accent:       #0f766e;
+  --accent-hover: #115e59;
+  --accent-link:  #0c5f58;
+  --accent-wash:  #e6f4f2;
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
