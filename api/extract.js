@@ -32,7 +32,7 @@ Rules:
 
 STRUCTURED CLASSIFICATION (NEW):
 - category: classify as exactly ONE of: work_update, problem, decision, material, client_request, note
-- tags: generate 2-4 tags describing the topic. IMPORTANT: If "Known project areas" are listed above, you MUST use those EXACT area names as tags when the content relates to one of those areas (e.g. if areas include "B1 GF Kitchen" and the text mentions kitchen work, use "B1 GF Kitchen" as a tag, NOT "κουζίνα"). You may add additional descriptive tags in Greek alongside the area tag (e.g. ["B1 GF Kitchen", "υδραυλικά"]). If no area matches, use normalized Greek keywords.
+- tags: generate 2-4 tags describing the topic. IMPORTANT: If "Known project areas" are listed above, you MUST use those EXACT area names as tags when the content relates to one of those areas (e.g. if areas include "Κ1 Ισόγειο Κουζίνα" and the text mentions kitchen work, use "Κ1 Ισόγειο Κουζίνα" as a tag, not a generic "κουζίνα"). You may add additional descriptive tags in Greek alongside the area tag (e.g. ["Κ1 Ισόγειο Κουζίνα", "υδραυλικά"]). If no area matches, use normalized Greek keywords.
 - entry_status: for problems set "open", for decisions set null, for everything else set null
 - title: a short Greek title (5-10 words) summarizing the entry
 - If the input contains MULTIPLE distinct topics (e.g. a material delivery AND a problem), split into multiple entries in the "entries" array.
