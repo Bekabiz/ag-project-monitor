@@ -9,6 +9,53 @@ export const config = {
  * One job: audio → text. No GPT extraction here.
  * All structured extraction goes through /api/extract (one brain, two input modes).
  */
+/**
+ * Whisper mishears proper nouns badly — "Κατάκολο" came back as "Kakatkolo".
+ * Its `prompt` parameter biases decoding toward supplied vocabulary, so we feed
+ * it the office's real project names, locations and staff names.
+ *
+ * Cached in module scope: Vercel reuses warm instances, so this is usually
+ * zero extra latency.
+ */
+let vocabCache = { value: '', at: 0 };
+const VOCAB_TTL = 10 * 60 * 1000; // 10 minutes
+
+async function getVocabulary() {
+  if (vocabCache.value && Date.now() - vocabCache.at < VOCAB_TTL) {
+    return vocabCache.value;
+  }
+
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_KEY;
+  if (!url || !key) return '';
+
+  try {
+    const headers = { apikey: key, Authorization: `Bearer ${key}` };
+    const [projRes, profRes] = await Promise.all([
+      fetch(`${url}/rest/v1/projects?status=eq.active&select=name,location`, { headers }),
+      fetch(`${url}/rest/v1/profiles?select=full_name`, { headers }),
+    ]);
+
+    const projects = projRes.ok ? await projRes.json() : [];
+    const profiles = profRes.ok ? await profRes.json() : [];
+
+    const terms = [
+      ...projects.flatMap(p => [p.name, p.location]),
+      ...profiles.map(p => p.full_name),
+    ].filter(Boolean);
+
+    // Whisper's prompt works best as natural text, not a bare list.
+    const value = terms.length
+      ? `Τεχνικό γραφείο Αδαμόπουλος. Έργα και τοποθεσίες: ${[...new Set(terms)].join(', ')}.`
+      : '';
+
+    vocabCache = { value, at: Date.now() };
+    return value;
+  } catch {
+    return '';
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -36,11 +83,14 @@ export default async function handler(req, res) {
 
     const file = await toFile(audioBuffer, fileName, { type: fileType });
 
+    const vocabulary = await getVocabulary();
+
     // Transcribe with Whisper
     const transcription = await openai.audio.transcriptions.create({
       file: file,
       model: 'whisper-1',
       language: 'el',
+      ...(vocabulary ? { prompt: vocabulary } : {}),
     });
 
     const transcript = transcription.text;
