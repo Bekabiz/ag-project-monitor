@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { AlertTriangle, ArrowLeft, Building2, CalendarDays, Camera, CheckCircle2, ChevronRight, ClipboardCheck, Clock3, FileDown, FileText, FolderTree, Image, LayoutDashboard, ListTree, MapPin, Mic, Plus, RefreshCw, Search, Sparkles, Trash2 } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Building2, CalendarDays, Camera, CheckCircle2, ChevronRight, ClipboardCheck, Clock3, FileDown, FileText, FolderTree, Image, LayoutDashboard, ListTree, MapPin, Mic, Plus, RefreshCw, Search, Sparkles, Trash2, X } from 'lucide-react'
 import { db, dbRead, supabase } from '../lib/db'
 import StepsView from './StepsView'
 import { ButtonSpinner, EmptyState, InlineNotice, LoadingState, ModalShell } from '../components/ui'
@@ -31,6 +31,45 @@ export default function ProjectDetail({ project, profile, onBack, onAddUpdate })
   const [tab, setTab] = useState('overview')
   const [entries, setEntries] = useState([])
   const [areas, setAreas] = useState([])
+  // Structure editor — the AI gets rooms wrong sometimes, so every area must be
+  // renameable, removable and addable at any time, not only at import.
+  const [areaEditor, setAreaEditor] = useState(false)
+  const [areaDraft, setAreaDraft] = useState({ name: '', type: 'room' })
+  const [areaBusy, setAreaBusy] = useState(null)
+
+  async function renameArea(area, name) {
+    const next = name.trim()
+    if (!next || next === area.area_name) return
+    setAreaBusy(area.id)
+    try {
+      await db(supabase.from('project_areas').update({ area_name: next }).eq('id', area.id))
+      setAreas(prev => prev.map(a => a.id === area.id ? { ...a, area_name: next } : a))
+    } catch { showToast('Σφάλμα μετονομασίας', true) }
+    setAreaBusy(null)
+  }
+
+  async function deleteArea(area) {
+    setAreaBusy(area.id)
+    try {
+      await db(supabase.from('project_areas').delete().eq('id', area.id))
+      setAreas(prev => prev.filter(a => a.id !== area.id))
+    } catch { showToast('Σφάλμα διαγραφής', true) }
+    setAreaBusy(null)
+  }
+
+  async function addArea() {
+    const name = areaDraft.name.trim()
+    if (!name) return
+    setAreaBusy('new')
+    try {
+      const rows = await dbRead(supabase.from('project_areas').insert({
+        project_id: project.id, area_name: name, area_type: areaDraft.type
+      }).select())
+      if (rows?.[0]) setAreas(prev => [...prev, rows[0]])
+      setAreaDraft({ name: '', type: areaDraft.type })
+    } catch { showToast('Σφάλμα προσθήκης', true) }
+    setAreaBusy(null)
+  }
   const [deadlines, setDeadlines] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
@@ -459,8 +498,21 @@ export default function ProjectDetail({ project, profile, onBack, onAddUpdate })
             </section>
 
             <section className="project-content-panel">
-              <div className="project-panel-heading"><div><span className="is-purple" aria-hidden="true"><FolderTree size={18} strokeWidth={1.5} /></span><div><h3>Δομή έργου</h3><p>Χώροι, συστήματα και εξωτερικές περιοχές.</p></div></div><span className="project-panel-count">{areas.length}</span></div>
-              {areas.length === 0 ? <EmptyState icon={FolderTree} title="Δεν έχει εισαχθεί δομή" description={profile?.role === 'owner' ? 'Χρησιμοποιήστε την τεχνική περιγραφή για να δημιουργηθούν χώροι και συστήματα.' : 'Ο διαχειριστής δεν έχει εισαγάγει ακόμη τη δομή του έργου.'} compact /> : <div className="project-area-preview">{areas.slice(0, 10).map(area => <span key={area.id}>{area.area_name}</span>)}</div>}
+              <div className="project-panel-heading">
+                <div><span className="is-purple" aria-hidden="true"><FolderTree size={18} strokeWidth={1.5} /></span><div><h3>Δομή έργου</h3><p>Χώροι, συστήματα και εξωτερικές περιοχές.</p></div></div>
+                <span className="project-panel-count">{areas.length}</span>
+              </div>
+              {areas.length === 0 ? (
+                <EmptyState icon={FolderTree} title="Δεν έχει εισαχθεί δομή" description={profile?.role === 'owner' ? 'Χρησιμοποιήστε την τεχνική περιγραφή για να δημιουργηθούν χώροι και συστήματα.' : 'Ο διαχειριστής δεν έχει εισαγάγει ακόμη τη δομή του έργου.'} compact />
+              ) : (
+                <div className="project-area-preview">
+                  {areas.slice(0, 10).map(area => <span key={area.id}>{area.area_name}</span>)}
+                </div>
+              )}
+              <button type="button" className="project-area-manage" onClick={() => setAreaEditor(true)}>
+                <FolderTree size={15} strokeWidth={1.5} aria-hidden="true" />
+                {areas.length === 0 ? 'Προσθήκη χώρου' : 'Επεξεργασία δομής'}
+              </button>
             </section>
           </aside>
         </div>
@@ -575,6 +627,64 @@ export default function ProjectDetail({ project, profile, onBack, onAddUpdate })
             <label htmlFor="delete-confirm">Πληκτρολογήστε <strong>{project.name}</strong> για επιβεβαίωση</label>
             <input id="delete-confirm" value={deleteConfirmName} onChange={e => setDeleteConfirmName(e.target.value)} placeholder={project.name} autoFocus />
           </div>
+        </div>
+      </ModalShell>
+
+      <ModalShell
+        open={areaEditor}
+        onClose={() => setAreaEditor(false)}
+        title="Δομή έργου"
+        description="Διορθώστε ό,τι δεν αναγνώρισε σωστά η εφαρμογή. Προσθέστε ή αφαιρέστε χώρους όποτε χρειάζεται."
+        icon={FolderTree}
+        size="md"
+        actions={<button type="button" className="action-btn primary" onClick={() => setAreaEditor(false)}>Τέλος</button>}
+      >
+        <div className="area-editor">
+          <div className="area-editor-add">
+            <select value={areaDraft.type} onChange={e => setAreaDraft(d => ({ ...d, type: e.target.value }))} aria-label="Τύπος">
+              <option value="room">Χώρος</option>
+              <option value="system">Σύστημα</option>
+              <option value="exterior">Εξωτερικός</option>
+            </select>
+            <input
+              value={areaDraft.name}
+              onChange={e => setAreaDraft(d => ({ ...d, name: e.target.value }))}
+              onKeyDown={e => { if (e.key === 'Enter') addArea() }}
+              placeholder="π.χ. Κ1 Ισόγειο Κουζίνα"
+            />
+            <button type="button" className="action-btn primary" onClick={addArea} disabled={!areaDraft.name.trim() || areaBusy === 'new'}>
+              {areaBusy === 'new' ? <ButtonSpinner label="…" /> : 'Προσθήκη'}
+            </button>
+          </div>
+
+          {areas.length === 0 ? (
+            <p className="area-editor-empty">Δεν υπάρχουν ακόμη χώροι.</p>
+          ) : (
+            ['room', 'system', 'exterior'].map(type => {
+              const list = areas.filter(a => a.area_type === type)
+              if (!list.length) return null
+              const label = type === 'room' ? 'Χώροι' : type === 'system' ? 'Συστήματα' : 'Εξωτερικοί χώροι'
+              return (
+                <div key={type} className="area-editor-group">
+                  <h4>{label} <span>{list.length}</span></h4>
+                  {list.map(area => (
+                    <div key={area.id} className="area-editor-row">
+                      <input
+                        defaultValue={area.area_name}
+                        onBlur={e => renameArea(area, e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
+                        disabled={areaBusy === area.id}
+                        aria-label={`Όνομα: ${area.area_name}`}
+                      />
+                      <button type="button" onClick={() => deleteArea(area)} disabled={areaBusy === area.id} aria-label={`Διαγραφή ${area.area_name}`}>
+                        <X size={15} strokeWidth={1.5} aria-hidden="true" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )
+            })
+          )}
         </div>
       </ModalShell>
 

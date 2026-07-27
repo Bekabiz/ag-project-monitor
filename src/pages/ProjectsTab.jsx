@@ -37,8 +37,12 @@ export default function ProjectsTab({ profile, onSelectProject }) {
       const projs = await dbRead(supabase
         .from('project_dashboard_stats')
         .select('*')
-        .eq('status', 'active')
-        .order('name'))
+        .eq('status', 'active'))
+
+      // Postgres orders by byte value, which puts every Latin name above every
+      // Greek one. Sort in the browser with Greek collation so it reads
+      // alphabetically to the office.
+      projs.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'el', { sensitivity: 'base' }))
 
       const statsMap = {}
       for (const project of projs) {

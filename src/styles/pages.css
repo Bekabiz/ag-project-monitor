@@ -1759,3 +1759,52 @@ button.today-person-summary:hover { background: var(--canvas); }
 .center-register-picker-option:hover { border-color: var(--accent); background: var(--accent-wash); }
 .center-register-picker-option strong { font-size: var(--fs-body); font-weight: 600; }
 .center-register-picker-option small { font-size: var(--fs-caption); color: var(--text-secondary); }
+
+/* Project structure editor — the AI mislabels rooms, so every area stays
+   renameable, removable and addable for the life of the project. */
+.project-area-manage {
+  display: inline-flex; align-items: center; gap: 8px;
+  margin-top: 12px; padding: 9px 14px;
+  border: 1px solid var(--hairline); border-radius: var(--radius-pill);
+  background: var(--paper); color: var(--text-primary);
+  font-size: 14px; font-weight: 500; cursor: pointer;
+  transition: border-color .15s ease, background .15s ease;
+}
+.project-area-manage:hover { border-color: var(--ink); background: var(--wash); }
+
+.area-editor { display: grid; gap: 20px; }
+.area-editor-add { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; }
+.area-editor-add select,
+.area-editor-add input {
+  min-height: 44px; padding: 0 12px;
+  border: 1px solid var(--hairline); border-radius: var(--radius-sm);
+  background: var(--paper); color: var(--text-primary); font-size: 15px;
+}
+.area-editor-add input:focus,
+.area-editor-row input:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: var(--accent); }
+
+.area-editor-group { display: grid; gap: 6px; }
+.area-editor-group h4 {
+  margin: 0 0 2px; color: var(--text-secondary);
+  font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+}
+.area-editor-group h4 span { color: var(--text-muted); font-weight: 400; }
+
+.area-editor-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; }
+.area-editor-row input {
+  min-height: 44px; padding: 0 12px;
+  border: 1px solid transparent; border-radius: var(--radius-sm);
+  background: var(--wash); color: var(--text-primary); font-size: 15px;
+}
+.area-editor-row input:hover { border-color: var(--hairline); }
+.area-editor-row button {
+  display: grid; place-items: center; width: 44px; height: 44px;
+  border: 0; border-radius: var(--radius-sm);
+  background: transparent; color: var(--text-muted); cursor: pointer;
+}
+.area-editor-row button:hover { background: var(--danger-wash); color: var(--danger); }
+.area-editor-empty { margin: 0; color: var(--text-secondary); font-size: 14px; }
+
+@media (max-width: 560px) {
+  .area-editor-add { grid-template-columns: 1fr; }
+}
