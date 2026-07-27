@@ -12,6 +12,34 @@ import { sortProfiles } from '../lib/people'
 import { isPushSupported, subscribeToPush, isSubscribed as checkPushSubscribed } from '../lib/push'
 import { ButtonSpinner, EmptyState, LoadingState, ModalShell } from '../components/ui'
 
+/**
+ * Match what the AI heard against real projects.
+ *
+ * Errs toward guessing rather than leaving the field empty: the dropdown is on
+ * screen before saving, so a wrong guess costs one tap while a missing guess
+ * costs the full selection every time.
+ *
+ * Matches on location as well as name — Giorgos says "Κατάκολο", not
+ * "Καρανάσης" — and compares accent-insensitively so "καρανασης" still hits.
+ * The only guard is a minimum length, which stops two-letter coincidences.
+ */
+function matchProject(spoken, projects) {
+  const norm = s => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim()
+  const needle = norm(spoken)
+  if (needle.length < 3) return null
+
+  const hits = projects.filter(p =>
+    [p.name, p.location].some(field => {
+      const hay = norm(field)
+      if (!hay) return false
+      return hay === needle || hay.includes(needle) || needle.includes(hay)
+    })
+  )
+
+  // Prefer a name match over a location match when several fit.
+  return hits.find(p => norm(p.name).includes(needle) || needle.includes(norm(p.name))) || hits[0] || null
+}
+
 export default function TodayTab({ profile, onBadgeCount }) {
   const [mySteps, setMySteps] = useState([])
   const [updates, setUpdates] = useState([])
@@ -262,10 +290,7 @@ export default function TodayTab({ profile, onBadgeCount }) {
         const extracted = await extractText(data.transcript, projects.map(p => p.name))
         if (extracted) {
           if (extracted.project_name) {
-            const matchedProj = projects.find(p =>
-              p.name.toLowerCase().includes(extracted.project_name.toLowerCase()) ||
-              extracted.project_name.toLowerCase().includes(p.name.toLowerCase())
-            )
+            const matchedProj = matchProject(extracted.project_name, projects)
             if (matchedProj) setTaskProject(matchedProj.id)
           }
           if (extracted.people?.length > 0) {

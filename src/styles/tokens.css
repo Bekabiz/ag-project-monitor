@@ -63,8 +63,9 @@
      Every fg ≥ 4.5:1 on paper and its wash (ratios paper/wash). */
   --danger:        #a3231c;  /* 7.5 / 6.4 */
   --danger-wash:   #fbe9e7;
-  --warn:          #8a4d0f;  /* 6.7 / 5.7 */
-  --warn-wash:     #f7ecd9;
+  --warn:          #7a5a1e;  /* 6.9 on paper, 6.1 on wash — desaturated so a
+                                  page full of "needs update" reads calm, not alarming */
+  --warn-wash:     #f4f0e6;
   --success:       #28703a;  /* 6.1 / 5.2 */
   --success-wash:  #e5f0e6;
   --neutral:       #5d5d63;  /* 6.5 / 5.6 */
