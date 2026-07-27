@@ -284,7 +284,11 @@ export default function TodayTab({ profile, onBadgeCount }) {
             if (matchedIds.length > 0) setTaskAssignees(matchedIds)
           }
           if (extracted.deadline_date) setTaskDate(extracted.deadline_date)
-          if (extracted.action_items?.length > 0) setTaskDesc(extracted.action_items.join(', '))
+          // A single action item is almost always a restatement of the task
+          // itself ("Έλεγχος προόδου έργου" -> "Ελέγξτε την πρόοδο του έργου"),
+          // which duplicates the title. Only fill the description when there
+          // is genuinely more than one distinct step.
+          if (extracted.action_items?.length > 1) setTaskDesc(extracted.action_items.join(', '))
         } else {
           setTaskTitle(prev => prev ? prev + ' ' + data.transcript : data.transcript)
         }
