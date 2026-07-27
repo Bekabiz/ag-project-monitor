@@ -181,10 +181,22 @@ async function verify() {
   let mismatches = 0
 
   for (const table of TABLES) {
-    const [{ count: src }, { count: tgt }] = await Promise.all([
+    const [srcRes, tgtRes] = await Promise.all([
       source.from(table).select('*', { count: 'exact', head: true }),
       target.from(table).select('*', { count: 'exact', head: true }),
     ])
+
+    // A rejected key or missing table must fail loudly, not look like "0 rows".
+    for (const [side, res] of [['source', srcRes], ['target', tgtRes]]) {
+      if (res.error && res.error.code !== '42P01') {
+        console.log(`  FAIL ${table.padEnd(18)} ${side}: ${res.error.message}`)
+        mismatches++
+      }
+    }
+    if (srcRes.error || tgtRes.error) continue
+
+    const src = srcRes.count
+    const tgt = tgtRes.count
     if (src === null && tgt === null) continue
 
     const ok = src === tgt
@@ -203,9 +215,23 @@ async function verify() {
   return mismatches
 }
 
+async function preflight() {
+  for (const [label, client, url] of [['SOURCE', source, SOURCE_URL], ['TARGET', target, TARGET_URL]]) {
+    const { error } = await client.from('projects').select('id', { count: 'exact', head: true })
+    if (error) {
+      console.error(`${label} unreachable (${url})`)
+      console.error(`  ${error.message}`)
+      console.error(`  Check the key matches this project ref and is the service_role key.`)
+      process.exit(1)
+    }
+  }
+}
+
 async function main() {
   console.log(`AG Project Monitor migration`)
   console.log(`  ${sourceRef} → ${targetRef}${DRY_RUN ? '  [DRY RUN]' : ''}\n`)
+
+  await preflight()
   console.log('Tables')
 
   for (const table of TABLES) await copyTable(table)
