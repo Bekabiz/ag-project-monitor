@@ -35,7 +35,14 @@ STRUCTURED CLASSIFICATION (NEW):
 - tags: generate 2-4 tags describing the topic. IMPORTANT: If "Known project areas" are listed above, you MUST use those EXACT area names as tags when the content relates to one of those areas (e.g. if areas include "Κ1 Ισόγειο Κουζίνα" and the text mentions kitchen work, use "Κ1 Ισόγειο Κουζίνα" as a tag, not a generic "κουζίνα"). You may add additional descriptive tags in Greek alongside the area tag (e.g. ["Κ1 Ισόγειο Κουζίνα", "υδραυλικά"]). If no area matches, use normalized Greek keywords.
 - entry_status: for problems set "open", for decisions set null, for everything else set null
 - title: a short Greek title (5-10 words) summarizing the entry
-- If the input contains MULTIPLE distinct topics (e.g. a material delivery AND a problem), split into multiple entries in the "entries" array.
+- SPLITTING IS MANDATORY. Create one entry for EVERY distinct fact that someone
+  might need to find again later. Do not merge facts, and do not drop a fact
+  because it seems minor or because it shares a sentence with something bigger.
+- A delivery or arrival of materials is ALWAYS its own material entry, even when
+  the same sentence also reports a problem. "Τα πλακάκια έφτασαν αλλά υπάρχει
+  πρόβλημα με τον σωλήνα" is TWO entries: one material, one problem — never one.
+- Before returning, re-read the input and check that every fact in it appears in
+  exactly one entry. A fact mentioned only in the summary is a mistake.
 
 Return ONLY valid JSON, no markdown fences, no explanation. Exact format:
 {"project_name":"string or null","people":["string"],"deadline_description":"string or empty","deadline_date":"YYYY-MM-DD or null","budget_change":0,"action_items":["string"],"summary":"Greek summary","entries":[{"category":"work_update","title":"short Greek title","text":"Greek description","tags":["tag1","tag2"],"entry_status":null}]}`
