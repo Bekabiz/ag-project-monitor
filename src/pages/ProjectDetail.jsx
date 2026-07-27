@@ -34,6 +34,7 @@ export default function ProjectDetail({ project, profile, onBack, onAddUpdate })
   const [areas, setAreas] = useState([])
   // Structure editor — the AI gets rooms wrong sometimes, so every area must be
   // renameable, removable and addable at any time, not only at import.
+  const [fileFolder, setFileFolder] = useState(null)
   const [areaEditor, setAreaEditor] = useState(false)
   const [areaDraft, setAreaDraft] = useState({ name: '', type: 'room' })
   const [areaBusy, setAreaBusy] = useState(null)
@@ -385,7 +386,7 @@ export default function ProjectDetail({ project, profile, onBack, onAddUpdate })
     { id: 'overview', label: 'Επισκόπηση', icon: LayoutDashboard },
     { id: 'memory', label: 'Μνήμη έργου', icon: ListTree, badge: entries.length },
     { id: 'tasks', label: 'Εργασίες', icon: ClipboardCheck },
-    { id: 'photos', label: 'Φωτογραφίες', icon: Camera, badge: photos.length },
+    { id: 'photos', label: 'Αρχεία', icon: FileText, badge: photos.length + documents.length },
     { id: 'timeline', label: 'Χρονολόγιο', icon: Clock3 },
     { id: 'report', label: 'Αναφορά', icon: FileText },
   ]
@@ -551,7 +552,6 @@ export default function ProjectDetail({ project, profile, onBack, onAddUpdate })
                     return <button type="button" key={key} className="project-category-card" onClick={() => setCatFilter(key)}><span style={{ '--category-bg': config.bg }} aria-hidden="true"><CatIcon path={config.icon} color={config.color} size={19} /></span><div><strong>{config.label}</strong><small>{openCount > 0 ? `${openCount} ανοιχτά` : `${count} καταχωρήσεις`}</small></div><em>{count}</em><ChevronRight size={16} strokeWidth={1.5} aria-hidden="true" /></button>
                   })}
                   {photos.length > 0 && <button type="button" className="project-category-card" onClick={() => setTab('photos')}><span className="is-photo" aria-hidden="true"><Camera size={19} strokeWidth={1.5} /></span><div><strong>Φωτογραφίες</strong><small>{photos.length} αρχεία εικόνας</small></div><em>{photos.length}</em><ChevronRight size={16} strokeWidth={1.5} aria-hidden="true" /></button>}
-                  {documents.length > 0 && <button type="button" className="project-category-card" onClick={() => setCatFilter('__documents')}><span className="is-photo" aria-hidden="true"><FileText size={19} strokeWidth={1.5} /></span><div><strong>Έγγραφα και σχέδια</strong><small>{documents.length} αρχεία</small></div><em>{documents.length}</em><ChevronRight size={16} strokeWidth={1.5} aria-hidden="true" /></button>}
                 </div>
               ) : (
                 <div className="project-category-detail">
@@ -578,8 +578,45 @@ export default function ProjectDetail({ project, profile, onBack, onAddUpdate })
 
       {tab === 'photos' && (
         <section className="project-gallery-panel">
-          <header className="project-memory-header"><div><h2>Φωτογραφίες έργου</h2><p>Οπτικό ιστορικό από εργοτάξιο, έγγραφα και επιμέρους χώρους.</p></div>{onAddUpdate && <button type="button" onClick={onAddUpdate}><Plus size={16} strokeWidth={1.5} aria-hidden="true" />Προσθήκη φωτογραφίας</button>}</header>
-          {photos.length === 0 ? <EmptyState icon={Image} title="Δεν υπάρχουν φωτογραφίες" description="Οι φωτογραφίες του έργου θα εμφανιστούν εδώ μαζί με ημερομηνία και ετικέτες." actionLabel={onAddUpdate ? 'Προσθήκη φωτογραφίας' : undefined} onAction={onAddUpdate} /> : <div className="project-photo-grid">{photos.map(photo => <button type="button" key={photo.id} className="project-photo-card" onClick={() => setLightboxUrl(photo.file_url)}><img src={photo.file_url} alt={photo.ai_summary || `Φωτογραφία έργου ${project.name}`} loading="lazy" /><span><strong>{photo.ai_summary?.slice(0, 70) || 'Φωτογραφία έργου'}</strong><small>{formatDate(photo.created_at)}</small></span>{(photo.tags || []).length > 0 && <em>{photo.tags.slice(0, 2).join(' · ')}</em>}</button>)}</div>}
+          <header className="project-memory-header">
+            <div><h2>Αρχεία έργου</h2><p>Φωτογραφίες από το εργοτάξιο και έγγραφα του έργου.</p></div>
+            {onAddUpdate && <button type="button" onClick={onAddUpdate}><Plus size={16} strokeWidth={1.5} aria-hidden="true" />Προσθήκη αρχείου</button>}
+          </header>
+
+          {/* Two folders: pictures and documents are different things and are
+              looked for differently, so they are not mixed into one grid. */}
+          {!fileFolder ? (
+            <div className="project-folder-grid">
+              <button type="button" className="project-folder-card" onClick={() => setFileFolder('photos')}>
+                <span className="is-photo" aria-hidden="true"><Camera size={22} strokeWidth={1.5} /></span>
+                <div><strong>Φωτογραφίες</strong><small>{photos.length} {photos.length === 1 ? 'εικόνα' : 'εικόνες'}</small></div>
+                <ChevronRight size={18} strokeWidth={1.5} aria-hidden="true" />
+              </button>
+              <button type="button" className="project-folder-card" onClick={() => setFileFolder('documents')}>
+                <span className="is-photo" aria-hidden="true"><FileText size={22} strokeWidth={1.5} /></span>
+                <div><strong>Έγγραφα και σχέδια</strong><small>{documents.length} {documents.length === 1 ? 'αρχείο' : 'αρχεία'}</small></div>
+                <ChevronRight size={18} strokeWidth={1.5} aria-hidden="true" />
+              </button>
+            </div>
+          ) : (
+            <>
+              <button type="button" className="project-category-back" onClick={() => setFileFolder(null)}>
+                <ArrowLeft size={15} strokeWidth={1.5} aria-hidden="true" />Πίσω στα αρχεία
+              </button>
+
+              {fileFolder === 'photos' && (
+                photos.length === 0
+                  ? <EmptyState icon={Image} title="Δεν υπάρχουν φωτογραφίες" description="Οι φωτογραφίες του έργου θα εμφανιστούν εδώ μαζί με ημερομηνία και ετικέτες." actionLabel={onAddUpdate ? 'Προσθήκη φωτογραφίας' : undefined} onAction={onAddUpdate} />
+                  : <div className="project-photo-grid">{photos.map(photo => <button type="button" key={photo.id} className="project-photo-card" onClick={() => setLightboxUrl(photo.file_url)}><img src={photo.file_url} alt={photo.ai_summary || `Φωτογραφία έργου ${project.name}`} loading="lazy" /><span><strong>{photo.ai_summary?.slice(0, 70) || 'Φωτογραφία έργου'}</strong><small>{formatDate(photo.created_at)}</small></span>{(photo.tags || []).length > 0 && <em>{photo.tags.slice(0, 2).join(' · ')}</em>}</button>)}</div>
+              )}
+
+              {fileFolder === 'documents' && (
+                documents.length === 0
+                  ? <EmptyState icon={FileText} title="Δεν υπάρχουν έγγραφα" description="Τα σχέδια, οι άδειες και τα έγγραφα του έργου θα εμφανιστούν εδώ." actionLabel={onAddUpdate ? 'Προσθήκη εγγράφου' : undefined} onAction={onAddUpdate} />
+                  : <div className="project-document-list">{documents.map(doc => <a key={doc.id} className="project-document-row" href={doc.file_url} target="_blank" rel="noreferrer"><span aria-hidden="true"><FileText size={18} strokeWidth={1.5} /></span><div><strong>{doc.file_name || 'Έγγραφο'}</strong><small>{formatDate(doc.created_at)}{doc.doc_version ? ` · ${doc.doc_version}` : ''}{doc.file_size ? ` · ${(doc.file_size / 1024).toFixed(0)} KB` : ''}</small>{doc.doc_notes && <p>{doc.doc_notes}</p>}</div><ChevronRight size={16} strokeWidth={1.5} aria-hidden="true" /></a>)}</div>
+              )}
+            </>
+          )}
         </section>
       )}
 

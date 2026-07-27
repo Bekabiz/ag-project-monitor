@@ -345,22 +345,12 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
   // Picking a file only attaches it. Nothing is uploaded until the person has
   // filled in the name, version and notes and pressed save — otherwise those
   // fields are always empty at the moment of upload.
-  function handleFilePick(e) {
-    const files = Array.from(e.target.files || [])
+  function handleDocPick(e) {
+    const file = e.target.files?.[0]
     e.target.value = '' // allow re-picking the same file
-    if (!files.length) return
-
-    const images = files.filter(f => f.type.startsWith('image/'))
-    const docs = files.filter(f => !f.type.startsWith('image/'))
-
-    // Images go straight through — there is no metadata to collect for a photo.
-    if (images.length) handlePhotoUpload({ target: { files: images } })
-
-    // A document waits for its name, version and notes.
-    if (docs.length) {
-      setDocFile(docs[0])
-      if (!docName) setDocName(docs[0].name.replace(/\.[^.]+$/, ''))
-    }
+    if (!file) return
+    setDocFile(file)
+    if (!docName) setDocName(file.name.replace(/\.[^.]+$/, ''))
   }
 
   async function handleDocSave() {
@@ -571,9 +561,14 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
 
               <aside className="input-attachment-panel">
                 <div className="input-attachment-heading"><h3>Γρήγορη προσθήκη</h3><p>Υλικό από το εργοτάξιο ή το γραφείο.</p></div>
-                <button type="button" className="input-attachment-action is-photo" onClick={() => setShowFileModal('file')}>
+                <button type="button" className="input-attachment-action is-photo" onClick={() => setShowFileModal('photo')}>
                   <span aria-hidden="true"><Camera size={20} strokeWidth={1.5} /></span>
-                  <span><strong>Φωτογραφία ή αρχείο</strong><small>Εικόνες, PDF, Word, Excel ή DWG</small></span>
+                  <span><strong>Φωτογραφίες</strong><small>Λήψη ή επιλογή πολλών εικόνων</small></span>
+                  <ChevronRight size={16} strokeWidth={1.5} aria-hidden="true" />
+                </button>
+                <button type="button" className="input-attachment-action is-file" onClick={() => setShowFileModal('file')}>
+                  <span aria-hidden="true"><FileUp size={20} strokeWidth={1.5} /></span>
+                  <span><strong>Έγγραφο ή σχέδιο</strong><small>PDF, Word, Excel ή DWG</small></span>
                   <ChevronRight size={16} strokeWidth={1.5} aria-hidden="true" />
                 </button>
                 <button type="button" className="input-attachment-action is-link" onClick={() => setShowFileModal('link')}>
@@ -655,10 +650,28 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
       </section>
 
       <ModalShell
+        open={showFileModal === 'photo'}
+        onClose={() => setShowFileModal(null)}
+        title="Προσθήκη φωτογραφιών"
+        description={`Οι φωτογραφίες θα αποθηκευτούν στο έργο «${selected?.name || ''}».`}
+        icon={Camera}
+        size="sm"
+        actions={<button type="button" className="action-btn" onClick={() => setShowFileModal(null)}>Ακύρωση</button>}
+      >
+        <label className="input-file-dropzone">
+          <span aria-hidden="true"><Camera size={24} strokeWidth={1.5} /></span>
+          <strong>Λήψη ή επιλογή φωτογραφιών</strong>
+          <small>Μπορείτε να επιλέξετε πολλές εικόνες μαζί.</small>
+          <input type="file" accept="image/*" capture="environment" multiple onChange={handlePhotoUpload} />
+        </label>
+        {sending && <div className="input-upload-progress"><ButtonSpinner label="Μεταφόρτωση φωτογραφιών…" /></div>}
+      </ModalShell>
+
+      <ModalShell
         open={showFileModal === 'file'}
         onClose={() => setShowFileModal(null)}
-        title="Φωτογραφία ή αρχείο"
-        description={`Θα συνδεθεί με το έργο «${selected?.name || ''}». Οι φωτογραφίες αποθηκεύονται αμέσως.`}
+        title="Προσθήκη εγγράφου ή σχεδίου"
+        description={`Το αρχείο θα συνδεθεί με το έργο «${selected?.name || ''}».`}
         icon={FileUp}
         size="md"
         actions={<>
@@ -678,7 +691,7 @@ export default function InputTab({ profile, initialProject, onOpenProjects }) {
               </button>
             </div>
           ) : (
-            <label className="input-file-dropzone is-full"><span aria-hidden="true"><FileUp size={24} strokeWidth={1.5} /></span><strong>Επιλογή αρχείου</strong><small>Εικόνες, PDF, DWG, Word ή Excel</small><input type="file" accept="image/*,.pdf,.dwg,.doc,.docx,.xls,.xlsx" multiple onChange={handleFilePick} /></label>
+            <label className="input-file-dropzone is-full"><span aria-hidden="true"><FileUp size={24} strokeWidth={1.5} /></span><strong>Επιλογή αρχείου</strong><small>PDF, DWG, Word ή Excel</small><input type="file" accept=".pdf,.dwg,.doc,.docx,.xls,.xlsx" onChange={handleDocPick} /></label>
           )}
           <div><label htmlFor="document-name">Όνομα εγγράφου</label><input id="document-name" value={docName} onChange={event => setDocName(event.target.value)} placeholder="π.χ. Αρχιτεκτονικό σχέδιο ισογείου" /></div>
           <div><label htmlFor="document-version">Έκδοση</label><input id="document-version" value={docVersion} onChange={event => setDocVersion(event.target.value)} placeholder="π.χ. v3" /></div>
