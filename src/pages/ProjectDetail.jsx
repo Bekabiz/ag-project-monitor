@@ -458,7 +458,7 @@ export default function ProjectDetail({ project, profile, onBack, onAddUpdate })
             <p><MapPin size={14} strokeWidth={1.5} aria-hidden="true" />{project.location || 'Δεν έχει οριστεί τοποθεσία'}{project.building_type ? ` · ${project.building_type.replaceAll('_', ' ')}` : ''}</p>
           </div>
           <div className="project-hero-actions">
-            {profile?.role === 'owner' && areas.length === 0 && (
+            {areas.length === 0 && (
               <label className="project-structure-button">
                 <FolderTree size={16} strokeWidth={1.5} aria-hidden="true" />
                 <span>Εισαγωγή δομής</span>
@@ -526,7 +526,7 @@ export default function ProjectDetail({ project, profile, onBack, onAddUpdate })
                 <span className="project-panel-count">{areas.length}</span>
               </div>
               {areas.length === 0 ? (
-                <EmptyState icon={FolderTree} title="Δεν έχει εισαχθεί δομή" description={profile?.role === 'owner' ? 'Χρησιμοποιήστε την τεχνική περιγραφή για να δημιουργηθούν χώροι και συστήματα.' : 'Ο διαχειριστής δεν έχει εισαγάγει ακόμη τη δομή του έργου.'} compact />
+                <EmptyState icon={FolderTree} title="Δεν έχει εισαχθεί δομή" description="Ανεβάστε την τεχνική περιγραφή για να δημιουργηθούν αυτόματα χώροι και συστήματα." compact />
               ) : (
                 <div className="project-area-preview">
                   {areas.slice(0, 10).map(area => <span key={area.id}>{area.area_name}</span>)}
